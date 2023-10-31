@@ -1,9 +1,9 @@
-import { Mesh, CircleGeometry, MeshBasicMaterial, Vector3 } from 'three';
+import { Vector3 } from 'three';
 
 /**
  * Dot class used to abstract the positioning of moving dots.
  */
-export default class Dot {
+class Dot {
   // Positional coordinates
   x;
   y;
@@ -152,3 +152,5 @@ export default class Dot {
     }
   }
 }
+
+export default Dot;

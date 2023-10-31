@@ -1,8 +1,9 @@
 {
-  "name": "ouvrai-template-cursor",
+  "name": "task_vr_rdk",
   "version": "1.0.0",
   "type": "module",
   "dependencies": {
-    "ouvrai": "../.."
+    "ouvrai": "../..",
+    "three.meshline": "^1.4.0"
   }
 }

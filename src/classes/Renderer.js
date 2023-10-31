@@ -1,14 +1,15 @@
 // Core modules
-import Dot from "./Dot";
+import Dot from "./Dot.js";
 
 // Three.js modules
-import { Mesh, CircleGeometry, MeshBasicMaterial, PlaneGeometry } from "three";
+import { Mesh, CircleGeometry, MeshBasicMaterial, PlaneGeometry, EllipseCurve, BufferGeometry, Line, LineBasicMaterial, Vector2 } from "three";
+import { MeshLine, MeshLineMaterial } from "three.meshline";
 
 /**
  * Renderer abstraction that interfaces directly with the
  * Three.js graphics library
  */
-export class Renderer {
+class Renderer {
   target;
   elements;
 
@@ -103,94 +104,50 @@ export class Renderer {
    * Creates the fixation cross in Two.js
    * @param {number} x x-coordinate of the fixation cross
    * @param {number} y y-coordinate of the fixation cros
+   * @param {number} z z-coordinate of the fixation cros
    * @param {float} d the width of the fixation cross
-   * @param {boolean} update toggles updating the object via a step() method
+   * @param {boolean} animate toggles updating the object via a step() method
    * @param {string} fill the colour of the fixation cross
    * @return {Array} array containing two Two.Rectangle objects
    */
-  createFixation(x, y, d, update, fill = "black") {
-    const coordinates = Renderer.translate(x, y, this.width, this.height);
-    const rectangleHorizontal = this.target.makeRectangle(
-      coordinates[0],
-      coordinates[1],
-      d,
-      d / 4
-    );
-    const rectangleVertical = this.target.makeRectangle(
-      coordinates[0],
-      coordinates[1],
-      d / 4,
-      d
-    );
-    rectangleHorizontal.fill = fill;
-    rectangleVertical.fill = fill;
-    rectangleHorizontal.noStroke();
-    rectangleVertical.noStroke();
-    if (update) {
-      this.addElement(rectangleHorizontal);
-      this.addElement(rectangleVertical);
-    }
-    return [rectangleHorizontal, rectangleVertical];
+  createFixation(x, y, z, d, animate = false, fill = "black") {
+    // Add a white circle behind the cross to improve contrast
+    const background = this.createCircle(x, y, z, d * 0.7, animate, "white");
+
+    // Bars of the fixation cross
+    const horizontal = this.createRectangle(x, y, z, d, d / 4, animate, fill);
+    const vertical = this.createRectangle(x, y, z, d / 4, d, animate, fill);
+
+    return [background, horizontal, vertical];
   }
 
   /**
    * Create an arc
-   * @param {number} startAngle the starting angle of the arc
-   * @param {number} endAngle the ending angle of the arc
+   * @param {number} x x-coordinate of the arc
+   * @param {number} y y-coordinate of the arc
+   * @param {number} z z-coordinate of the arc
+   * @param {number} thetaStart the starting angle of the arc
+   * @param {number} thetaEnd the ending angle of the arc
+   * @param {boolean} clockwise angle the arc clockwise or not
+   * @param {number} width the line width of the arc
    * @param {string} fill the colour of the arc
    * @return {ArcSegment} arc object
    */
-  createArc(startAngle, endAngle, fill = "red") {
-    const coordinates = Renderer.translate(0, 0, this.width, this.height);
-    const arc = this.target.makeArcSegment(
-      coordinates[0],
-      coordinates[1],
-      this.viewRadius,
-      this.viewRadius,
-      startAngle,
-      endAngle
+  createArc(x, y, z, r, thetaStart, thetaEnd, clockwise, width, animate = false, fill = "red") {
+    const curve = new EllipseCurve(x, y, r, r, thetaStart, thetaEnd, clockwise, 0);
+    const geometry = new BufferGeometry().setFromPoints(curve.getPoints(50));
+    const line = new MeshLine();
+    line.setGeometry(geometry);
+    const mesh = new Mesh(
+      line.geometry,
+      new MeshLineMaterial({ color: fill, lineWidth: width })
     );
-    arc.stroke = fill;
-    arc.linewidth = 10;
-    this.target.add(arc);
-    return arc;
-  }
+    mesh.position.set(x, y, z);
 
-  /**
-   * Create a line
-   * @param {number} x1 starting x-coordinate
-   * @param {number} y1 starting y-coordinate
-   * @param {number} x2 ending x-coordinate
-   * @param {number} y2 ending y-coordinate
-   * @param {number} width width of the line
-   * @param {string} fill the colour of the line
-   * @return {Two.Line} line object
-   */
-  createLine(
-    x1,
-    y1,
-    x2,
-    y2,
-    width,
-    fill = "black"
-  ) {
-    const startCoordinates = Renderer.translate(
-      x1,
-      y1,
-      this.width,
-      this.height
-    );
-    const endCoordinates = Renderer.translate(x2, y2, this.width, this.height);
-    const line = this.target.makeLine(
-      startCoordinates[0],
-      startCoordinates[1],
-      endCoordinates[0],
-      endCoordinates[1]
-    );
-    line.stroke = fill;
-    line.linewidth = width;
-    this.target.add(line);
-    return line;
+    this.target.add(mesh);
+    if (animate) this.addElement(mesh);
+
+    return mesh;
   }
 
   /**
@@ -228,48 +185,6 @@ export class Renderer {
   getTarget() {
     return this.target;
   }
-
-  /**
-   * Takes coordinates of form x [-150, 150], y [-150, 150] and
-   * translates them to x [0, 300], y [0, 300]
-   * @param {number} x original x-coordinate
-   * @param {number} y original y-coordinate
-   * @param {number} width width of the view
-   * @param {number} height height of the view
-   * @return {number[]} translated x and y coordinates
-   */
-  static translate(
-    x,
-    y,
-    width,
-    height
-  ) {
-    x += width / 2;
-    y = height / 2 - y;
-    return [x, y];
-  }
-
-  /**
-   * Determine if a set of coordinates is visible in the view
-   * @param {number} x the x-coordinate of the object
-   * @param {number} y the y-coordinate of the object
-   * @param {number} radius the radius of the view
-   * @return {boolean}
-   */
-  static visible(x, y, radius) {
-    const distance = Math.sqrt(x ** 2 + y ** 2);
-    return distance < radius;
-  }
-
-  /**
-   * Determine if a set of coodinates is inside the view
-   * @param {number} x the x-coordinate of the object
-   * @param {number} y the y-coordinate of the object
-   * @param {number} w the width of the view
-   * @param {number} h the height of the view
-   * @return {boolean}
-   */
-  static renderable(x, y, w, h) {
-    return x >= 0 && x <= w && y >= 0 && y <= h;
-  }
 }
+
+export default Renderer;

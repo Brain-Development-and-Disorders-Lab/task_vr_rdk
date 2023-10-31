@@ -2,13 +2,9 @@
 import {
   Vector3,
   Group,
-  Mesh,
   Quaternion,
-  CircleGeometry,
-  MeshBasicMaterial,
-  PlaneGeometry,
 } from 'three';
-import { Easing, Tween, update as tweenUpdate } from '@tweenjs/tween.js'; // https://github.com/tweenjs/tween.js/
+import { update as tweenUpdate } from '@tweenjs/tween.js'; // https://github.com/tweenjs/tween.js/
 
 // Package imports
 import { Experiment, InstructionsPanel, Block } from 'ouvrai';
@@ -16,8 +12,9 @@ import { Experiment, InstructionsPanel, Block } from 'ouvrai';
 // Static asset imports (https://vitejs.dev/guide/assets.html)
 import environmentLightingURL from 'ouvrai/lib/environments/IndoorHDRI003_1K-HDR.exr?url'; // absolute path from ouvrai
 
-import Dot from './classes/Dot';
-import { Renderer } from './classes/Renderer';
+// Custom classes
+import Renderer from './classes/Renderer';
+import Graphics from './classes/Graphics';
 
 /*
  * Main function contains all experiment logic. At a minimum you should:
@@ -52,11 +49,17 @@ async function main() {
 
     // Assume meters and seconds for three.js, but note tween.js uses milliseconds
     homePosn: new Vector3(0, 1.75, -0.3),
-    cameraLayout: 2,
+    cameraLayout: 0,
     cameraFixed: true,
 
     // Frame and rendering count
     frameCount: 0,
+
+    // Trial structure
+    numTutorialTrials: 10,
+
+    // Trial durations
+    fixationDuration: 0.25,
   });
 
   /**
@@ -67,11 +70,14 @@ async function main() {
     [
       'CONSENT',
       'SIGNIN',
-      'WELCOME',
+      'INSTRUCTIONS',
       'START',
+      'FIXATION',
+      'TUTORIAL',
+      'RESPONSE',
+      'FEEDBACK',
       'FINISH',
-      'STARTNOFEEDBACK',
-      'STARTCLAMP',
+      'ADVANCE',
       'CONTROLLER',
       'DATABASE',
       'BLOCKED',
@@ -95,49 +101,10 @@ async function main() {
 
   // Create a new Renderer
   const TaskRenderer = new Renderer(workspace);
+  const TaskGraphics = new Graphics(TaskRenderer);
 
-  // Create a mock RDK stimulus
-  // Background
-  TaskRenderer.createRectangle(0, 0, -2.2, 100, 50, false, "white");
-
-  // Aperture
-  TaskRenderer.createCircle(0, 0, -2, 1, false, "black");
-  TaskRenderer.createCircle(0, 0, -2, 0.97, false, "white");
-
-  // Dots
-  const dotCount = 20 ** 2;
-  const dotRowCount = Math.floor(Math.sqrt(dotCount));
-  for (let i = -dotRowCount / 2; i < dotRowCount / 2; i++) {
-    for (let j = -dotRowCount / 2; j < dotRowCount / 2; j++) {
-      const delta = Math.random();
-      const x = (i * 1.94) / dotRowCount + (delta * 1.94) / dotRowCount;
-      const y = (j * 1.94) / dotRowCount + (delta * 1.94) / dotRowCount;
-
-      if (delta > 0.6) {
-        // Non-dynamic dot that is just moving in random paths
-        const dot = new Dot(x, y, -1.98, {
-          type: 'random',
-          radius: 0.03,
-          velocity: 0.01,
-          direction: 2 * Math.PI * Math.random(),
-          apertureRadius: 0.97,
-        });
-        TaskRenderer.createDot(dot, true);
-      } else {
-        const dot = new Dot(x, y, -1.98, {
-          type: 'reference',
-          radius: 0.03,
-          velocity: 0.01,
-          direction: 2 * Math.PI,
-          apertureRadius: 0.97,
-        });
-        TaskRenderer.createDot(dot, true);
-      }
-    }
-  }
-
+  // Attach the camera to the entire view if specified
   if (exp.cfg.cameraFixed) {
-    // Attach the camera to the entire view if specified
     exp.sceneManager.camera.attach(workspace);
   }
 
@@ -146,10 +113,16 @@ async function main() {
    */
   exp.createTrialSequence([
     new Block({
-      variables: {},
+      variables: {
+        coherence: 0.2,
+        duration: 2,
+        direction: Math.PI,
+        showFeedback: false,
+        requireConfidence: false,
+      },
       options: {
-        name: 'P0',
-        reps: exp.cfg.numBaselineCycles,
+        name: 'tutorial',
+        reps: exp.cfg.numTutorialTrials,
       },
     }),
   ]);
@@ -204,11 +177,11 @@ async function main() {
       // SIGNIN state can be left alone
       case 'SIGNIN':
         if (exp.waitForAuthentication()) {
-          exp.state.next('WELCOME');
+          exp.state.next('START');
         }
         break;
 
-      case 'WELCOME':
+      case 'INSTRUCTIONS':
         exp.state.once(() => {
           exp.VRUI.visible = false;
         });
@@ -216,89 +189,87 @@ async function main() {
         break;
 
       case 'START':
-        exp.state.once(function () {});
+        exp.state.once(() => {
+          exp.VRUI.visible = false;
+
+          trial = structuredClone(exp.trials[exp.trialNumber]);
+          trial.trialNumber = exp.trialNumber;
+          trial.startTime = performance.now();
+
+          exp.state.next('FIXATION');
+        });
+        break;
+
+      case 'FIXATION':
+        exp.state.once(() => {
+          exp.VRUI.visible = false;
+
+          // Construct 'FIXATION'-type stimulus
+          TaskGraphics.addOutline();
+          TaskGraphics.addFixation();
+        });
+
+        // Proceed to the next state upon time expiration
+        if (exp.state.expired(exp.cfg.fixationDuration)) {
+          if (trial.block.name === "tutorial") {
+            exp.state.next("TUTORIAL");
+          }
+        }
+        break;
+
+      case 'TUTORIAL':
+        exp.state.once(() => {
+          exp.VRUI.visible = false;
+
+          // Construct 'TUTORIAL'-type stimulus
+          TaskGraphics.addOutline();
+          TaskGraphics.addFixation();
+          TaskGraphics.addDots();
+        });
+
+        // Proceed to the next state upon time expiration
+        if (exp.state.expired(trial.duration)) {
+          TaskGraphics.clear();
+          exp.state.next('RESPONSE');
+        }
+        break;
+
+      case 'RESPONSE':
+        exp.state.once(() => {
+          exp.VRUI.visible = false;
+
+          // Construct 'RESPONSE'-type stimulus
+          TaskGraphics.addOutline();
+          TaskGraphics.addFixation();
+          TaskGraphics.addLeftArc();
+          TaskGraphics.addRightArc();
+
+          // exp.state.next('FEEDBACK');
+        });
+
+        break;
+
+      case 'FEEDBACK':
+        exp.state.once(() => {
+          exp.VRUI.visible = false;
+
+          // Construct stimulus
+
+          exp.state.next('FINISH');
+        });
         break;
 
       case 'FINISH':
         exp.state.once(function () {
-          let canRepeatDemo = exp.trialNumber < exp.cfg.maxDemoTrials - 1;
-          trial.demoTrial &&
-            exp.VRUI.edit({
-              title: 'Make sense?',
-              instructions: `You will perform ${
-                exp.numTrials - exp.trialNumber - 1
-              } movements toward the same target. \
-              There will be ${
-                exp.cfg.restTrials.length
-              } rest breaks, but you may rest at any time before returning to the start cube.
-              ${
-                canRepeatDemo ? 'To repeat the instructions, click Back.\n' : ''
-              }\
-              If you are ready to start, click Next.`,
-              interactive: true,
-              backButtonState: canRepeatDemo ? 'idle' : 'disabled',
-              nextButtonState: 'idle',
-            });
-          target.visible = false;
+          TaskRenderer.clearElements();
         });
-        // Wait for button click on demo trial
-        if (trial.demoTrial) {
-          if (exp.VRUI.clickedNext) {
-            exp.repeatDemoTrial = false;
-          } else if (exp.VRUI.clickedBack) {
-            exp.repeatDemoTrial = true;
-          } else {
-            break;
-          }
-        }
         // Save immediately prior to state transition (ensures one save per trial)
         exp.firebase.saveTrial(trial);
         exp.state.next('ADVANCE');
         break;
 
-      case 'STARTNOFEEDBACK':
-        exp.state.once(function () {
-          exp.VRUI.edit({
-            title: 'Challenge',
-            instructions: `Try to hit the target without visual feedback! \
-            In the gray area, the tool will disappear. A dark ring shows your distance.\n\
-            Try it out now before continuing.`,
-            backButtonState: 'disabled',
-            nextButtonState: 'idle',
-          });
-          trial.noFeedback = true; // not a problem bc we've already saved this trial
-        });
-        if (exp.VRUI.clickedNext) {
-          // Hide UI
-          exp.VRUI.edit({
-            interactive: false,
-            buttons: false,
-            instructions: false,
-          });
-          exp.state.next('SETUP');
-        }
-        break;
-
-      case 'STARTCLAMP':
-        exp.state.once(function () {
-          exp.VRUI.edit({
-            title: 'Almost done',
-            instructions: `For the remaining trials, please aim straight at the target, the way you would normally. \
-              Do not deliberately aim to either side of the target.`,
-            backButtonState: 'disabled',
-            nextButtonState: 'idle',
-          });
-          trial.errorClamp = true; // not a problem bc we've already saved this trial
-        });
-        if (exp.VRUI.clickedNext) {
-          // Hide UI
-          exp.VRUI.edit({
-            interactive: false,
-            buttons: false,
-            instructions: false,
-          });
-          exp.state.next('SETUP');
-        }
+      case 'ADVANCE':
+        exp.state.once(function () {});
         break;
 
       case 'CONTROLLER':
@@ -348,17 +319,18 @@ async function main() {
     exp.VRUI.updateUI();
     exp.sceneManager.render();
 
+    // Execute the "step()" function on all animated components
     TaskRenderer.getElements().forEach((element) => {
       element.step(exp.cfg.frameCount, exp.sceneManager.renderer.xr.isPresenting);
     });
 
+    // Increment the frame count
     exp.cfg.frameCount += 1;
   }
 
   /**
    * Event handlers
    */
-
   // Record state transition data
   function handleStateChange() {
     trial?.stateChange?.push(exp.state.current);
@@ -371,6 +343,11 @@ async function main() {
       exp.sceneManager.camera.getWorldQuaternion(new Quaternion())
     );
   }
+
+  function handleDeviceInput(event) {
+    console.info('Event:', event);
+  }
 }
 
 window.addEventListener('DOMContentLoaded', main);
+window.addEventListener('keypress', handleDeviceInput);

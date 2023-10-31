@@ -1,42 +1,29 @@
-// Core modules
-import { Graphics } from "./Graphics";
-
-// Type definitions
-import { IRenderer, IStimulus } from "../../types";
-
 /**
  * Stimulus abstraction
  */
-export class Stimulus {
-  private parameters: IStimulus;
-  private name: string;
-  private interactive: boolean;
-  private selected: any;
-  private keybindings: any;
-  private timing: any;
-  private target: any;
-  private trial: any;
-  private postTrialHandler: any;
-  private rendererParameters: IRenderer;
-  private timer: number;
+class Stimulus {
+  parameters;
+  name;
+  interactive;
+  keybindings;
+  timing;
+  postTrialHandler;
+  timer;
+
   /**
    * Default constructor for Stimulus
-   * @param {IStimulus} parameters configuration information
+   * @param {any} parameters configuration information
    */
-  constructor(parameters: IStimulus) {
+  constructor(parameters) {
     // Store parameters
     this.parameters = parameters;
 
     // Unpack parameters
     this.name = parameters.name;
     this.interactive = parameters.interactive;
-    this.selected = parameters.selected;
     this.keybindings = parameters.keybindings;
     this.timing = parameters.timing;
-    this.target = parameters.target;
-    this.trial = parameters.trial;
     this.postTrialHandler = parameters.postTrialHandler;
-    this.rendererParameters = parameters.rendererParameters;
 
     // Timer
     this.timer = null;
@@ -46,14 +33,14 @@ export class Stimulus {
    * Get the parameters of the renderer
    * @return {any}
    */
-  getParameters(): any {
+  getParameters() {
     return this.parameters;
   }
 
   /**
    * Setup the keybindings for the stimulus
    */
-  createKeybindings(): void {
+  createKeybindings() {
     // Check if the stimulus can be interacted with
     if (this.interactive) {
       // Bind keys
@@ -68,7 +55,7 @@ export class Stimulus {
   /**
    * Remove keybindings for the stimulus
    */
-  removeKeybindings(): void {
+  removeKeybindings() {
     // Unbind keys
     for (const binding in this.keybindings) {
       if (this.keybindings[binding]) {
@@ -84,7 +71,7 @@ export class Stimulus {
    * Set the timer of the stimuli
    * @param {number} timer the timer
    */
-  setTimer(timer: number) {
+  setTimer(timer) {
     this.clearTimer();
     this.timer = timer;
   }
@@ -93,32 +80,24 @@ export class Stimulus {
    * Retrieve the timer of the stimuli
    * @return {number}
    */
-  getTimer(): number {
+  getTimer() {
     return this.timer;
   }
 
   /**
    * Clear the timer of the stimuli
    */
-  clearTimer(): void {
+  clearTimer() {
     if (this.timer !== null) {
       window.clearTimeout(this.timer);
     }
   }
 
   /**
-   * Retrieve the target element
-   * @return {any}
-   */
-  getTarget(): any {
-    return this.target;
-  }
-
-  /**
    * Get the handler called after each trial
    * @return {any}
    */
-  getPostTrialHandler(): any {
+  getPostTrialHandler() {
     return this.postTrialHandler;
   }
 
@@ -126,11 +105,9 @@ export class Stimulus {
    * Run the stimuli animations
    * @param {any} parameters runner properties
    */
-  static run(parameters: any): void {
+  static run(parameters) {
     // Instantiate graphics.
-    const two = parameters.two;
-    const renderer = parameters.renderer;
-    const graphics = parameters.graphics as Graphics;
+    const graphics = parameters.graphics;
 
     for (let c = 0; c < parameters.components.length; c++) {
       const component = parameters.components[c];
@@ -140,36 +117,15 @@ export class Stimulus {
         graphics.addFixation();
       } else if (component === "dots") {
         graphics.addDots();
-      } else if (component === "ccw_arc") {
-        graphics.addCounterclockwiseArc();
-      } else if (component === "cw_arc") {
-        graphics.addClockwiseArc();
       } else if (component === "left_arc") {
         graphics.addLeftArc();
       } else if (component === "right_arc") {
         graphics.addRightArc();
-      } else if (component === "indicator") {
-        graphics.addReferenceIndicator();
-      } else if (component === "confidence") {
-        graphics.addConfidence(parameters);
-      } else if (component === "forced_confidence") {
-        graphics.addForcedConfidence(parameters);
-      } else if (component === "left") {
-        graphics.addLeftKey();
-      } else if (component === "right") {
-        graphics.addRightKey();
       } else {
         console.warn(`Unknown component: '${component}'`);
       }
     }
-
-    two
-      .bind("update", (frameCount: number) => {
-        for (let d = 0; d < renderer.getElements().length; d++) {
-          const element = renderer.getElements()[d];
-          element.step(frameCount);
-        }
-      })
-      .play();
   }
 }
+
+export default Stimulus;
