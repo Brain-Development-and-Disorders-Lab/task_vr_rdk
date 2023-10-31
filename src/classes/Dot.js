@@ -45,16 +45,6 @@ export default class Dot {
 
     // Dot is within the aperture bounds or not
     this.reset = false;
-
-    // Create three.js components
-    this.dot = new Mesh(
-      new CircleGeometry(this.radius, 32, 0),
-      new MeshBasicMaterial({
-        color: 'black',
-        toneMapped: false,
-      })
-    );
-    this.dot.position.set(this.x, this.y, this.z);
   }
 
   /**
@@ -77,6 +67,10 @@ export default class Dot {
     return this.z;
   }
 
+  getRadius() {
+    return this.radius;
+  }
+
   getPosition() {
     return new Vector3(this.x, this.y, this.z);
   }
@@ -91,6 +85,10 @@ export default class Dot {
    */
   getType() {
     return this.type;
+  }
+
+  setObject(dot) {
+    this.dot = dot;
   }
 
   getObject() {
@@ -115,40 +113,42 @@ export default class Dot {
       }
     }
 
-    // Apply skip for VR presentation in 120hz
-    if (inVR && frameCount % 2) return;
+    if (this.dot) {
+      // Apply skip for VR presentation in 120hz
+      if (inVR && frameCount % 2) return;
 
-    let x = this.x;
-    let y = this.y;
+      let x = this.x;
+      let y = this.y;
 
-    // Determine visibility of updated position
-    const inAperture = Math.sqrt(x ** 2 + y ** 2) < this.apertureRadius;
+      // Determine visibility of updated position
+      const inAperture = Math.sqrt(x ** 2 + y ** 2) < this.apertureRadius;
 
-    // Check if the dot needs to be translated
-    if (!inAperture && !this.reset) {
-      if (this.type === 'reference') {
-        // Translate the location of "reference"-type dots to remain synchronized
-        x = x - 2 * this.apertureRadius * Math.cos(this.direction);
-        y = y - 2 * this.apertureRadius * Math.sin(this.direction);
-      } else if (this.type === 'random') {
-        // Reset the direction of "random"-type dots to avoid disappearance
-        this.direction -= Math.PI;
+      // Check if the dot needs to be translated
+      if (!inAperture && !this.reset) {
+        if (this.type === 'reference') {
+          // Translate the location of "reference"-type dots to remain synchronized
+          x = x - 2 * this.apertureRadius * Math.cos(this.direction);
+          y = y - 2 * this.apertureRadius * Math.sin(this.direction);
+        } else if (this.type === 'random') {
+          // Reset the direction of "random"-type dots to avoid disappearance
+          this.direction -= Math.PI;
+        }
+        this.reset = true;
+      } else {
+        // Calculate the updated position
+        x = x + this.velocity * Math.cos(this.direction);
+        y = y + this.velocity * Math.sin(this.direction);
       }
-      this.reset = true;
-    } else {
-      // Calculate the updated position
-      x = x + this.velocity * Math.cos(this.direction);
-      y = y + this.velocity * Math.sin(this.direction);
+      // Update the reset toggle if required
+      if (this.dot.visible) this.reset = false;
+
+      // Show the dot only when within the aperture
+      this.dot.visible = Math.sqrt(x ** 2 + y ** 2) <= this.apertureRadius;
+
+      // Apply the updated dot position
+      this.x = x;
+      this.y = y;
+      this.dot.position.set(this.x, this.y, this.z);
     }
-    // Update the reset toggle if required
-    if (this.dot.visible) this.reset = false;
-
-    // Show the dot only when within the aperture
-    this.dot.visible = Math.sqrt(x ** 2 + y ** 2) <= this.apertureRadius;
-
-    // Apply the updated dot position
-    this.x = x;
-    this.y = y;
-    this.dot.position.set(this.x, this.y, this.z);
   }
 }

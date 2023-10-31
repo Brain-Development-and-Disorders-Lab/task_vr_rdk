@@ -17,6 +17,7 @@ import { Experiment, InstructionsPanel, Block } from 'ouvrai';
 import environmentLightingURL from 'ouvrai/lib/environments/IndoorHDRI003_1K-HDR.exr?url'; // absolute path from ouvrai
 
 import Dot from './classes/Dot';
+import { Renderer } from './classes/Renderer';
 
 /*
  * Main function contains all experiment logic. At a minimum you should:
@@ -51,7 +52,7 @@ async function main() {
 
     // Assume meters and seconds for three.js, but note tween.js uses milliseconds
     homePosn: new Vector3(0, 1.75, -0.3),
-    cameraLayout: 0,
+    cameraLayout: 2,
     cameraFixed: true,
 
     // Frame and rendering count
@@ -92,32 +93,18 @@ async function main() {
   workspace.position.copy(exp.cfg.homePosn);
   exp.sceneManager.scene.add(workspace);
 
-  const background = new Mesh(
-    new PlaneGeometry(100, 50),
-    new MeshBasicMaterial({
-      color: 'white',
-      toneMapped: false,
-    })
-  );
-  background.position.setZ(-2.2);
+  // Create a new Renderer
+  const TaskRenderer = new Renderer(workspace);
 
   // Create a mock RDK stimulus
+  // Background
+  TaskRenderer.createRectangle(0, 0, -2.2, 100, 50, false, "white");
+
   // Aperture
-  const circleOutline = new Mesh(
-    new CircleGeometry(1, 64, 0),
-    new MeshBasicMaterial({
-      color: 'black',
-      toneMapped: false,
-    })
-  );
-  const circleInterior = new Mesh(
-    new CircleGeometry(0.97, 64, 0),
-    new MeshBasicMaterial({ toneMapped: false })
-  );
-  circleOutline.position.setZ(-2);
-  circleInterior.position.setZ(-2);
+  TaskRenderer.createCircle(0, 0, -2, 1, false, "black");
+  TaskRenderer.createCircle(0, 0, -2, 0.97, false, "white");
+
   // Dots
-  const dots = [];
   const dotCount = 20 ** 2;
   const dotRowCount = Math.floor(Math.sqrt(dotCount));
   for (let i = -dotRowCount / 2; i < dotRowCount / 2; i++) {
@@ -135,25 +122,19 @@ async function main() {
           direction: 2 * Math.PI * Math.random(),
           apertureRadius: 0.97,
         });
-        dots.push(dot);
+        TaskRenderer.createDot(dot, true);
       } else {
         const dot = new Dot(x, y, -1.98, {
           type: 'reference',
           radius: 0.03,
           velocity: 0.01,
-          direction: (Math.PI / 180) * 290,
+          direction: 2 * Math.PI,
           apertureRadius: 0.97,
         });
-        dots.push(dot);
+        TaskRenderer.createDot(dot, true);
       }
     }
   }
-  workspace.add(
-    background,
-    circleOutline,
-    circleInterior,
-    ...dots.map((dot) => dot.getObject())
-  );
 
   if (exp.cfg.cameraFixed) {
     // Attach the camera to the entire view if specified
@@ -367,8 +348,8 @@ async function main() {
     exp.VRUI.updateUI();
     exp.sceneManager.render();
 
-    dots.forEach((dot) => {
-      dot.step(exp.cfg.frameCount, exp.sceneManager.renderer.xr.isPresenting);
+    TaskRenderer.getElements().forEach((element) => {
+      element.step(exp.cfg.frameCount, exp.sceneManager.renderer.xr.isPresenting);
     });
 
     exp.cfg.frameCount += 1;
