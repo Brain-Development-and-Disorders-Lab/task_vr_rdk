@@ -1,9 +1,5 @@
 // Third-party imports
-import {
-  Vector3,
-  Group,
-  Quaternion,
-} from 'three';
+import { Vector3, Group, Quaternion } from 'three';
 import { update as tweenUpdate } from '@tweenjs/tween.js'; // https://github.com/tweenjs/tween.js/
 
 // Package imports
@@ -55,11 +51,18 @@ async function main() {
     // Frame and rendering count
     frameCount: 0,
 
+    // Input configuration
+    input: {
+      left: 'f',
+      right: 'j',
+    },
+
     // Trial structure
     numTutorialTrials: 10,
 
     // Trial durations
     fixationDuration: 0.25,
+    feedbackDuration: 0.4,
   });
 
   /**
@@ -78,6 +81,7 @@ async function main() {
       'FEEDBACK',
       'FINISH',
       'ADVANCE',
+      'DONE',
       'CONTROLLER',
       'DATABASE',
       'BLOCKED',
@@ -136,6 +140,26 @@ async function main() {
   exp.start(calcFunc, stateFunc, displayFunc);
 
   /**
+   * Bind an event listener to listen for keyboard events
+   */
+  window.addEventListener('keyup', inputFunc);
+  function inputFunc(event) {
+    if (event.key) {
+      switch (exp.state.current) {
+        case 'RESPONSE':
+          if (event.key === exp.cfg.input.right) {
+            trial.data.response = 'right';
+            exp.state.next('FEEDBACK');
+          } else if (event.key === exp.cfg.input.left) {
+            trial.data.response = 'right';
+            exp.state.next('FEEDBACK');
+          }
+          break;
+      }
+    }
+  }
+
+  /**
    * Use `calcFunc` for calculations used in _multiple states_
    */
   function calcFunc() {}
@@ -192,9 +216,15 @@ async function main() {
         exp.state.once(() => {
           exp.VRUI.visible = false;
 
+          // Copy and instantiate the 'trial' object
           trial = structuredClone(exp.trials[exp.trialNumber]);
           trial.trialNumber = exp.trialNumber;
           trial.startTime = performance.now();
+
+          // Create the 'trial.data' structure
+          trial.data = {
+            response: null,
+          };
 
           exp.state.next('FIXATION');
         });
@@ -205,14 +235,15 @@ async function main() {
           exp.VRUI.visible = false;
 
           // Construct 'FIXATION'-type stimulus
+          TaskGraphics.addBackground();
           TaskGraphics.addOutline();
           TaskGraphics.addFixation();
         });
 
         // Proceed to the next state upon time expiration
         if (exp.state.expired(exp.cfg.fixationDuration)) {
-          if (trial.block.name === "tutorial") {
-            exp.state.next("TUTORIAL");
+          if (trial.block.name === 'tutorial') {
+            exp.state.next('TUTORIAL');
           }
         }
         break;
@@ -243,8 +274,6 @@ async function main() {
           TaskGraphics.addFixation();
           TaskGraphics.addLeftArc();
           TaskGraphics.addRightArc();
-
-          // exp.state.next('FEEDBACK');
         });
 
         break;
@@ -269,12 +298,47 @@ async function main() {
         break;
 
       case 'ADVANCE':
-        exp.state.once(function () {});
+        if (!exp.firebase.saveSuccessful) {
+          break; // wait until firebase save returns successful
+        } else if (exp.firebase.saveFailed) {
+          exp.blocker.fatal(err);
+          exp.state.push('BLOCKED');
+        }
+        exp.nextTrial();
+        if (exp.trialNumber < exp.numTrials) {
+          exp.state.next('START');
+        } else {
+          exp.complete();
+
+          // Clean up
+          workspace.visible = false;
+          exp.state.next('DONE');
+        }
+        break;
+
+      case 'DONE':
+        if (!exp.firebase.saveSuccessful) {
+          break;
+        }
+        exp.state.once(function () {
+          exp.goodbye.show(); // show the goodbye screen
+          exp.VRUI.edit({
+            title: 'Complete',
+            instructions:
+              'Thank you. Exit VR to find the submission link on the study web page.',
+            interactive: true,
+            backButtonState: 'disabled',
+            nextButtonState: 'idle',
+            nextButtonText: 'Exit',
+          });
+        });
+        if (exp.VRUI.clickedNext) {
+          exp.xrSession.end();
+        }
         break;
 
       case 'CONTROLLER':
         exp.state.once(function () {
-          // Ok to put down controller during rest
           if (exp.state.last !== 'REST') {
             exp.VRUI.edit({
               title: 'Controller?',
@@ -321,7 +385,10 @@ async function main() {
 
     // Execute the "step()" function on all animated components
     TaskRenderer.getElements().forEach((element) => {
-      element.step(exp.cfg.frameCount, exp.sceneManager.renderer.xr.isPresenting);
+      element.step(
+        exp.cfg.frameCount,
+        exp.sceneManager.renderer.xr.isPresenting
+      );
     });
 
     // Increment the frame count
@@ -343,11 +410,6 @@ async function main() {
       exp.sceneManager.camera.getWorldQuaternion(new Quaternion())
     );
   }
-
-  function handleDeviceInput(event) {
-    console.info('Event:', event);
-  }
 }
 
 window.addEventListener('DOMContentLoaded', main);
-window.addEventListener('keypress', handleDeviceInput);
