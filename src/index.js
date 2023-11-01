@@ -128,9 +128,8 @@ async function main() {
   exp.createTrialSequence([
     new Block({
       variables: {
-        coherence: 0.2,
+        coherence: 0.8,
         duration: 2,
-        direction: Math.PI,
         showFeedback: false,
         requireConfidence: false,
       },
@@ -159,10 +158,20 @@ async function main() {
         case 'RESPONSE':
           if (event.key === exp.cfg.input.right) {
             trial.data.response = 'right';
-            exp.state.next('FEEDBACK');
+            trial.data.correct = trial.referenceDirection === 0 ? 1 : 0;
+            if (trial.showFeedback) {
+              exp.state.next('FEEDBACK');
+            } else {
+              exp.state.next('FINISH');
+            }
           } else if (event.key === exp.cfg.input.left) {
-            trial.data.response = 'right';
-            exp.state.next('FEEDBACK');
+            trial.data.response = 'left';
+            trial.data.correct = trial.referenceDirection === Math.PI ? 1 : 0;
+            if (trial.showFeedback) {
+              exp.state.next('FEEDBACK');
+            } else {
+              exp.state.next('FINISH');
+            }
           }
           break;
       }
@@ -230,10 +239,12 @@ async function main() {
           trial = structuredClone(exp.trials[exp.trialNumber]);
           trial.trialNumber = exp.trialNumber;
           trial.startTime = performance.now();
+          trial.referenceDirection = Math.random() > 0.5 ? Math.PI : 0;
 
           // Create the 'trial.data' structure
           trial.data = {
             response: null,
+            correct: 0,
           };
 
           exp.state.next('FIXATION');
@@ -266,7 +277,7 @@ async function main() {
           // Construct 'TUTORIAL'-type stimulus
           TaskGraphics.addOutline();
           TaskGraphics.addFixation();
-          TaskGraphics.addDots();
+          TaskGraphics.addDots(trial.coherence, trial.referenceDirection);
         });
 
         // Proceed to the next state upon time expiration
@@ -315,6 +326,7 @@ async function main() {
           exp.blocker.fatal(err);
           exp.state.push('BLOCKED');
         }
+        console.info('Trial:', trial);
         exp.nextTrial();
         if (exp.trialNumber < exp.numTrials) {
           exp.state.next('START');

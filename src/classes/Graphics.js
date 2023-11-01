@@ -83,16 +83,16 @@ class Graphics {
   /**
    * Create the arrays of dots seen in each stimuli
    */
-  addDots() {
+  addDots(coherence, referenceDirection) {
     const dotCount = 20 ** 2;
     const dotRowCount = Math.floor(Math.sqrt(dotCount));
     for (let i = -dotRowCount / 2; i < dotRowCount / 2; i++) {
       for (let j = -dotRowCount / 2; j < dotRowCount / 2; j++) {
         const delta = Math.random();
-        const x = (i * 1.94) / dotRowCount + (delta * 1.94) / dotRowCount;
-        const y = (j * 1.94) / dotRowCount + (delta * 1.94) / dotRowCount;
+        const x = (i * 2) / dotRowCount + (delta * 2) / dotRowCount;
+        const y = (j * 2) / dotRowCount + (delta * 2) / dotRowCount;
 
-        if (delta > 0.6) {
+        if (delta > coherence) {
           // Non-dynamic dot that is just moving in random paths
           const dot = new Dot(x, y, -1.98, {
             type: 'random',
@@ -107,7 +107,7 @@ class Graphics {
             type: 'reference',
             radius: 0.03,
             velocity: 0.01,
-            direction: 2 * Math.PI,
+            direction: referenceDirection,
             apertureRadius: 0.97,
           });
           this.renderer.createDot(dot, true);
