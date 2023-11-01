@@ -57,8 +57,13 @@ async function main() {
       right: 'j',
     },
 
+    // Experiment behavior
+    confidenceGap: 3,
+
     // Trial structure
     numTutorialTrials: 10,
+    numPracticeTrials: 10,
+    numCalibrationTrials: 120,
 
     // Trial durations
     fixationDuration: 0.25,
@@ -76,9 +81,10 @@ async function main() {
       'INSTRUCTIONS',
       'START',
       'FIXATION',
-      'TUTORIAL',
+      'MOTION',
       'RESPONSE',
       'FEEDBACK',
+      'CONFIDENCE',
       'FINISH',
       'ADVANCE',
       'DONE',
@@ -131,11 +137,32 @@ async function main() {
         coherence: 0.8,
         duration: 2,
         showFeedback: true,
-        requireConfidence: false,
       },
       options: {
         name: 'tutorial',
         reps: exp.cfg.numTutorialTrials,
+      },
+    }),
+    new Block({
+      variables: {
+        coherence: 0.8,
+        duration: 2,
+        showFeedback: false,
+      },
+      options: {
+        name: 'practice',
+        reps: exp.cfg.numPracticeTrials,
+      },
+    }),
+    new Block({
+      variables: {
+        coherence: 0.8,
+        duration: 2,
+        showFeedback: false,
+      },
+      options: {
+        name: 'calibration',
+        reps: exp.cfg.numCalibrationTrials,
       },
     }),
   ]);
@@ -156,24 +183,33 @@ async function main() {
     if (event.key) {
       switch (exp.state.current) {
         case 'RESPONSE':
+          const validInput = [exp.cfg.input.left, exp.cfg.input.right];
+          if (validInput.includes(event.key)) {
+            // Valid input was received, store responses and outcome
+            if (event.key === exp.cfg.input.left) {
+              trial.data.response = 'left';
+              trial.data.correct = trial.referenceDirection === Math.PI ? 1 : 0;
+            } else {
+              trial.data.response = 'right';
+              trial.data.correct = trial.referenceDirection === 0 ? 1 : 0;
+            }
+            // Clear graphics and proceed to next state
+            TaskGraphics.clear();
+            if (trial.showFeedback) {
+              exp.state.next('FEEDBACK');
+            } else {
+              // Check if we need to show confidence
+              if (trial.trialNumber % exp.cfg.confidenceGap === 0) {
+                exp.state.next('CONFIDENCE');
+              } else {
+                exp.state.next('FINISH');
+              }
+            }
+          }
+          break;
+        case 'CONFIDENCE':
           if (event.key === exp.cfg.input.right) {
-            trial.data.response = 'right';
-            trial.data.correct = trial.referenceDirection === 0 ? 1 : 0;
-            TaskGraphics.clear();
-            if (trial.showFeedback) {
-              exp.state.next('FEEDBACK');
-            } else {
-              exp.state.next('FINISH');
-            }
-          } else if (event.key === exp.cfg.input.left) {
-            trial.data.response = 'left';
-            trial.data.correct = trial.referenceDirection === Math.PI ? 1 : 0;
-            TaskGraphics.clear();
-            if (trial.showFeedback) {
-              exp.state.next('FEEDBACK');
-            } else {
-              exp.state.next('FINISH');
-            }
+            exp.state.next('FINISH');
           }
           break;
       }
@@ -237,11 +273,51 @@ async function main() {
         exp.state.once(() => {
           exp.VRUI.visible = false;
 
+          // Modifications to coherence if required
+          let updateCoherence = false;
+          let coherenceDelta = 0;
+
+          // Update the coherence as required
+          if (trial.trialNumber >= 0 && trial.block.name === 'calibration') {
+            if (trial.data.correct === 0) {
+              // Update the coherence if there has been one incorrect trial
+              updateCoherence = true;
+              coherenceDelta = 0.01;
+            } else if (
+              trial.data.correct === 1 &&
+              trial.lastTrial.data &&
+              trial.lastTrial.data.correct === 1
+            ) {
+              // Examine condition across two trials
+              if (trial.coherence === trial.lastTrial.coherence) {
+                // Update the coherence if there have been two correct trials
+                updateCoherence = true;
+                coherenceDelta = -0.01;
+              }
+            }
+          }
+
+          // Store previous trial information, excluding 'lastTrial'
+          const { lastTrial: _, ...lastTrial } = trial;
+
           // Copy and instantiate the 'trial' object
           trial = structuredClone(exp.trials[exp.trialNumber]);
+          trial.lastTrial = lastTrial;
           trial.trialNumber = exp.trialNumber;
           trial.startTime = performance.now();
           trial.referenceDirection = Math.random() > 0.5 ? Math.PI : 0;
+
+          // Adjust the coherence if required
+          if (trial.block.name === 'calibration') {
+            // Copy the coherences from the previous trial
+            if (trial.trialNumber > 0) {
+              trial.coherence = trial.lastTrial.coherence;
+            }
+            // Apply an update to the coherence if calculated
+            if (updateCoherence) {
+              trial.coherence = trial.coherence + coherenceDelta;
+            }
+          }
 
           // Create the 'trial.data' structure
           trial.data = {
@@ -265,18 +341,16 @@ async function main() {
 
         // Proceed to the next state upon time expiration
         if (exp.state.expired(exp.cfg.fixationDuration)) {
-          if (trial.block.name === 'tutorial') {
-            TaskGraphics.clear();
-            exp.state.next('TUTORIAL');
-          }
+          TaskGraphics.clear();
+          exp.state.next('MOTION');
         }
         break;
 
-      case 'TUTORIAL':
+      case 'MOTION':
         exp.state.once(() => {
           exp.VRUI.visible = false;
 
-          // Construct 'TUTORIAL'-type stimulus
+          // Construct 'MOTION'-type stimulus
           TaskGraphics.addOutline();
           TaskGraphics.addFixation();
           TaskGraphics.addDots(trial.coherence, trial.referenceDirection);
@@ -297,6 +371,13 @@ async function main() {
           TaskGraphics.addFixation();
           TaskGraphics.addLeftArc();
           TaskGraphics.addRightArc();
+        });
+        break;
+
+      case 'CONFIDENCE':
+        exp.state.once(() => {
+          exp.VRUI.visible = false;
+          // Construct 'CONFIDENCE'-type stimulus
         });
         break;
 
@@ -335,7 +416,6 @@ async function main() {
           exp.blocker.fatal(err);
           exp.state.push('BLOCKED');
         }
-        console.info('Trial:', trial);
         exp.nextTrial();
         if (exp.trialNumber < exp.numTrials) {
           exp.state.next('START');
