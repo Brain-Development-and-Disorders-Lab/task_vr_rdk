@@ -130,7 +130,7 @@ async function main() {
       variables: {
         coherence: 0.8,
         duration: 2,
-        showFeedback: false,
+        showFeedback: true,
         requireConfidence: false,
       },
       options: {
@@ -159,6 +159,7 @@ async function main() {
           if (event.key === exp.cfg.input.right) {
             trial.data.response = 'right';
             trial.data.correct = trial.referenceDirection === 0 ? 1 : 0;
+            TaskGraphics.clear();
             if (trial.showFeedback) {
               exp.state.next('FEEDBACK');
             } else {
@@ -167,6 +168,7 @@ async function main() {
           } else if (event.key === exp.cfg.input.left) {
             trial.data.response = 'left';
             trial.data.correct = trial.referenceDirection === Math.PI ? 1 : 0;
+            TaskGraphics.clear();
             if (trial.showFeedback) {
               exp.state.next('FEEDBACK');
             } else {
@@ -290,24 +292,31 @@ async function main() {
       case 'RESPONSE':
         exp.state.once(() => {
           exp.VRUI.visible = false;
-
           // Construct 'RESPONSE'-type stimulus
           TaskGraphics.addOutline();
           TaskGraphics.addFixation();
           TaskGraphics.addLeftArc();
           TaskGraphics.addRightArc();
         });
-
         break;
 
       case 'FEEDBACK':
         exp.state.once(() => {
           exp.VRUI.visible = false;
-
-          // Construct stimulus
-
-          exp.state.next('FINISH');
+          // Construct 'FEEDBACK'-type stimulus
+          TaskGraphics.addOutline();
+          if (trial.data.correct === 1) {
+            TaskGraphics.addFixation('green');
+          } else {
+            TaskGraphics.addFixation('red');
+          }
         });
+        if (exp.state.expired(exp.cfg.feedbackDuration)) {
+          if (trial.block.name === 'tutorial') {
+            TaskGraphics.clear();
+            exp.state.next('FINISH');
+          }
+        }
         break;
 
       case 'FINISH':
