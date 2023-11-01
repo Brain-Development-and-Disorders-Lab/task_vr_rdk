@@ -1,9 +1,16 @@
 // Core modules
-import Dot from "./Dot.js";
+import Dot from './Dot.js';
 
 // Three.js modules
-import { Mesh, CircleGeometry, MeshBasicMaterial, PlaneGeometry, EllipseCurve, BufferGeometry, Line, LineBasicMaterial, Vector2 } from "three";
-import { MeshLine, MeshLineMaterial } from "three.meshline";
+import {
+  Mesh,
+  CircleGeometry,
+  MeshBasicMaterial,
+  PlaneGeometry,
+  EllipseCurve,
+  BufferGeometry,
+} from 'three';
+import { MeshLine, MeshLineMaterial } from 'three.meshline';
 
 /**
  * Renderer abstraction that interfaces directly with the
@@ -32,7 +39,7 @@ class Renderer {
    * @param {string} fill the colour of the fill
    * @return {THREE.Mesh} a Three.js Circle object
    */
-  createCircle(x, y, z, r, animate = false, fill = "black") {
+  createCircle(x, y, z, r, animate = false, fill = 'black') {
     const circle = new Mesh(
       new CircleGeometry(r, 64, 0),
       new MeshBasicMaterial({
@@ -55,7 +62,7 @@ class Renderer {
    * @param {string} fill the colour of the Dot
    * @return {THREE.Mesh} a Three.js Circle object
    */
-  createDot(dot, animate = false, fill = "black") {
+  createDot(dot, animate = false, fill = 'black') {
     // Create three.js components
     const circle = new Mesh(
       new CircleGeometry(dot.getRadius(), 32, 0),
@@ -84,7 +91,7 @@ class Renderer {
    * @param {string} fill the colour of the rectangle
    * @return {THREE.Mesh} a Three.js PlaneGeometry object
    */
-  createRectangle( x, y, z, w, h, animate = false, fill = "black") {
+  createRectangle(x, y, z, w, h, animate = false, fill = 'black') {
     const rectangle = new Mesh(
       new PlaneGeometry(w, h),
       new MeshBasicMaterial({
@@ -110,9 +117,9 @@ class Renderer {
    * @param {string} fill the colour of the fixation cross
    * @return {Array} array containing two Two.Rectangle objects
    */
-  createFixation(x, y, z, d, animate = false, fill = "black") {
+  createFixation(x, y, z, d, animate = false, fill = 'black') {
     // Add a white circle behind the cross to improve contrast
-    const background = this.createCircle(x, y, z, d * 0.7, animate, "white");
+    const background = this.createCircle(x, y, z, d * 0.7, animate, 'white');
 
     // Bars of the fixation cross
     const horizontal = this.createRectangle(x, y, z, d, d / 4, animate, fill);
@@ -133,8 +140,28 @@ class Renderer {
    * @param {string} fill the colour of the arc
    * @return {ArcSegment} arc object
    */
-  createArc(x, y, z, r, thetaStart, thetaEnd, clockwise, width, animate = false, fill = "red") {
-    const curve = new EllipseCurve(x, y, r, r, thetaStart, thetaEnd, clockwise, 0);
+  createArc(
+    x,
+    y,
+    z,
+    r,
+    thetaStart,
+    thetaEnd,
+    clockwise = false,
+    width = 1,
+    animate = false,
+    fill = 'red'
+  ) {
+    const curve = new EllipseCurve(
+      x,
+      y,
+      r,
+      r,
+      thetaStart,
+      thetaEnd,
+      clockwise,
+      0
+    );
     const geometry = new BufferGeometry().setFromPoints(curve.getPoints(50));
     const line = new MeshLine();
     line.setGeometry(geometry);

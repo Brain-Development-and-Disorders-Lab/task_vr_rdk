@@ -1,6 +1,6 @@
 // Core modules
-import Dot from "./Dot.js";
-import Renderer from "./Renderer.js";
+import Dot from './Dot.js';
+import Renderer from './Renderer.js';
 
 /**
  * Graphics class used to interface with the plugin and the renderer class
@@ -14,7 +14,6 @@ class Graphics {
    */
   constructor(renderer) {
     this.renderer = renderer;
-    this.addBackground();
   }
 
   /**
@@ -22,28 +21,26 @@ class Graphics {
    * @param {boolean} visible the status of cursor visibility
    */
   cursorVisibility(visible = true) {
-    document.body.style.cursor = visible
-      ? "auto"
-      : "none";
+    document.body.style.cursor = visible ? 'auto' : 'none';
   }
 
   addBackground() {
     // Setup the graphics background
-    this.renderer.createRectangle(0, 0, -2.2, 100, 50, false, "white");
+    this.renderer.createRectangle(0, 0, -2.2, 100, 50, false, 'white');
   }
 
   /**
    * Setup outlines
    */
   addOutline() {
-    this.renderer.createCircle(0, 0, -2, 1, false, "black");
-    this.renderer.createCircle(0, 0, -2, 0.97, false, "white");
+    this.renderer.createCircle(0, 0, -2, 1, false, 'black');
+    this.renderer.createCircle(0, 0, -2, 0.97, false, 'white');
   }
 
   /**
    * Create a fixation cross
    */
-  addFixation(style="black") {
+  addFixation(style = 'black') {
     this.renderer.createFixation(0, 0, -1.9, 0.1, false, style);
   }
 
@@ -51,14 +48,36 @@ class Graphics {
    * Create the orange left arc
    */
   addLeftArc() {
-    this.renderer.createArc(0, 0, -1.96, 0.97, -Math.PI / 2, Math.PI / 2, true, 0.03, false, "#d78000");
+    this.renderer.createArc(
+      0,
+      0,
+      -1.96,
+      0.97,
+      -Math.PI / 2,
+      Math.PI / 2,
+      true,
+      0.03,
+      false,
+      '#d78000'
+    );
   }
 
   /**
    * Create the blue right arc
    */
   addRightArc() {
-    this.renderer.createArc(0, 0, -1.96, 0.97, -Math.PI / 2, Math.PI / 2, false, 0.03, false, "#3ea3a3");
+    this.renderer.createArc(
+      0,
+      0,
+      -1.96,
+      0.97,
+      -Math.PI / 2,
+      Math.PI / 2,
+      false,
+      0.03,
+      false,
+      '#3ea3a3'
+    );
   }
 
   /**
@@ -102,7 +121,6 @@ class Graphics {
    */
   clear() {
     this.renderer.clearElements();
-    this.addBackground();
   }
 }
 

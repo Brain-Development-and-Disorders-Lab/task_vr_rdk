@@ -98,19 +98,29 @@ async function main() {
   /*
    * Create visual stimuli with three.js
    */
-  // Workspace "root" (helpful for individual height calibration)
-  const workspace = new Group();
-  workspace.position.copy(exp.cfg.homePosn);
-  exp.sceneManager.scene.add(workspace);
+  // Background elements
+  const backgroundGroup = new Group();
+  backgroundGroup.position.copy(exp.cfg.homePosn);
+  exp.sceneManager.scene.add(backgroundGroup);
 
-  // Create a new Renderer
-  const TaskRenderer = new Renderer(workspace);
+  // Task "root"
+  const taskGroup = new Group();
+  taskGroup.position.copy(exp.cfg.homePosn);
+  exp.sceneManager.scene.add(taskGroup);
+
+  // Create new Renderers and Graphics
+  const BackgroundRenderer = new Renderer(backgroundGroup);
+  const BackgroundGraphics = new Graphics(BackgroundRenderer);
+  const TaskRenderer = new Renderer(taskGroup);
   const TaskGraphics = new Graphics(TaskRenderer);
 
-  // Attach the camera to the entire view if specified
+  // Attach the camera to the task if specified
   if (exp.cfg.cameraFixed) {
-    exp.sceneManager.camera.attach(workspace);
+    exp.sceneManager.camera.attach(taskGroup);
   }
+
+  // Setup the background prior to starting the task
+  BackgroundGraphics.addBackground();
 
   /*
    * Create trial sequence from array of block objects.
@@ -243,6 +253,7 @@ async function main() {
         // Proceed to the next state upon time expiration
         if (exp.state.expired(exp.cfg.fixationDuration)) {
           if (trial.block.name === 'tutorial') {
+            TaskGraphics.clear();
             exp.state.next('TUTORIAL');
           }
         }
@@ -311,7 +322,7 @@ async function main() {
           exp.complete();
 
           // Clean up
-          workspace.visible = false;
+          taskGroup.visible = false;
           exp.state.next('DONE');
         }
         break;
