@@ -19,6 +19,7 @@ import { MeshLine, MeshLineMaterial } from 'three.meshline';
 class Renderer {
   target;
   elements;
+  animated;
 
   /**
    * Default constructor for Renderer
@@ -27,6 +28,7 @@ class Renderer {
   constructor(target) {
     this.target = target;
     this.elements = [];
+    this.animated = [];
   }
 
   /**
@@ -50,7 +52,8 @@ class Renderer {
     circle.position.set(x, y, z);
 
     this.target.add(circle);
-    if (animate) this.addElement(circle);
+    this.addElement(circle);
+    if (animate) this.addAnimated(circle);
 
     return circle;
   }
@@ -75,7 +78,8 @@ class Renderer {
     dot.setObject(circle);
 
     this.target.add(dot.getObject());
-    if (animate) this.addElement(dot);
+    this.addElement(dot.getObject());
+    if (animate) this.addAnimated(dot);
 
     return circle;
   }
@@ -91,7 +95,16 @@ class Renderer {
    * @param {string} fill the colour of the rectangle
    * @return {THREE.Mesh} a Three.js PlaneGeometry object
    */
-  createRectangle(x, y, z, w, h, animate = false, fill = 'black') {
+  createRectangle(
+    x,
+    y,
+    z,
+    w,
+    h,
+    animate = false,
+    fill = 'black',
+    preserved = false
+  ) {
     const rectangle = new Mesh(
       new PlaneGeometry(w, h),
       new MeshBasicMaterial({
@@ -102,7 +115,8 @@ class Renderer {
     rectangle.position.set(x, y, z);
 
     this.target.add(rectangle);
-    if (animate) this.addElement(rectangle);
+    if (!preserved) this.addElement(rectangle);
+    if (animate) this.addAnimated(rectangle);
 
     return rectangle;
   }
@@ -119,10 +133,25 @@ class Renderer {
    */
   createFixation(x, y, z, d, animate = false, fill = 'black') {
     // Add a white circle behind the cross to improve contrast
-    const background = this.createCircle(x, y, z, d * 0.7, animate, 'white');
+    const background = this.createCircle(
+      x,
+      y,
+      z - 0.05,
+      d * 0.7,
+      animate,
+      'white'
+    );
 
     // Bars of the fixation cross
-    const horizontal = this.createRectangle(x, y, z, d, d / 4, animate, fill);
+    const horizontal = this.createRectangle(
+      x,
+      y,
+      z + 0.02,
+      d,
+      d / 4,
+      animate,
+      fill
+    );
     const vertical = this.createRectangle(x, y, z, d / 4, d, animate, fill);
 
     return [background, horizontal, vertical];
@@ -172,13 +201,14 @@ class Renderer {
     mesh.position.set(x, y, z);
 
     this.target.add(mesh);
-    if (animate) this.addElement(mesh);
+    this.addElement(mesh);
+    if (animate) this.addAnimated(mesh);
 
-    return mesh;
+    return curve;
   }
 
   /**
-   * Adds an element to the list of renderered element
+   * Adds an element to the list of static element
    * @param {any} element add an element
    */
   addElement(element) {
@@ -186,7 +216,15 @@ class Renderer {
   }
 
   /**
-   * Retrieves the list of renderable elements
+   * Adds an element to the list of animated element
+   * @param {any} element add an element
+   */
+  addAnimated(element) {
+    this.animated.push(element);
+  }
+
+  /**
+   * Retrieves the list of static elements
    * @return {any[]} the array of elements
    */
   getElements() {
@@ -194,7 +232,15 @@ class Renderer {
   }
 
   /**
-   * Clear the list of renderable elements
+   * Retrieves the list of animated elements
+   * @return {any[]} the array of elements
+   */
+  getAnimated() {
+    return this.animated;
+  }
+
+  /**
+   * Clear the list of static elements
    */
   clearElements() {
     for (let e = 0; e < this.elements.length; e++) {
@@ -202,7 +248,17 @@ class Renderer {
       this.elements[e] = null;
     }
     this.elements = [];
-    this.target.clear();
+  }
+
+  /**
+   * Clear the list of animated elements
+   */
+  clearAnimated() {
+    for (let e = 0; e < this.animated.length; e++) {
+      this.target.remove(this.animated[e].getObject());
+      this.animated[e] = null;
+    }
+    this.animated = [];
   }
 
   /**

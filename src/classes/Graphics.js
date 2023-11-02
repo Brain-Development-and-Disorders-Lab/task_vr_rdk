@@ -25,23 +25,32 @@ class Graphics {
   }
 
   addBackground() {
-    // Setup the graphics background
-    this.renderer.createRectangle(0, 0, -2.2, 100, 50, false, 'white');
+    this.renderer.createRectangle(0, 0, -2.4, 100, 50, false, 'white', true);
   }
 
   /**
-   * Setup outlines
+   * Create the aperture outline
    */
   addOutline() {
-    this.renderer.createCircle(0, 0, -2, 1, false, 'black');
-    this.renderer.createCircle(0, 0, -2, 0.97, false, 'white');
+    this.renderer.createArc(
+      0,
+      0,
+      -2.2,
+      0.97,
+      0,
+      2 * Math.PI,
+      false,
+      0.03,
+      false,
+      'black'
+    );
   }
 
   /**
    * Create a fixation cross
    */
   addFixation(style = 'black') {
-    this.renderer.createFixation(0, 0, -1.9, 0.1, false, style);
+    this.renderer.createFixation(0, 0, -1.8, 0.1, false, style);
   }
 
   /**
@@ -51,8 +60,8 @@ class Graphics {
     this.renderer.createArc(
       0,
       0,
-      -1.96,
-      0.97,
+      -2,
+      0.9,
       -Math.PI / 2,
       Math.PI / 2,
       true,
@@ -69,8 +78,8 @@ class Graphics {
     this.renderer.createArc(
       0,
       0,
-      -1.96,
-      0.97,
+      -2,
+      0.9,
       -Math.PI / 2,
       Math.PI / 2,
       false,
@@ -94,21 +103,21 @@ class Graphics {
 
         if (delta > coherence) {
           // Non-dynamic dot that is just moving in random paths
-          const dot = new Dot(x, y, -1.98, {
+          const dot = new Dot(x, y, -1.9, {
             type: 'random',
             radius: 0.03,
             velocity: 0.01,
             direction: 2 * Math.PI * Math.random(),
-            apertureRadius: 0.97,
+            apertureRadius: 0.87,
           });
           this.renderer.createDot(dot, true);
         } else {
-          const dot = new Dot(x, y, -1.98, {
+          const dot = new Dot(x, y, -1.9, {
             type: 'reference',
             radius: 0.03,
             velocity: 0.01,
             direction: referenceDirection,
-            apertureRadius: 0.97,
+            apertureRadius: 0.87,
           });
           this.renderer.createDot(dot, true);
         }
@@ -121,6 +130,7 @@ class Graphics {
    */
   clear() {
     this.renderer.clearElements();
+    this.renderer.clearAnimated();
   }
 }
 

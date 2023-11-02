@@ -114,9 +114,6 @@ class Dot {
     }
 
     if (this.dot) {
-      // Apply skip for VR presentation in 120hz
-      if (inVR && frameCount % 2) return;
-
       let x = this.x;
       let y = this.y;
 
