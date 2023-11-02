@@ -64,15 +64,16 @@ async function main() {
     // Experiment behavior
     confidenceGap: 3,
 
-    // Trial structure
-    numTutorialTrials: 0,
-    numPracticeTrials: 0,
-    numCalibrationTrials: 4,
-    numMainTrials: 2,
+    // Trial structure, n: number of repetitions (n * 2)
+    numTutorialTrials: 1,
+    numPracticeTrials: 1,
+    numCalibrationTrials: 2,
+    numMainTrials: 1,
 
     // Trial durations
-    fixationDuration: 0.25,
-    feedbackDuration: 0.4,
+    fixationDuration: 1,
+    postResponseDuration: 0.25,
+    feedbackDuration: 0.25,
   });
 
   /**
@@ -88,6 +89,7 @@ async function main() {
       'FIXATION',
       'MOTION',
       'RESPONSE',
+      'POSTRESPONSE',
       'FEEDBACK',
       'CONFIDENCE',
       'FINISH',
@@ -213,12 +215,7 @@ async function main() {
             if (trial.showFeedback) {
               exp.state.next('FEEDBACK');
             } else {
-              // Check if we need to show confidence
-              if (trial.trialNumber % exp.cfg.confidenceGap === 0) {
-                exp.state.next('CONFIDENCE');
-              } else {
-                exp.state.next('FINISH');
-              }
+              exp.state.next('POSTRESPONSE');
             }
           }
           break;
@@ -305,7 +302,7 @@ async function main() {
            * 'main'-type operations
            */
           if (trial.block.name === 'main') {
-            if (trial.block.repetition === 0) {
+            if (trial.block.trial === 0) {
               console.info("First 'main' trial");
               let trials = d3.filter(
                 data,
@@ -404,6 +401,28 @@ async function main() {
           TaskGraphics.addLeftArc();
           TaskGraphics.addRightArc();
         });
+        break;
+
+      case 'POSTRESPONSE':
+        exp.state.once(() => {
+          exp.VRUI.visible = false;
+
+          // Construct 'FIXATION'-type stimulus
+          TaskGraphics.addBackground();
+          TaskGraphics.addOutline();
+          TaskGraphics.addFixation();
+        });
+
+        // Proceed to the next state upon time expiration
+        if (exp.state.expired(exp.cfg.postResponseDuration)) {
+          TaskGraphics.clear();
+          // Check if we need to show confidence
+          if (trial.trialNumber % exp.cfg.confidenceGap === 0) {
+            exp.state.next('CONFIDENCE');
+          } else {
+            exp.state.next('FINISH');
+          }
+        }
         break;
 
       case 'CONFIDENCE':
