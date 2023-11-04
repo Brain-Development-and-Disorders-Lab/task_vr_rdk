@@ -98,11 +98,13 @@ class Dot {
   /**
    * Generic step method that is called sixty times per second
    * @param {number} frameCount the number of elapsed frames
-   * @param {boolean} inVR whether the application is running VR or not
    */
-  step(frameCount, inVR) {
-    if (this.type === 'random') {
-      if (frameCount % 6 === 0) {
+  step(frameCount) {
+    if (this.dot) {
+      let x = this.x;
+      let y = this.y;
+
+      if (this.type === 'random' && frameCount % 6 === 0) {
         // Adjust the direction
         const delta = Math.random();
         if (delta > 0.5) {
@@ -111,11 +113,6 @@ class Dot {
           this.direction += (Math.PI / 8) * delta;
         }
       }
-    }
-
-    if (this.dot) {
-      let x = this.x;
-      let y = this.y;
 
       const inAperture =
         Math.sqrt(x ** 2 + y ** 2) < this.apertureRadius + this.radius / 2;
@@ -136,6 +133,7 @@ class Dot {
         x = x + this.velocity * Math.cos(this.direction);
         y = y + this.velocity * Math.sin(this.direction);
       }
+
       // Update the reset toggle if required
       if (this.dot.visible) this.reset = false;
 
