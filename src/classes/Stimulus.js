@@ -15,15 +15,25 @@ import { MeshLine, MeshLineMaterial } from 'three.meshline';
 // Utility modules
 import _ from 'lodash';
 
+// Fixed graphical values
+const REFRESH_RATE = 90; // hertz
+const APERTURE_RADIUS = 4; // degrees
+const FIXATION_RADIUS = 0.1; // degrees
+const DOT_RADIUS = 0.03; // degrees
+const DOT_OFFSET = 0.25; // units
+const DOT_VELOCITY = 2 / REFRESH_RATE;
+const BACKGROUND_OFFSET = 0.5; // units
+
 /**
  * Stimulus class used to interface with the renderer class and generate the aperture
  */
 class Stimulus {
   // Public properties
   target;
-  animated;
+  distance;
 
   // Private properties
+  _animated;
   _parameters;
   _components;
 
@@ -31,12 +41,12 @@ class Stimulus {
    * Stimulus constructor
    * @param {THREE.Group} target instance of a Three.js 'Group' class
    */
-  constructor(target) {
-    // Store instance of 'Group'
+  constructor(target, distance) {
     this.target = target;
+    this.distance = distance;
 
     // Collection of dynamic (animated) components
-    this.animated = [];
+    this._animated = [];
 
     // Instantiate the collection of components
     this._components = {
@@ -70,7 +80,7 @@ class Stimulus {
   }
 
   /**
-   * Adjust the visibility of
+   * Adjust the visibility of Stimulus components
    * @param {any} parameters specify the components of the RDK stimulus that are visible
    * @param {boolean} parameters.background show or hide the white background
    * @param {boolean} parameters.outline show or hide the aperture outline
@@ -154,7 +164,16 @@ class Stimulus {
   }
 
   _addBackground() {
-    return this._createRectangle(0, 0, -2.4, 100, 50, false, 'white', true);
+    return this._createRectangle(
+      0,
+      0,
+      -this.distance - BACKGROUND_OFFSET,
+      100,
+      100,
+      false,
+      'white',
+      true
+    );
   }
 
   /**
@@ -164,12 +183,12 @@ class Stimulus {
     return this._createArc(
       0,
       0,
-      -2.2,
-      0.97,
+      -this.distance,
+      this.distance * Math.tan(APERTURE_RADIUS),
       0,
       2 * Math.PI,
       false,
-      0.03,
+      0.05 * Math.tan(APERTURE_RADIUS),
       false,
       'black'
     );
@@ -179,7 +198,14 @@ class Stimulus {
    * Create a fixation cross
    */
   _addFixation(style = 'black') {
-    return this._createFixation(0, 0, -1.8, 0.1, false, style);
+    return this._createFixation(
+      0,
+      0,
+      -this.distance,
+      FIXATION_RADIUS * 2,
+      false,
+      style
+    );
   }
 
   /**
@@ -189,12 +215,12 @@ class Stimulus {
     return this._createArc(
       0,
       0,
-      -2,
-      0.9,
+      -this.distance,
+      this.distance * Math.tan(APERTURE_RADIUS),
       -Math.PI / 2,
       Math.PI / 2,
       true,
-      0.03,
+      0.05 * Math.tan(APERTURE_RADIUS),
       false,
       '#d78000'
     );
@@ -207,12 +233,12 @@ class Stimulus {
     return this._createArc(
       0,
       0,
-      -2,
-      0.9,
+      -this.distance,
+      this.distance * Math.tan(APERTURE_RADIUS),
       -Math.PI / 2,
       Math.PI / 2,
       false,
-      0.03,
+      0.05 * Math.tan(APERTURE_RADIUS),
       false,
       '#3ea3a3'
     );
@@ -224,29 +250,34 @@ class Stimulus {
   _addDots(coherence, referenceDirection) {
     const dotCount = 20 ** 2;
     const dotRowCount = Math.floor(Math.sqrt(dotCount));
+    const apertureRadius = this.distance * Math.tan(APERTURE_RADIUS);
     for (let i = -dotRowCount / 2; i < dotRowCount / 2; i++) {
       for (let j = -dotRowCount / 2; j < dotRowCount / 2; j++) {
         const delta = Math.random();
-        const x = (i * 2) / dotRowCount + (delta * 2) / dotRowCount;
-        const y = (j * 2) / dotRowCount + (delta * 2) / dotRowCount;
+        const x =
+          (i * apertureRadius * 2) / dotRowCount +
+          (delta * apertureRadius * 2) / dotRowCount;
+        const y =
+          (j * apertureRadius * 2) / dotRowCount +
+          (delta * apertureRadius * 2) / dotRowCount;
 
         if (delta > coherence) {
           // Non-dynamic dot that is just moving in random paths
-          const dot = new Dot(x, y, -1.9, {
+          const dot = new Dot(x, y, -this.distance - DOT_OFFSET, {
             type: 'random',
-            radius: 0.03,
-            velocity: 0.01,
+            radius: this.distance * Math.tan(DOT_RADIUS),
+            velocity: DOT_VELOCITY,
             direction: 2 * Math.PI * Math.random(),
-            apertureRadius: 0.87,
+            apertureRadius: apertureRadius,
           });
           this._createDot(dot, true);
         } else {
-          const dot = new Dot(x, y, -1.9, {
+          const dot = new Dot(x, y, -this.distance - DOT_OFFSET, {
             type: 'reference',
-            radius: 0.03,
-            velocity: 0.01,
+            radius: this.distance * Math.tan(DOT_RADIUS),
+            velocity: DOT_VELOCITY,
             direction: referenceDirection,
-            apertureRadius: 0.87,
+            apertureRadius: apertureRadius,
           });
           this._createDot(dot, true);
         }
@@ -351,7 +382,7 @@ class Stimulus {
       x,
       y,
       z - 0.05,
-      d * 0.7,
+      d * 0.8,
       animate,
       'white'
     );
@@ -426,7 +457,7 @@ class Stimulus {
    * @param {any} element add an element
    */
   _addAnimated(element) {
-    this.animated.push(element);
+    this._animated.push(element);
   }
 
   /**
@@ -434,7 +465,7 @@ class Stimulus {
    * @return {any[]} the array of elements
    */
   getAnimated() {
-    return this.animated;
+    return this._animated;
   }
 
   /**
@@ -449,11 +480,11 @@ class Stimulus {
    * Clear the list of animated elements
    */
   _clearAnimated() {
-    for (let e = 0; e < this.animated.length; e++) {
-      this.target.remove(this.animated[e].getObject());
-      this.animated[e] = null;
+    for (let e = 0; e < this._animated.length; e++) {
+      this.target.remove(this._animated[e].getObject());
+      this._animated[e] = null;
     }
-    this.animated = [];
+    this._animated = [];
   }
 
   /**

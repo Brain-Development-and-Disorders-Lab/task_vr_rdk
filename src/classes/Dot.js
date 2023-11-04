@@ -117,8 +117,8 @@ class Dot {
       let x = this.x;
       let y = this.y;
 
-      // Determine visibility of updated position
-      const inAperture = Math.sqrt(x ** 2 + y ** 2) < this.apertureRadius;
+      const inAperture =
+        Math.sqrt(x ** 2 + y ** 2) < this.apertureRadius + this.radius / 2;
 
       // Check if the dot needs to be translated
       if (!inAperture && !this.reset) {
@@ -140,7 +140,8 @@ class Dot {
       if (this.dot.visible) this.reset = false;
 
       // Show the dot only when within the aperture
-      this.dot.visible = Math.sqrt(x ** 2 + y ** 2) <= this.apertureRadius;
+      this.dot.visible =
+        Math.sqrt(x ** 2 + y ** 2) <= this.apertureRadius + this.radius / 2;
 
       // Apply the updated dot position
       this.x = x;
