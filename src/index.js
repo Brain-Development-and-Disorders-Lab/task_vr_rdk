@@ -17,6 +17,7 @@ import _ from 'lodash';
 
 // Visual constants
 const VIEW_DISTANCE = 2.0;
+const VIEW_SCALE = 2.0;
 
 /*
  * Main function contains all experiment logic. At a minimum you should:
@@ -51,7 +52,7 @@ async function main() {
     audio: true,
 
     // Assume meters and seconds for three.js, but note tween.js uses milliseconds
-    taskPosition: new Vector3(0, 1.6, -VIEW_DISTANCE),
+    taskPosition: new Vector3(0, 1.6, -VIEW_DISTANCE * VIEW_SCALE),
     cameraLayout: 2,
     cameraFixed: false,
 
@@ -679,15 +680,12 @@ async function main() {
   function displayFunc() {
     tweenUpdate();
     exp.VRUI.updateUI();
-    exp.sceneManager.render();
 
     // Execute the "step()" function on all animated components
     stimulus.getAnimated().forEach((element) => {
-      element.step(
-        exp.cfg.frameCount,
-        exp.sceneManager.renderer.xr.isPresenting
-      );
+      element.step(exp.cfg.frameCount);
     });
+    exp.sceneManager.render();
 
     // Increment the frame count
     exp.cfg.frameCount += 1;
