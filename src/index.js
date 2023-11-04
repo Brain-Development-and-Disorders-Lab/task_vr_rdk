@@ -265,8 +265,8 @@ async function main() {
           }
           break;
         case 'RESPONSE':
-          const validInput = [exp.cfg.input.left, exp.cfg.input.right];
-          if (validInput.includes(event.key)) {
+          const responseInput = [exp.cfg.input.left, exp.cfg.input.right];
+          if (responseInput.includes(event.key)) {
             // Valid input was received, store responses and outcome
             if (event.key === exp.cfg.input.left) {
               trial.data.response = 'left';
@@ -285,8 +285,15 @@ async function main() {
           }
           break;
         case 'CONFIDENCE':
-          if (event.key === exp.cfg.input.right) {
-            exp.state.next('FINISH');
+          const confidenceInput = [exp.cfg.input.left, exp.cfg.input.right];
+          if (confidenceInput.includes(event.key)) {
+            if (event.key === exp.cfg.input.right) {
+              trial.data.confidence = 1;
+              exp.state.next('FINISH');
+            } else {
+              trial.data.confidence = 0;
+              exp.state.next('FINISH');
+            }
           }
           break;
       }
@@ -488,6 +495,9 @@ async function main() {
             dots: {
               visible: false,
             },
+            text: {
+              confidence: true,
+            },
           });
         });
         // Proceed to the next state upon time expiration
@@ -511,6 +521,9 @@ async function main() {
               coherence: trial.coherence,
               direction: trial.referenceDirection,
             },
+            text: {
+              confidence: false,
+            },
           });
         });
 
@@ -533,6 +546,9 @@ async function main() {
             dots: {
               visible: false,
             },
+            text: {
+              confidence: false,
+            },
           });
         });
         break;
@@ -548,6 +564,9 @@ async function main() {
             reference: false,
             dots: {
               visible: false,
+            },
+            text: {
+              confidence: false,
             },
           });
         });
@@ -566,8 +585,13 @@ async function main() {
 
       case 'CONFIDENCE':
         exp.state.once(() => {
-          exp.VRUI.visible = false;
+          exp.VRUI.visible = true;
           // Construct 'CONFIDENCE'-type stimulus
+          stimulus.setParameters({
+            text: {
+              confidence: true,
+            },
+          });
         });
         break;
 
@@ -582,6 +606,9 @@ async function main() {
             reference: false,
             dots: {
               visible: false,
+            },
+            text: {
+              confidence: false,
             },
           });
         });

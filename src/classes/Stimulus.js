@@ -3,6 +3,7 @@ import Dot from './Dot.js';
 
 // Three.js modules
 import {
+  Color,
   Mesh,
   CircleGeometry,
   MeshBasicMaterial,
@@ -11,6 +12,11 @@ import {
   BufferGeometry,
 } from 'three';
 import { MeshLine, MeshLineMaterial } from 'three.meshline';
+
+// Three-Mesh-UI
+import FontJSON from 'three-mesh-ui/examples/assets/Roboto-msdf.json';
+import FontImage from 'three-mesh-ui/examples/assets/Roboto-msdf.png';
+import { Block, Text } from 'three-mesh-ui';
 
 // Utility modules
 import _ from 'lodash';
@@ -62,6 +68,9 @@ class Stimulus {
         right: this._addRightArc(),
       },
       dots: this._addDots(),
+      text: {
+        confidence: this._addConfidenceText(),
+      },
     };
 
     // Instantiate the visibility state
@@ -74,6 +83,9 @@ class Stimulus {
         visible: false,
         coherence: 0.0,
         direction: 0.0,
+      },
+      text: {
+        confidence: false,
       },
     };
     this.setParameters(this._parameters);
@@ -148,6 +160,9 @@ class Stimulus {
       // Hide the dots
       this._clearAnimated();
     }
+
+    // Text
+    this._components.text.confidence.visible = this._parameters.text.confidence;
   }
 
   /**
@@ -160,6 +175,9 @@ class Stimulus {
       fixation: 'none',
       reference: false,
       dots: false,
+      text: {
+        confidence: false,
+      },
     });
   }
 
@@ -283,6 +301,10 @@ class Stimulus {
         }
       }
     }
+  }
+
+  _addConfidenceText(fill = 'black') {
+    return this._createConfidenceText(0, 0, -this.distance, 'test', fill);
   }
 
   /**
@@ -450,6 +472,84 @@ class Stimulus {
     if (animate) this._addAnimated(mesh);
 
     return mesh;
+  }
+
+  _createConfidenceText(x, y, z, text, fill = 'black') {
+    const confidenceContainer = new Block({
+      justifyContent: 'center',
+      padding: 0.025,
+      margin: 0.1,
+      width: 6.0,
+      fontFamily: FontJSON,
+      fontTexture: FontImage,
+      backgroundOpacity: 0,
+    });
+    confidenceContainer.position.set(x, y, z);
+    this.target.add(confidenceContainer);
+
+    const descriptionContainer = new Block({
+      height: 0.8,
+      width: 2.8,
+      margin: 0.02,
+      padding: 0.04,
+      borderRadius: 0.04,
+      justifyContent: 'center',
+      fontSize: 0.07,
+      bestFit: 'auto',
+      fontColor: new Color('black'),
+      backgroundColor: new Color(0xededed),
+    });
+    descriptionContainer.add(
+      new Text({
+        content: `Between the last two trials, did you feel more confident about your response to the last trial (1 trial ago), or the trial prior to it (2 trials ago)?`,
+      })
+    );
+    confidenceContainer.add(descriptionContainer);
+
+    const actionContainer = new Block({
+      contentDirection: 'row',
+      justifyContent: 'center',
+      padding: 0.025,
+      width: 4,
+      fontFamily: FontJSON,
+      fontTexture: FontImage,
+      backgroundOpacity: 0,
+    });
+    const leftContainer = new Block({
+      height: 0.5,
+      width: 0.8,
+      margin: 1.5,
+      borderRadius: 0.04,
+      justifyContent: 'center',
+      fontSize: 0.07,
+      bestFit: 'auto',
+      fontColor: new Color('white'),
+      backgroundColor: new Color('teal'),
+    });
+    leftContainer.add(
+      new Text({
+        content: `Last trial\n(Press X)`,
+      })
+    );
+    const rightContainer = new Block({
+      height: 0.5,
+      width: 0.8,
+      margin: 1.5,
+      borderRadius: 0.04,
+      justifyContent: 'center',
+      fontSize: 0.07,
+      bestFit: 'auto',
+      fontColor: new Color('black'),
+      backgroundColor: new Color('orange'),
+    });
+    rightContainer.add(
+      new Text({
+        content: `Prior trial\n(Press A)`,
+      })
+    );
+    actionContainer.add(leftContainer, rightContainer);
+    confidenceContainer.add(actionContainer);
+    return confidenceContainer;
   }
 
   /**
