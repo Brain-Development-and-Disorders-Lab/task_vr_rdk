@@ -15,6 +15,9 @@ import Stimulus from './classes/Stimulus';
 import * as d3 from 'd3-array';
 import _ from 'lodash';
 
+// Visual constants
+const VIEW_DISTANCE = 2.0;
+
 /*
  * Main function contains all experiment logic. At a minimum you should:
  * 1. Create a `new Experiment({...config})`
@@ -48,8 +51,8 @@ async function main() {
     audio: true,
 
     // Assume meters and seconds for three.js, but note tween.js uses milliseconds
-    homePosn: new Vector3(0, 1.75, -0.3),
-    cameraLayout: 0,
+    taskPosition: new Vector3(0, 1.6, -VIEW_DISTANCE),
+    cameraLayout: 2,
     cameraFixed: false,
 
     // Frame and rendering count
@@ -110,9 +113,9 @@ async function main() {
    */
   // Create task 'Stimulus' instance
   const taskGroup = new Group();
-  taskGroup.position.copy(exp.cfg.homePosn);
+  taskGroup.position.copy(exp.cfg.taskPosition);
   exp.sceneManager.scene.add(taskGroup);
-  const stimulus = new Stimulus(taskGroup);
+  const stimulus = new Stimulus(taskGroup, VIEW_DISTANCE);
 
   // Attach the camera to the task if specified
   if (exp.cfg.cameraFixed) {
