@@ -3,18 +3,21 @@ import { Vector3, Group, Quaternion } from 'three';
 import { update as tweenUpdate } from '@tweenjs/tween.js'; // https://github.com/tweenjs/tween.js/
 
 // Package imports
-import { Experiment, InstructionsPanel, Block } from 'ouvrai';
+import { Experiment, Block } from 'ouvrai';
 
 // Static asset imports (https://vitejs.dev/guide/assets.html)
 import environmentLightingURL from 'ouvrai/lib/environments/IndoorHDRI003_1K-HDR.exr?url'; // absolute path from ouvrai
 
 // Custom classes
-import Renderer from './classes/Renderer';
-import Graphics from './classes/Graphics';
+import Stimulus from './classes/Stimulus';
 
 // Data manipulation imports
 import * as d3 from 'd3-array';
 import _ from 'lodash';
+
+// Visual constants
+const VIEW_DISTANCE = 2.0;
+const VIEW_SCALE = 2.0;
 
 /*
  * Main function contains all experiment logic. At a minimum you should:
@@ -49,7 +52,7 @@ async function main() {
     audio: true,
 
     // Assume meters and seconds for three.js, but note tween.js uses milliseconds
-    homePosn: new Vector3(0, 1.75, -0.3),
+    taskPosition: new Vector3(0, 1.6, -VIEW_DISTANCE * VIEW_SCALE),
     cameraLayout: 2,
     cameraFixed: false,
 
@@ -109,13 +112,11 @@ async function main() {
   /*
    * Create visual stimuli with three.js
    */
-  // Task "root"
+  // Create task 'Stimulus' instance
   const taskGroup = new Group();
-  taskGroup.position.copy(exp.cfg.homePosn);
+  taskGroup.position.copy(exp.cfg.taskPosition);
   exp.sceneManager.scene.add(taskGroup);
-  const TaskRenderer = new Renderer(taskGroup);
-  const TaskGraphics = new Graphics(TaskRenderer);
-  TaskGraphics.addBackground();
+  const stimulus = new Stimulus(taskGroup, VIEW_DISTANCE);
 
   // Attach the camera to the task if specified
   if (exp.cfg.cameraFixed) {
@@ -263,7 +264,7 @@ async function main() {
               trial.data.correct = trial.referenceDirection === 0 ? 1 : 0;
             }
             // Clear graphics and proceed to next state
-            TaskGraphics.clear();
+            stimulus.clear();
             if (trial.showFeedback) {
               exp.state.next('FEEDBACK');
             } else {
@@ -460,13 +461,19 @@ async function main() {
         exp.state.once(() => {
           exp.VRUI.visible = false;
           // Construct 'FIXATION'-type stimulus
-          TaskGraphics.addBackground();
-          TaskGraphics.addOutline();
-          TaskGraphics.addFixation();
+          stimulus.setParameters({
+            background: true,
+            outline: true,
+            fixation: 'standard',
+            reference: false,
+            dots: {
+              visible: false,
+            },
+          });
         });
         // Proceed to the next state upon time expiration
         if (exp.state.expired(exp.cfg.fixationDuration)) {
-          TaskGraphics.clear();
+          stimulus.reset();
           exp.state.next('MOTION');
         }
         break;
@@ -475,15 +482,22 @@ async function main() {
         exp.state.once(() => {
           exp.VRUI.visible = false;
           // Construct 'MOTION'-type stimulus
-          TaskGraphics.addBackground();
-          TaskGraphics.addOutline();
-          TaskGraphics.addFixation();
-          TaskGraphics.addDots(trial.coherence, trial.referenceDirection);
+          stimulus.setParameters({
+            background: true,
+            outline: true,
+            fixation: 'standard',
+            reference: false,
+            dots: {
+              visible: true,
+              coherence: trial.coherence,
+              direction: trial.referenceDirection,
+            },
+          });
         });
 
         // Proceed to the next state upon time expiration
         if (exp.state.expired(trial.duration)) {
-          TaskGraphics.clear();
+          stimulus.reset();
           exp.state.next('RESPONSE');
         }
         break;
@@ -492,10 +506,15 @@ async function main() {
         exp.state.once(() => {
           exp.VRUI.visible = false;
           // Construct 'RESPONSE'-type stimulus
-          TaskGraphics.addBackground();
-          TaskGraphics.addFixation();
-          TaskGraphics.addLeftArc();
-          TaskGraphics.addRightArc();
+          stimulus.setParameters({
+            background: true,
+            outline: false,
+            fixation: 'standard',
+            reference: true,
+            dots: {
+              visible: false,
+            },
+          });
         });
         break;
 
@@ -503,14 +522,20 @@ async function main() {
         exp.state.once(() => {
           exp.VRUI.visible = false;
           // Construct 'FIXATION'-type stimulus
-          TaskGraphics.addBackground();
-          TaskGraphics.addOutline();
-          TaskGraphics.addFixation();
+          stimulus.setParameters({
+            background: true,
+            outline: true,
+            fixation: 'standard',
+            reference: false,
+            dots: {
+              visible: false,
+            },
+          });
         });
 
         // Proceed to the next state upon time expiration
         if (exp.state.expired(exp.cfg.postResponseDuration)) {
-          TaskGraphics.clear();
+          stimulus.reset();
           // Check if we need to show confidence
           if (trial.trialNumber % exp.cfg.confidenceGap === 0) {
             exp.state.next('CONFIDENCE');
@@ -531,17 +556,19 @@ async function main() {
         exp.state.once(() => {
           exp.VRUI.visible = false;
           // Construct 'FEEDBACK'-type stimulus
-          TaskGraphics.addBackground();
-          TaskGraphics.addOutline();
-          if (trial.data.correct === 1) {
-            TaskGraphics.addFixation('green');
-          } else {
-            TaskGraphics.addFixation('red');
-          }
+          stimulus.setParameters({
+            background: true,
+            outline: true,
+            fixation: trial.data.correct === 1 ? 'correct' : 'incorrect',
+            reference: false,
+            dots: {
+              visible: false,
+            },
+          });
         });
         if (exp.state.expired(exp.cfg.feedbackDuration)) {
+          stimulus.reset();
           if (trial.block.name === 'tutorial') {
-            TaskGraphics.clear();
             exp.state.next('FINISH');
           }
         }
@@ -549,7 +576,7 @@ async function main() {
 
       case 'FINISH':
         exp.state.once(function () {
-          TaskGraphics.clear();
+          stimulus.reset();
         });
         exp.firebase.saveTrial(trial);
         exp.state.next('ADVANCE');
@@ -653,15 +680,12 @@ async function main() {
   function displayFunc() {
     tweenUpdate();
     exp.VRUI.updateUI();
-    exp.sceneManager.render();
 
     // Execute the "step()" function on all animated components
-    TaskRenderer.getAnimated().forEach((element) => {
-      element.step(
-        exp.cfg.frameCount,
-        exp.sceneManager.renderer.xr.isPresenting
-      );
+    stimulus.getAnimated().forEach((element) => {
+      element.step(exp.cfg.frameCount);
     });
+    exp.sceneManager.render();
 
     // Increment the frame count
     exp.cfg.frameCount += 1;
