@@ -18,6 +18,7 @@ import _ from 'lodash';
 // Visual constants
 const VIEW_DISTANCE = 2.0;
 const VIEW_SCALE = 2.0;
+const DEFAULT_CAMERA_LAYOUT = 2;
 
 /*
  * Main function contains all experiment logic. At a minimum you should:
@@ -133,6 +134,7 @@ async function main() {
         coherences: [0.3, 0.6],
         duration: 2,
         showFeedback: true,
+        cameraLayout: DEFAULT_CAMERA_LAYOUT,
       },
       options: {
         name: 'tutorial',
@@ -145,6 +147,7 @@ async function main() {
         coherences: [0.3, 0.6],
         duration: 2,
         showFeedback: false,
+        cameraLayout: DEFAULT_CAMERA_LAYOUT,
       },
       options: {
         name: 'practice',
@@ -157,6 +160,7 @@ async function main() {
         coherences: [0.2, 0.2],
         duration: 2,
         showFeedback: false,
+        cameraLayout: DEFAULT_CAMERA_LAYOUT,
       },
       options: {
         name: 'calibration',
@@ -169,6 +173,7 @@ async function main() {
         coherences: [0.2, 0.2],
         duration: 2,
         showFeedback: false,
+        cameraLayout: DEFAULT_CAMERA_LAYOUT,
       },
       options: {
         name: 'main',
@@ -177,6 +182,12 @@ async function main() {
     }),
   ]);
 
+  /**
+   * Input mapping
+   * Implement a function to poll the gamepad button schema, checking for
+   * buttons that are pressed or have changed state
+   */
+  // Input data structure
   let input = {
     left: {
       x: false,
@@ -186,6 +197,7 @@ async function main() {
     },
   };
 
+  // Input polling function
   window.setInterval(
     (input) => {
       if (exp.sceneManager.renderer.xr.isPresenting) {
@@ -330,6 +342,7 @@ async function main() {
       case 'WELCOME':
         exp.state.once(() => {
           exp.VRUI.visible = true;
+          exp.sceneManager.setCameraLayout(DEFAULT_CAMERA_LAYOUT);
           exp.VRUI.edit({
             title: 'Welcome',
             instructions: `Use the controller in your right hand to continue.`,
@@ -345,6 +358,7 @@ async function main() {
       case 'PRETUTORIAL':
         exp.state.once(() => {
           exp.VRUI.visible = true;
+          exp.sceneManager.setCameraLayout(DEFAULT_CAMERA_LAYOUT);
           exp.VRUI.edit({
             title: 'Start (Tutorial)',
             instructions: `When you are ready and comfortable, use the controller in your right hand to start the task.`,
@@ -360,6 +374,7 @@ async function main() {
       case 'PREPRACTICE':
         exp.state.once(() => {
           exp.VRUI.visible = true;
+          exp.sceneManager.setCameraLayout(DEFAULT_CAMERA_LAYOUT);
           exp.VRUI.edit({
             title: 'Start (Practice)',
             instructions: `When you are ready and comfortable, use the controller in your right hand to start the task.`,
@@ -375,6 +390,7 @@ async function main() {
       case 'PREMAIN':
         exp.state.once(() => {
           exp.VRUI.visible = true;
+          exp.sceneManager.setCameraLayout(DEFAULT_CAMERA_LAYOUT);
           exp.VRUI.edit({
             title: 'Start (Main)',
             instructions: `When you are ready and comfortable, use the controller in your right hand to start the task.`,
@@ -453,6 +469,9 @@ async function main() {
             response: null,
             correct: 0,
           };
+
+          // Setup the cameras
+          exp.sceneManager.setCameraLayout(trial.cameraLayout);
           exp.state.next('FIXATION');
         });
         break;
