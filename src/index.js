@@ -61,7 +61,7 @@ async function main() {
     },
 
     // Experiment behavior
-    confidenceGap: 3,
+    confidenceGap: 2,
 
     // Trial structure, n: number of repetitions (n * 2)
     numTutorialTrials: 2,
@@ -121,7 +121,7 @@ async function main() {
       variables: {
         coherence: 0.3,
         coherences: [0.3, 0.6],
-        showFeedback: true,
+        showFeedback: false,
         cameraLayout: DEFAULT_CAMERA_LAYOUT,
       },
       options: {
@@ -133,7 +133,7 @@ async function main() {
       variables: {
         coherence: 0.3,
         coherences: [0.3, 0.6],
-        showFeedback: false,
+        showFeedback: true,
         cameraLayout: DEFAULT_CAMERA_LAYOUT,
       },
       options: {
@@ -336,8 +336,8 @@ async function main() {
           exp.VRUI.visible = true;
           exp.sceneManager.setCameraLayout(DEFAULT_CAMERA_LAYOUT);
           exp.VRUI.edit({
-            title: 'Welcome',
-            instructions: `Use the controller in your right hand to continue.`,
+            title: 'Instructions',
+            instructions: `In each game, you will be briefly shown dots moving inside a circular area.\nAfter watching the dots, a blue section and an orange section will appear on the perimeter of the circle.\n\nYour task: Determine whether there was movement of dots towards the blue or the orange section.`,
             interactive: false,
             buttons: false,
             backButtonState: 'disabled',
@@ -352,8 +352,8 @@ async function main() {
           exp.VRUI.visible = true;
           exp.sceneManager.setCameraLayout(DEFAULT_CAMERA_LAYOUT);
           exp.VRUI.edit({
-            title: 'Start (Tutorial)',
-            instructions: `When you are ready and comfortable, use the controller in your right hand to start the task.`,
+            title: 'Practice Games',
+            instructions: `Play a few games now and practice watching the dots while observing the appearance of the game. Use the controller buttons to interact with the game.\n\nWhen you are ready and comfortable, use the controller in your right hand to start the task.`,
             interactive: false,
             buttons: false,
             backButtonState: 'disabled',
@@ -368,8 +368,8 @@ async function main() {
           exp.VRUI.visible = true;
           exp.sceneManager.setCameraLayout(DEFAULT_CAMERA_LAYOUT);
           exp.VRUI.edit({
-            title: 'Start (Practice)',
-            instructions: `When you are ready and comfortable, use the controller in your right hand to start the task.`,
+            title: 'Practice Games',
+            instructions: `You will now play another ${exp.cfg.numPracticeTrials} practice games. You won't have to rate your confidence after each game, but the cross in the center of the circlular area will briefly change color if your answer was correct or not. Green is a correct answer, red is an incorrect answer.\n\nWhen you are ready and comfortable, use the controller in your right hand to start the task.`,
             interactive: false,
             buttons: false,
             backButtonState: 'disabled',
@@ -384,8 +384,10 @@ async function main() {
           exp.VRUI.visible = true;
           exp.sceneManager.setCameraLayout(DEFAULT_CAMERA_LAYOUT);
           exp.VRUI.edit({
-            title: 'Start (Main)',
-            instructions: `When you are ready and comfortable, use the controller in your right hand to start the task.`,
+            title: 'Instructions',
+            instructions: `That concludes all the practice games. You will now play ${
+              exp.cfg.numCalibrationTrials + exp.cfg.numMainTrials
+            } games.\nYou will not be shown if you answered correctly or not, and you will be asked to rate your confidence after some of the games.\n\nWhen you are ready and comfortable, use the controller in your right hand to start the task.`,
             interactive: false,
             buttons: false,
             backButtonState: 'disabled',
@@ -614,7 +616,7 @@ async function main() {
         });
         if (exp.state.expired(exp.cfg.feedbackDuration)) {
           stimulus.reset();
-          if (trial.block.name === 'tutorial') {
+          if (trial.block.name === 'practice') {
             exp.state.next('FINISH');
           }
         }
@@ -671,8 +673,8 @@ async function main() {
         }
         exp.state.once(function () {
           exp.VRUI.edit({
-            title: 'Task Complete',
-            instructions: `The task is now complete. Thank you for your participation!`,
+            title: 'Complete',
+            instructions: `The game is now complete. Thank you for your participation!`,
             interactive: false,
             buttons: false,
             backButtonState: 'disabled',
