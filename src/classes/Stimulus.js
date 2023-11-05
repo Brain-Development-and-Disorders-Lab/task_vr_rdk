@@ -70,6 +70,7 @@ class Stimulus {
       dots: this._addDots(),
       text: {
         confidence: this._addConfidenceText(),
+        response: this._addResponseButtons(),
       },
     };
 
@@ -86,6 +87,7 @@ class Stimulus {
       },
       text: {
         confidence: false,
+        response: false,
       },
     };
     this.setParameters(this._parameters);
@@ -163,6 +165,7 @@ class Stimulus {
 
     // Text
     this._components.text.confidence.visible = this._parameters.text.confidence;
+    this._components.text.response.visible = this._parameters.text.response;
   }
 
   /**
@@ -174,9 +177,14 @@ class Stimulus {
       outline: false,
       fixation: 'none',
       reference: false,
-      dots: false,
+      dots: {
+        visible: false,
+        coherence: 0.0,
+        direction: 0.0,
+      },
       text: {
         confidence: false,
+        response: false,
       },
     });
   }
@@ -186,8 +194,8 @@ class Stimulus {
       0,
       0,
       -this.distance - BACKGROUND_OFFSET,
-      100,
-      100,
+      600,
+      600,
       false,
       'white',
       true
@@ -304,7 +312,26 @@ class Stimulus {
   }
 
   _addConfidenceText(fill = 'black') {
-    return this._createConfidenceText(0, 0, -this.distance, 'test', fill);
+    return this._createConfidenceText(
+      0,
+      0,
+      -this.distance,
+      `Between the last two trials, did you feel more confident about your response to the last trial (1 trial ago), or the trial prior to it (2 trials ago)?`,
+      fill
+    );
+  }
+
+  _addResponseButtons() {
+    return this._createActionButtons(
+      'Left (X)',
+      'Right (A)',
+      2.0,
+      0.8,
+      'orange',
+      'black',
+      'teal',
+      'white'
+    );
   }
 
   /**
@@ -501,55 +528,76 @@ class Stimulus {
     });
     descriptionContainer.add(
       new Text({
-        content: `Between the last two trials, did you feel more confident about your response to the last trial (1 trial ago), or the trial prior to it (2 trials ago)?`,
+        content: text,
       })
     );
     confidenceContainer.add(descriptionContainer);
 
+    const actionButtons = this._createActionButtons(
+      `Prior trial\n(Press X)`,
+      `Last trial\n(Press A)`,
+      1.5,
+      0.8
+    );
+    confidenceContainer.add(actionButtons);
+
+    return confidenceContainer;
+  }
+
+  _createActionButtons(
+    leftText,
+    rightText,
+    spacing = 1.7,
+    width = 0.8,
+    leftBackgroundColor = 0xededed,
+    leftFontColor = 'black',
+    rightBackgroundColor = 0xededed,
+    rightFontColor = 'black'
+  ) {
     const actionContainer = new Block({
       contentDirection: 'row',
       justifyContent: 'center',
       padding: 0.025,
-      width: 4,
+      width: 8.0,
       fontFamily: FontJSON,
       fontTexture: FontImage,
       backgroundOpacity: 0,
     });
     const leftContainer = new Block({
       height: 0.5,
-      width: 0.8,
-      margin: 1.5,
+      width: width,
+      margin: spacing,
       borderRadius: 0.04,
       justifyContent: 'center',
       fontSize: 0.07,
       bestFit: 'auto',
-      fontColor: new Color('white'),
-      backgroundColor: new Color('teal'),
+      fontColor: new Color(leftFontColor),
+      backgroundColor: new Color(leftBackgroundColor),
     });
     leftContainer.add(
       new Text({
-        content: `Last trial\n(Press X)`,
+        content: leftText,
       })
     );
     const rightContainer = new Block({
       height: 0.5,
-      width: 0.8,
-      margin: 1.5,
+      width: width,
+      margin: spacing,
       borderRadius: 0.04,
       justifyContent: 'center',
       fontSize: 0.07,
       bestFit: 'auto',
-      fontColor: new Color('black'),
-      backgroundColor: new Color('orange'),
+      fontColor: new Color(rightFontColor),
+      backgroundColor: new Color(rightBackgroundColor),
     });
     rightContainer.add(
       new Text({
-        content: `Prior trial\n(Press A)`,
+        content: rightText,
       })
     );
     actionContainer.add(leftContainer, rightContainer);
-    confidenceContainer.add(actionContainer);
-    return confidenceContainer;
+    this.target.add(actionContainer);
+    return actionContainer;
   }
 
   /**
