@@ -15,22 +15,14 @@ import _ from 'lodash';
 // Visual constants
 const VIEW_DISTANCE = 2.0;
 const VIEW_SCALE = 3.0;
-const DEFAULT_CAMERA_LAYOUT = 0;
+const DEFAULT_CAMERA_LAYOUT = 2;
 
 /*
- * Main function contains all experiment logic. At a minimum you should:
- * 1. Create a `new Experiment({...config})`
- * 2. Initialize the state machine with `exp.state.init(states, changeFunc)`
- * 3. Create stimuli and add them with `exp.sceneManager.scene.add(...objects)`
- * 4. Create trial sequence with `exp.createTrialSequence([...blocks])`
- * 5. Start the main loop with `exp.start(calcFunc, stateFunc, displayFunc)`
- * 6. Design your experiment by editing `calcFunc`, `stateFunc`, and `displayFunc`
+ * Main function contains all experiment logic
  */
 
 async function main() {
-  // Configure your experiment
   const exp = new Experiment({
-    // Options to make development easier
     devOptions: {
       skipConsent: true,
       orbitControls: false,
@@ -46,8 +38,6 @@ async function main() {
     // Three.js settings
     backgroundColor: 'black',
     audio: true,
-
-    // Assume meters and seconds for three.js, but note tween.js uses milliseconds
     taskPosition: new Vector3(0, 1.6, -VIEW_DISTANCE * VIEW_SCALE),
     cameraLayout: 2,
 
@@ -61,18 +51,18 @@ async function main() {
     },
 
     // Experiment behavior
-    confidenceGap: 3,
+    confidenceGap: 2,
 
     // Trial structure, n: number of repetitions (n * 2)
-    numTutorialTrials: 2,
-    numPracticeTrials: 2,
-    numCalibrationTrials: 4,
-    numMainTrials: 4,
+    numTutorialTrials: 5, // 10
+    numPracticeTrials: 5, // 10
+    numCalibrationTrials: 60, // 120
+    numMainTrials: 100, // 200
 
     // Trial durations
-    fixationDuration: 1,
-    postResponseDuration: 0.25,
-    feedbackDuration: 0.25,
+    fixationDuration: 1.0, // seconds
+    postResponseDuration: 0.25, // seconds
+    feedbackDuration: 0.25, // seconds
   });
 
   /**
@@ -105,23 +95,84 @@ async function main() {
   );
 
   /*
-   * Create visual stimuli with three.js
+   * Create task 'Stimulus' instance
    */
-  // Create task 'Stimulus' instance
   const taskGroup = new Group();
   taskGroup.position.copy(exp.cfg.taskPosition);
   exp.sceneManager.scene.add(taskGroup);
-  const stimulus = new Stimulus(taskGroup, VIEW_DISTANCE);
+
+  /**
+   * Create 'Stimulus' presets
+   */
+  const presets = {
+    fixation: {
+      background: true,
+      outline: true,
+      fixation: 'standard',
+      reference: false,
+      dots: {
+        visible: false,
+      },
+      ui: {
+        confidence: false,
+        response: false,
+        navigation: false,
+      },
+    },
+    response: {
+      background: true,
+      outline: false,
+      fixation: 'standard',
+      reference: true,
+      dots: {
+        visible: false,
+      },
+      ui: {
+        confidence: false,
+        response: true,
+        navigation: false,
+      },
+    },
+    confidence: {
+      background: true,
+      outline: false,
+      fixation: 'none',
+      reference: false,
+      dots: {
+        visible: false,
+      },
+      ui: {
+        confidence: true,
+        response: false,
+        navigation: false,
+      },
+    },
+    navigation: {
+      background: true,
+      outline: false,
+      fixation: 'none',
+      reference: false,
+      dots: {
+        visible: false,
+      },
+      ui: {
+        confidence: false,
+        response: false,
+        navigation: true,
+      },
+    },
+  };
+  const stimulus = new Stimulus(taskGroup, VIEW_DISTANCE, presets);
 
   /*
-   * Create trial sequence from array of block objects.
+   * Create trial sequence
    */
   exp.createTrialSequence([
     new Block({
       variables: {
         coherence: 0.3,
         coherences: [0.3, 0.6],
-        showFeedback: true,
+        showFeedback: false,
         cameraLayout: DEFAULT_CAMERA_LAYOUT,
       },
       options: {
@@ -133,7 +184,7 @@ async function main() {
       variables: {
         coherence: 0.3,
         coherences: [0.3, 0.6],
-        showFeedback: false,
+        showFeedback: true,
         cameraLayout: DEFAULT_CAMERA_LAYOUT,
       },
       options: {
@@ -172,7 +223,6 @@ async function main() {
    * Implement a function to poll the gamepad button schema, checking for
    * buttons that are pressed or have changed state
    */
-  // Input data structure
   let input = {
     left: {
       x: false,
@@ -182,59 +232,45 @@ async function main() {
     },
   };
 
-  // Input polling function
-  window.setInterval(
-    (input) => {
-      if (exp.sceneManager.renderer.xr.isPresenting) {
-        // 'A' button
-        if (exp.rightGrip.input.gamepad.buttons[4].pressed === true) {
-          if (input.right.a === false) {
-            input.right.a = true;
-            window.dispatchEvent(
-              new KeyboardEvent('keyup', { key: exp.cfg.input.right })
-            );
-          }
-        }
-        if (exp.rightGrip.input.gamepad.buttons[4].pressed === false) {
-          input.right.a = false;
-        }
-
-        // 'X' button
-        if (exp.leftGrip.input.gamepad.buttons[4].pressed === true) {
-          if (input.left.x === false) {
-            input.left.x = true;
-            window.dispatchEvent(
-              new KeyboardEvent('keyup', { key: exp.cfg.input.left })
-            );
-          }
-        }
-        if (exp.leftGrip.input.gamepad.buttons[4].pressed === false) {
-          input.left.x = false;
+  /**
+   * Bind an interval to poll controller input
+   */
+  window.setInterval(pollControllerInput, 10, input);
+  function pollControllerInput(inputState) {
+    if (exp.sceneManager.renderer.xr.isPresenting) {
+      // 'A' button
+      if (exp.rightGrip.input.gamepad.buttons[4].pressed === true) {
+        if (inputState.right.a === false) {
+          inputState.right.a = true;
+          window.dispatchEvent(
+            new KeyboardEvent('keyup', { key: exp.cfg.input.right })
+          );
         }
       }
-    },
-    10,
-    input
-  );
+      if (exp.rightGrip.input.gamepad.buttons[4].pressed === false) {
+        inputState.right.a = false;
+      }
 
-  /**
-   * Array to store data generated by the experience
-   */
-  let data = [];
-
-  /*
-   * You must initialize an empty object called trial
-   */
-  let trial = {};
-
-  // Start the main loop! These three functions will take it from here.
-  exp.start(calcFunc, stateFunc, displayFunc);
+      // 'X' button
+      if (exp.leftGrip.input.gamepad.buttons[4].pressed === true) {
+        if (inputState.left.x === false) {
+          inputState.left.x = true;
+          window.dispatchEvent(
+            new KeyboardEvent('keyup', { key: exp.cfg.input.left })
+          );
+        }
+      }
+      if (exp.leftGrip.input.gamepad.buttons[4].pressed === false) {
+        inputState.left.x = false;
+      }
+    }
+  }
 
   /**
    * Bind an event listener to listen for keyboard events
    */
-  window.addEventListener('keyup', inputFunc);
-  function inputFunc(event) {
+  window.addEventListener('keyup', keyboardInput);
+  function keyboardInput(event) {
     if (event.key) {
       switch (exp.state.current) {
         case 'WELCOME':
@@ -243,6 +279,12 @@ async function main() {
           }
           break;
         case 'PRETUTORIAL':
+          if (event.key === exp.cfg.input.left) {
+            exp.state.next('WELCOME');
+          } else if (event.key === exp.cfg.input.right) {
+            exp.state.next('START');
+          }
+          break;
         case 'PREPRACTICE':
         case 'PREMAIN':
           if (event.key === exp.cfg.input.right) {
@@ -284,6 +326,18 @@ async function main() {
       }
     }
   }
+
+  /**
+   * Array to store data generated by the experience
+   */
+  let data = [];
+
+  /*
+   * You must initialize an empty object called trial
+   */
+  let trial = {};
+
+  exp.start(calcFunc, stateFunc, displayFunc);
 
   /**
    * Use `calcFunc` for calculations used in _multiple states_
@@ -333,65 +387,73 @@ async function main() {
 
       case 'WELCOME':
         exp.state.once(() => {
-          exp.VRUI.visible = true;
+          stimulus.usePreset('navigation');
           exp.sceneManager.setCameraLayout(DEFAULT_CAMERA_LAYOUT);
+          exp.VRUI.visible = true;
+          exp.VRUI.progress.visible = false;
           exp.VRUI.edit({
-            title: 'Welcome',
-            instructions: `Use the controller in your right hand to continue.`,
+            title: 'Instructions',
+            instructions: `In each game, you will be briefly shown dots moving inside a circular area.\nAfter watching the dots, a blue section and an orange section will appear on the perimeter of the circle.\n\nYour task: Determine whether there was movement of dots towards the blue or the orange section.`,
             interactive: false,
             buttons: false,
             backButtonState: 'disabled',
             nextButtonState: 'disabled',
           });
-          exp.VRUI.updateProgressBar(1, 4);
         });
         break;
 
       case 'PRETUTORIAL':
         exp.state.once(() => {
-          exp.VRUI.visible = true;
+          stimulus.usePreset('navigation');
           exp.sceneManager.setCameraLayout(DEFAULT_CAMERA_LAYOUT);
+          exp.VRUI.visible = true;
+          exp.VRUI.progress.visible = false;
           exp.VRUI.edit({
-            title: 'Start (Tutorial)',
-            instructions: `When you are ready and comfortable, use the controller in your right hand to start the task.`,
+            title: 'Practice Games',
+            instructions: `Play a few games now and practice watching the dots while observing the appearance of the game. Use the controller buttons to interact with the game.\n\nWhen you are ready and comfortable, use the controller in your right hand to start the task.`,
             interactive: false,
             buttons: false,
             backButtonState: 'disabled',
             nextButtonState: 'disabled',
           });
-          exp.VRUI.updateProgressBar(2, 4);
         });
         break;
 
       case 'PREPRACTICE':
         exp.state.once(() => {
-          exp.VRUI.visible = true;
+          stimulus.usePreset('navigation');
           exp.sceneManager.setCameraLayout(DEFAULT_CAMERA_LAYOUT);
+          exp.VRUI.visible = true;
+          exp.VRUI.progress.visible = false;
           exp.VRUI.edit({
-            title: 'Start (Practice)',
-            instructions: `When you are ready and comfortable, use the controller in your right hand to start the task.`,
+            title: 'Practice Games',
+            instructions: `You will now play another ${
+              exp.cfg.numPracticeTrials * 2
+            } practice games. You won't have to rate your confidence after each game, but the cross in the center of the circlular area will briefly change color if your answer was correct or not. Green is a correct answer, red is an incorrect answer.\n\nWhen you are ready and comfortable, use the controller in your right hand to start the task.`,
             interactive: false,
             buttons: false,
             backButtonState: 'disabled',
             nextButtonState: 'disabled',
           });
-          exp.VRUI.updateProgressBar(3, 4);
         });
         break;
 
       case 'PREMAIN':
         exp.state.once(() => {
-          exp.VRUI.visible = true;
+          stimulus.usePreset('navigation');
           exp.sceneManager.setCameraLayout(DEFAULT_CAMERA_LAYOUT);
+          exp.VRUI.visible = true;
+          exp.VRUI.progress.visible = false;
           exp.VRUI.edit({
-            title: 'Start (Main)',
-            instructions: `When you are ready and comfortable, use the controller in your right hand to start the task.`,
+            title: 'Instructions',
+            instructions: `That concludes all the practice games. You will now play ${
+              (exp.cfg.numCalibrationTrials + exp.cfg.numMainTrials) * 2
+            } games.\nYou will not be shown if you answered correctly or not, and you will be asked to rate your confidence after some of the games.\n\nWhen you are ready and comfortable, use the controller in your right hand to start the task.`,
             interactive: false,
             buttons: false,
             backButtonState: 'disabled',
             nextButtonState: 'disabled',
           });
-          exp.VRUI.updateProgressBar(4, 4);
         });
         break;
 
@@ -420,7 +482,11 @@ async function main() {
                 data,
                 (t) => t.block.name === 'calibration'
               );
-              trials = _.takeRight(trials, 4);
+              if (exp.cfg.numCalibrationTrials > 20) {
+                // If we have more than 20 calibration trials, take the median from the last 20
+                // This allows us to test with fewer calibration trials
+                trials = _.takeRight(trials, 20);
+              }
               let kArray = d3.map(data, (d) => d.coherence);
               let kMedian = d3.median(kArray);
               if (kMedian > 0.5) {
@@ -472,19 +538,7 @@ async function main() {
         exp.state.once(() => {
           exp.VRUI.visible = false;
           // Construct 'FIXATION'-type stimulus
-          stimulus.setParameters({
-            background: true,
-            outline: true,
-            fixation: 'standard',
-            reference: false,
-            dots: {
-              visible: false,
-            },
-            text: {
-              confidence: false,
-              response: false,
-            },
-          });
+          stimulus.usePreset('fixation');
         });
         // Proceed to the next state upon time expiration
         if (exp.state.expired(exp.cfg.fixationDuration)) {
@@ -507,9 +561,10 @@ async function main() {
               coherence: trial.coherence,
               direction: trial.referenceDirection,
             },
-            text: {
+            ui: {
               confidence: false,
               response: false,
+              navigation: false,
             },
           });
         });
@@ -525,19 +580,7 @@ async function main() {
         exp.state.once(() => {
           exp.VRUI.visible = false;
           // Construct 'RESPONSE'-type stimulus
-          stimulus.setParameters({
-            background: true,
-            outline: false,
-            fixation: 'standard',
-            reference: true,
-            dots: {
-              visible: false,
-            },
-            text: {
-              confidence: false,
-              response: true,
-            },
-          });
+          stimulus.usePreset('response');
         });
         break;
 
@@ -545,19 +588,7 @@ async function main() {
         exp.state.once(() => {
           exp.VRUI.visible = false;
           // Construct 'FIXATION'-type stimulus
-          stimulus.setParameters({
-            background: true,
-            outline: true,
-            fixation: 'standard',
-            reference: false,
-            dots: {
-              visible: false,
-            },
-            text: {
-              confidence: false,
-              response: false,
-            },
-          });
+          stimulus.usePreset('fixation');
         });
 
         // Proceed to the next state upon time expiration
@@ -578,19 +609,7 @@ async function main() {
         exp.state.once(() => {
           exp.VRUI.visible = false;
           // Construct 'CONFIDENCE'-type stimulus
-          stimulus.setParameters({
-            background: true,
-            outline: false,
-            fixation: 'none',
-            reference: false,
-            dots: {
-              visible: false,
-            },
-            text: {
-              confidence: true,
-              response: false,
-            },
-          });
+          stimulus.usePreset('confidence');
         });
         break;
 
@@ -606,15 +625,16 @@ async function main() {
             dots: {
               visible: false,
             },
-            text: {
+            ui: {
               confidence: false,
               response: false,
+              navigation: false,
             },
           });
         });
         if (exp.state.expired(exp.cfg.feedbackDuration)) {
           stimulus.reset();
-          if (trial.block.name === 'tutorial') {
+          if (trial.block.name === 'practice') {
             exp.state.next('FINISH');
           }
         }
@@ -671,13 +691,14 @@ async function main() {
         }
         exp.state.once(function () {
           exp.VRUI.edit({
-            title: 'Task Complete',
-            instructions: `The task is now complete. Thank you for your participation!`,
+            title: 'Complete',
+            instructions: `The game is now complete. Thank you for your participation!`,
             interactive: false,
             buttons: false,
             backButtonState: 'disabled',
             nextButtonState: 'disabled',
           });
+          exp.firebase.localSave();
         });
         if (exp.VRUI.clickedNext) {
           exp.xrSession.end();
