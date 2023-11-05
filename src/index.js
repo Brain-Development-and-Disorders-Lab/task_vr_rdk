@@ -100,7 +100,69 @@ async function main() {
   const taskGroup = new Group();
   taskGroup.position.copy(exp.cfg.taskPosition);
   exp.sceneManager.scene.add(taskGroup);
-  const stimulus = new Stimulus(taskGroup, VIEW_DISTANCE);
+
+  /**
+   * Create 'Stimulus' presets
+   */
+  const presets = {
+    fixation: {
+      background: true,
+      outline: true,
+      fixation: 'standard',
+      reference: false,
+      dots: {
+        visible: false,
+      },
+      ui: {
+        confidence: false,
+        response: false,
+        navigation: false,
+      },
+    },
+    response: {
+      background: true,
+      outline: false,
+      fixation: 'standard',
+      reference: true,
+      dots: {
+        visible: false,
+      },
+      ui: {
+        confidence: false,
+        response: true,
+        navigation: false,
+      },
+    },
+    confidence: {
+      background: true,
+      outline: false,
+      fixation: 'none',
+      reference: false,
+      dots: {
+        visible: false,
+      },
+      ui: {
+        confidence: true,
+        response: false,
+        navigation: false,
+      },
+    },
+    navigation: {
+      background: true,
+      outline: false,
+      fixation: 'none',
+      reference: false,
+      dots: {
+        visible: false,
+      },
+      ui: {
+        confidence: false,
+        response: false,
+        navigation: true,
+      },
+    },
+  };
+  const stimulus = new Stimulus(taskGroup, VIEW_DISTANCE, presets);
 
   /*
    * Create trial sequence
@@ -319,6 +381,7 @@ async function main() {
 
       case 'WELCOME':
         exp.state.once(() => {
+          stimulus.usePreset('navigation');
           exp.VRUI.visible = true;
           exp.sceneManager.setCameraLayout(DEFAULT_CAMERA_LAYOUT);
           exp.VRUI.edit({
@@ -335,6 +398,7 @@ async function main() {
 
       case 'PRETUTORIAL':
         exp.state.once(() => {
+          stimulus.usePreset('navigation');
           exp.VRUI.visible = true;
           exp.sceneManager.setCameraLayout(DEFAULT_CAMERA_LAYOUT);
           exp.VRUI.edit({
@@ -351,6 +415,7 @@ async function main() {
 
       case 'PREPRACTICE':
         exp.state.once(() => {
+          stimulus.usePreset('navigation');
           exp.VRUI.visible = true;
           exp.sceneManager.setCameraLayout(DEFAULT_CAMERA_LAYOUT);
           exp.VRUI.edit({
@@ -369,6 +434,7 @@ async function main() {
 
       case 'PREMAIN':
         exp.state.once(() => {
+          stimulus.usePreset('navigation');
           exp.VRUI.visible = true;
           exp.sceneManager.setCameraLayout(DEFAULT_CAMERA_LAYOUT);
           exp.VRUI.edit({
@@ -466,19 +532,7 @@ async function main() {
         exp.state.once(() => {
           exp.VRUI.visible = false;
           // Construct 'FIXATION'-type stimulus
-          stimulus.setParameters({
-            background: true,
-            outline: true,
-            fixation: 'standard',
-            reference: false,
-            dots: {
-              visible: false,
-            },
-            text: {
-              confidence: false,
-              response: false,
-            },
-          });
+          stimulus.usePreset('fixation');
         });
         // Proceed to the next state upon time expiration
         if (exp.state.expired(exp.cfg.fixationDuration)) {
@@ -501,9 +555,10 @@ async function main() {
               coherence: trial.coherence,
               direction: trial.referenceDirection,
             },
-            text: {
+            ui: {
               confidence: false,
               response: false,
+              navigation: false,
             },
           });
         });
@@ -519,19 +574,7 @@ async function main() {
         exp.state.once(() => {
           exp.VRUI.visible = false;
           // Construct 'RESPONSE'-type stimulus
-          stimulus.setParameters({
-            background: true,
-            outline: false,
-            fixation: 'standard',
-            reference: true,
-            dots: {
-              visible: false,
-            },
-            text: {
-              confidence: false,
-              response: true,
-            },
-          });
+          stimulus.usePreset('response');
         });
         break;
 
@@ -539,19 +582,7 @@ async function main() {
         exp.state.once(() => {
           exp.VRUI.visible = false;
           // Construct 'FIXATION'-type stimulus
-          stimulus.setParameters({
-            background: true,
-            outline: true,
-            fixation: 'standard',
-            reference: false,
-            dots: {
-              visible: false,
-            },
-            text: {
-              confidence: false,
-              response: false,
-            },
-          });
+          stimulus.usePreset('fixation');
         });
 
         // Proceed to the next state upon time expiration
@@ -572,19 +603,7 @@ async function main() {
         exp.state.once(() => {
           exp.VRUI.visible = false;
           // Construct 'CONFIDENCE'-type stimulus
-          stimulus.setParameters({
-            background: true,
-            outline: false,
-            fixation: 'none',
-            reference: false,
-            dots: {
-              visible: false,
-            },
-            text: {
-              confidence: true,
-              response: false,
-            },
-          });
+          stimulus.usePreset('confidence');
         });
         break;
 
@@ -600,9 +619,10 @@ async function main() {
             dots: {
               visible: false,
             },
-            text: {
+            ui: {
               confidence: false,
               response: false,
+              navigation: false,
             },
           });
         });

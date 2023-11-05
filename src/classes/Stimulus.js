@@ -38,6 +38,7 @@ class Stimulus {
   // Public properties
   target;
   distance;
+  presets;
 
   // Private properties
   _animated;
@@ -48,9 +49,26 @@ class Stimulus {
    * Stimulus constructor
    * @param {THREE.Group} target instance of a Three.js 'Group' class
    */
-  constructor(target, distance) {
+  constructor(target, distance, presets = {}) {
     this.target = target;
     this.distance = distance;
+    this.presets = presets;
+    this.presets.default = {
+      background: true,
+      outline: false,
+      fixation: 'none',
+      reference: false,
+      dots: {
+        visible: false,
+        coherence: 0.0,
+        direction: 0.0,
+      },
+      ui: {
+        confidence: false,
+        response: false,
+        navigation: false,
+      },
+    };
 
     // Collection of dynamic (animated) components
     this._animated = [];
@@ -69,29 +87,33 @@ class Stimulus {
         right: this._addRightArc(),
       },
       dots: this._addDots(),
-      text: {
+      ui: {
         confidence: this._addConfidenceText(),
         response: this._addResponseButtons(),
+        navigation: this._addNavigationButtons(),
       },
     };
 
     // Instantiate the visibility state
-    this._parameters = {
-      background: true,
-      outline: false,
-      fixation: 'none',
-      reference: false,
-      dots: {
-        visible: false,
-        coherence: 0.0,
-        direction: 0.0,
-      },
-      text: {
-        confidence: false,
-        response: false,
-      },
-    };
+    this._parameters = this.presets.default;
     this.setParameters(this._parameters);
+  }
+
+  addPreset(name, parameters) {
+    if (_.isUndefined(this.presets[name])) {
+      this.presets[name] = parameters;
+    } else {
+      console.warn(`Preset '${name}' already exists`);
+    }
+  }
+
+  usePreset(name) {
+    if (_.isUndefined(this.presets[name])) {
+      console.error(`Preset '${name}' does not exist`);
+      this.setParameters(this.presets.default);
+    } else {
+      this.setParameters(this.presets[name]);
+    }
   }
 
   /**
@@ -165,8 +187,9 @@ class Stimulus {
     }
 
     // Text
-    this._components.text.confidence.visible = this._parameters.text.confidence;
-    this._components.text.response.visible = this._parameters.text.response;
+    this._components.ui.confidence.visible = this._parameters.ui.confidence;
+    this._components.ui.response.visible = this._parameters.ui.response;
+    this._components.ui.navigation.visible = this._parameters.ui.navigation;
   }
 
   getComponents() {
@@ -177,21 +200,7 @@ class Stimulus {
    * Reset all elements managed by the renderer
    */
   reset() {
-    this.setParameters({
-      background: true,
-      outline: false,
-      fixation: 'none',
-      reference: false,
-      dots: {
-        visible: false,
-        coherence: 0.0,
-        direction: 0.0,
-      },
-      text: {
-        confidence: false,
-        response: false,
-      },
-    });
+    this.usePreset('default');
   }
 
   _addBackground() {
@@ -328,6 +337,15 @@ class Stimulus {
       'teal',
       'white'
     );
+  }
+
+  _addNavigationButtons() {
+    return this._createActionButtons(
+      'Back (X)',
+      'Next (A)',
+      0.4,
+      0.8
+    ).translateY(-1.6);
   }
 
   /**
@@ -515,7 +533,7 @@ class Stimulus {
     return mesh;
   }
 
-  _createConfidenceText(x, y, z, text, fill = 'black') {
+  _createConfidenceText(x, y, z, text) {
     const confidenceContainer = new Block({
       justifyContent: 'center',
       padding: 0.025,
@@ -550,7 +568,7 @@ class Stimulus {
     const actionButtons = this._createActionButtons(
       `Prior trial\n(Press X)`,
       `Last trial\n(Press A)`,
-      1.5,
+      0.6,
       0.8
     );
     confidenceContainer.add(actionButtons);
