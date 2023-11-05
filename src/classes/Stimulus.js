@@ -30,7 +30,6 @@ const FIXATION_RADIUS = 0.1; // degrees
 const DOT_RADIUS = 0.03; // degrees
 const DOT_OFFSET = 0.25; // units
 const DOT_VELOCITY = 2 / REFRESH_RATE;
-const BACKGROUND_OFFSET = 0.5; // units
 
 /**
  * Stimulus class used to interface with the renderer class and generate the aperture
