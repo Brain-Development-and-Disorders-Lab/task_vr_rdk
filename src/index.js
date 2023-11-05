@@ -5,9 +5,6 @@ import { update as tweenUpdate } from '@tweenjs/tween.js'; // https://github.com
 // Package imports
 import { Experiment, Block } from 'ouvrai';
 
-// Static asset imports (https://vitejs.dev/guide/assets.html)
-import environmentLightingURL from 'ouvrai/lib/environments/IndoorHDRI003_1K-HDR.exr?url'; // absolute path from ouvrai
-
 // Custom classes
 import Stimulus from './classes/Stimulus';
 
@@ -47,15 +44,12 @@ async function main() {
     controllerModels: false,
 
     // Three.js settings
-    environmentLighting: environmentLightingURL,
-    gridRoom: false,
     backgroundColor: 'black',
     audio: true,
 
     // Assume meters and seconds for three.js, but note tween.js uses milliseconds
     taskPosition: new Vector3(0, 1.6, -VIEW_DISTANCE * VIEW_SCALE),
     cameraLayout: 2,
-    cameraFixed: false,
 
     // Frame and rendering count
     frameCount: 0,
@@ -117,12 +111,8 @@ async function main() {
   const taskGroup = new Group();
   taskGroup.position.copy(exp.cfg.taskPosition);
   exp.sceneManager.scene.add(taskGroup);
+  console.info(exp.sceneManager.scene.children);
   const stimulus = new Stimulus(taskGroup, VIEW_DISTANCE);
-
-  // Attach the camera to the task if specified
-  if (exp.cfg.cameraFixed) {
-    exp.sceneManager.camera.attach(taskGroup);
-  }
 
   /*
    * Create trial sequence from array of block objects.
@@ -134,7 +124,7 @@ async function main() {
         coherences: [0.3, 0.6],
         duration: 2,
         showFeedback: true,
-        cameraLayout: 0,
+        cameraLayout: DEFAULT_CAMERA_LAYOUT,
       },
       options: {
         name: 'tutorial',

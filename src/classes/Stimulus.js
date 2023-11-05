@@ -10,6 +10,8 @@ import {
   PlaneGeometry,
   EllipseCurve,
   BufferGeometry,
+  SphereGeometry,
+  DoubleSide,
 } from 'three';
 import { MeshLine, MeshLineMaterial } from 'three.meshline';
 
@@ -168,6 +170,10 @@ class Stimulus {
     this._components.text.response.visible = this._parameters.text.response;
   }
 
+  getComponents() {
+    return this._components;
+  }
+
   /**
    * Reset all elements managed by the renderer
    */
@@ -190,16 +196,7 @@ class Stimulus {
   }
 
   _addBackground() {
-    return this._createRectangle(
-      0,
-      0,
-      -this.distance - BACKGROUND_OFFSET,
-      600,
-      600,
-      false,
-      'white',
-      true
-    );
+    return this._createSphere(0, 0, 0, 10, false, 'white');
   }
 
   /**
@@ -385,6 +382,24 @@ class Stimulus {
     if (animate) this._addAnimated(dot);
 
     return circle;
+  }
+
+  _createSphere(x, y, z, r, animate = false, fill = 'black') {
+    const sphere = new Mesh(
+      new SphereGeometry(r, 32, 16),
+      new MeshBasicMaterial({
+        color: fill,
+        toneMapped: false,
+        side: DoubleSide,
+      })
+    );
+    sphere.position.set(x, y, z);
+    sphere.visible = false;
+
+    this.target.add(sphere);
+    if (animate) this._addAnimated(sphere);
+
+    return sphere;
   }
 
   /**
