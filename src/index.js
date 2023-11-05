@@ -15,7 +15,7 @@ import _ from 'lodash';
 // Visual constants
 const VIEW_DISTANCE = 2.0;
 const VIEW_SCALE = 3.0;
-const DEFAULT_CAMERA_LAYOUT = 0;
+const DEFAULT_CAMERA_LAYOUT = 2;
 
 /*
  * Main function contains all experiment logic
@@ -355,7 +355,9 @@ async function main() {
           exp.sceneManager.setCameraLayout(DEFAULT_CAMERA_LAYOUT);
           exp.VRUI.edit({
             title: 'Practice Games',
-            instructions: `You will now play another ${exp.cfg.numPracticeTrials} practice games. You won't have to rate your confidence after each game, but the cross in the center of the circlular area will briefly change color if your answer was correct or not. Green is a correct answer, red is an incorrect answer.\n\nWhen you are ready and comfortable, use the controller in your right hand to start the task.`,
+            instructions: `You will now play another ${
+              exp.cfg.numPracticeTrials * 2
+            } practice games. You won't have to rate your confidence after each game, but the cross in the center of the circlular area will briefly change color if your answer was correct or not. Green is a correct answer, red is an incorrect answer.\n\nWhen you are ready and comfortable, use the controller in your right hand to start the task.`,
             interactive: false,
             buttons: false,
             backButtonState: 'disabled',
@@ -372,7 +374,7 @@ async function main() {
           exp.VRUI.edit({
             title: 'Instructions',
             instructions: `That concludes all the practice games. You will now play ${
-              exp.cfg.numCalibrationTrials + exp.cfg.numMainTrials
+              (exp.cfg.numCalibrationTrials + exp.cfg.numMainTrials) * 2
             } games.\nYou will not be shown if you answered correctly or not, and you will be asked to rate your confidence after some of the games.\n\nWhen you are ready and comfortable, use the controller in your right hand to start the task.`,
             interactive: false,
             buttons: false,
@@ -408,7 +410,11 @@ async function main() {
                 data,
                 (t) => t.block.name === 'calibration'
               );
-              trials = _.takeRight(trials, 4);
+              if (exp.cfg.numCalibrationTrials > 20) {
+                // If we have more than 20 calibration trials, take the median from the last 20
+                // This allows us to test with fewer calibration trials
+                trials = _.takeRight(trials, 20);
+              }
               let kArray = d3.map(data, (d) => d.coherence);
               let kMedian = d3.median(kArray);
               if (kMedian > 0.5) {
@@ -666,6 +672,7 @@ async function main() {
             backButtonState: 'disabled',
             nextButtonState: 'disabled',
           });
+          exp.firebase.localSave();
         });
         if (exp.VRUI.clickedNext) {
           exp.xrSession.end();
