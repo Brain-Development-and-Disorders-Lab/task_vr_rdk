@@ -54,10 +54,10 @@ async function main() {
     confidenceGap: 2,
 
     // Trial structure, n: number of repetitions (n * 2)
-    numTutorialTrials: 2,
-    numPracticeTrials: 2,
-    numCalibrationTrials: 4,
-    numMainTrials: 4,
+    numTutorialTrials: 5, // 10
+    numPracticeTrials: 5, // 10
+    numCalibrationTrials: 60, // 120
+    numMainTrials: 100, // 200
 
     // Trial durations
     fixationDuration: 1.0, // seconds
