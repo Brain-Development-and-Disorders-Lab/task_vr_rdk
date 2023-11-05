@@ -17,8 +17,8 @@ import _ from 'lodash';
 
 // Visual constants
 const VIEW_DISTANCE = 2.0;
-const VIEW_SCALE = 2.0;
-const DEFAULT_CAMERA_LAYOUT = 2;
+const VIEW_SCALE = 3.0;
+const DEFAULT_CAMERA_LAYOUT = 0;
 
 /*
  * Main function contains all experiment logic. At a minimum you should:
@@ -134,7 +134,7 @@ async function main() {
         coherences: [0.3, 0.6],
         duration: 2,
         showFeedback: true,
-        cameraLayout: DEFAULT_CAMERA_LAYOUT,
+        cameraLayout: 0,
       },
       options: {
         name: 'tutorial',
@@ -276,7 +276,7 @@ async function main() {
               trial.data.correct = trial.referenceDirection === 0 ? 1 : 0;
             }
             // Clear graphics and proceed to next state
-            stimulus.clear();
+            stimulus.reset();
             if (trial.showFeedback) {
               exp.state.next('FEEDBACK');
             } else {
@@ -496,7 +496,8 @@ async function main() {
               visible: false,
             },
             text: {
-              confidence: true,
+              confidence: false,
+              response: false,
             },
           });
         });
@@ -523,6 +524,7 @@ async function main() {
             },
             text: {
               confidence: false,
+              response: false,
             },
           });
         });
@@ -548,6 +550,7 @@ async function main() {
             },
             text: {
               confidence: false,
+              response: true,
             },
           });
         });
@@ -567,6 +570,7 @@ async function main() {
             },
             text: {
               confidence: false,
+              response: false,
             },
           });
         });
@@ -585,11 +589,19 @@ async function main() {
 
       case 'CONFIDENCE':
         exp.state.once(() => {
-          exp.VRUI.visible = true;
+          exp.VRUI.visible = false;
           // Construct 'CONFIDENCE'-type stimulus
           stimulus.setParameters({
+            background: true,
+            outline: false,
+            fixation: 'none',
+            reference: false,
+            dots: {
+              visible: false,
+            },
             text: {
               confidence: true,
+              response: false,
             },
           });
         });
@@ -609,6 +621,7 @@ async function main() {
             },
             text: {
               confidence: false,
+              response: false,
             },
           });
         });
@@ -645,11 +658,13 @@ async function main() {
             trialType === 'tutorial' &&
             elapsed.length === exp.cfg.numTutorialTrials * 2
           ) {
+            stimulus.reset();
             exp.state.next('PREPRACTICE');
           } else if (
             trialType === 'practice' &&
             elapsed.length === exp.cfg.numPracticeTrials * 2
           ) {
+            stimulus.reset();
             exp.state.next('PREMAIN');
           } else {
             exp.state.next('START');
