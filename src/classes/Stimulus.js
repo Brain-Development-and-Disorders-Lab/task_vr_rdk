@@ -3,14 +3,22 @@ import Dot from './Dot.js';
 
 // Three.js modules
 import {
+  Color,
   Mesh,
   CircleGeometry,
   MeshBasicMaterial,
   PlaneGeometry,
   EllipseCurve,
   BufferGeometry,
+  SphereGeometry,
+  DoubleSide,
 } from 'three';
 import { MeshLine, MeshLineMaterial } from 'three.meshline';
+
+// Three-Mesh-UI
+import FontJSON from 'three-mesh-ui/examples/assets/Roboto-msdf.json';
+import FontImage from 'three-mesh-ui/examples/assets/Roboto-msdf.png';
+import { Block, Text } from 'three-mesh-ui';
 
 // Utility modules
 import _ from 'lodash';
@@ -62,6 +70,10 @@ class Stimulus {
         right: this._addRightArc(),
       },
       dots: this._addDots(),
+      text: {
+        confidence: this._addConfidenceText(),
+        response: this._addResponseButtons(),
+      },
     };
 
     // Instantiate the visibility state
@@ -74,6 +86,10 @@ class Stimulus {
         visible: false,
         coherence: 0.0,
         direction: 0.0,
+      },
+      text: {
+        confidence: false,
+        response: false,
       },
     };
     this.setParameters(this._parameters);
@@ -148,6 +164,14 @@ class Stimulus {
       // Hide the dots
       this._clearAnimated();
     }
+
+    // Text
+    this._components.text.confidence.visible = this._parameters.text.confidence;
+    this._components.text.response.visible = this._parameters.text.response;
+  }
+
+  getComponents() {
+    return this._components;
   }
 
   /**
@@ -159,21 +183,20 @@ class Stimulus {
       outline: false,
       fixation: 'none',
       reference: false,
-      dots: false,
+      dots: {
+        visible: false,
+        coherence: 0.0,
+        direction: 0.0,
+      },
+      text: {
+        confidence: false,
+        response: false,
+      },
     });
   }
 
   _addBackground() {
-    return this._createRectangle(
-      0,
-      0,
-      -this.distance - BACKGROUND_OFFSET,
-      100,
-      100,
-      false,
-      'white',
-      true
-    );
+    return this._createSphere(0, 0, 0, 10, false, 'white');
   }
 
   /**
@@ -285,6 +308,29 @@ class Stimulus {
     }
   }
 
+  _addConfidenceText(fill = 'black') {
+    return this._createConfidenceText(
+      0,
+      0,
+      -this.distance,
+      `Between the last two trials, did you feel more confident about your response to the last trial (1 trial ago), or the trial prior to it (2 trials ago)?`,
+      fill
+    );
+  }
+
+  _addResponseButtons() {
+    return this._createActionButtons(
+      'Left (X)',
+      'Right (A)',
+      2.0,
+      0.8,
+      'orange',
+      'black',
+      'teal',
+      'white'
+    );
+  }
+
   /**
    * Create a circle
    * @param {number} x x-coordinate of the circle center
@@ -336,6 +382,24 @@ class Stimulus {
     if (animate) this._addAnimated(dot);
 
     return circle;
+  }
+
+  _createSphere(x, y, z, r, animate = false, fill = 'black') {
+    const sphere = new Mesh(
+      new SphereGeometry(r, 32, 16),
+      new MeshBasicMaterial({
+        color: fill,
+        toneMapped: false,
+        side: DoubleSide,
+      })
+    );
+    sphere.position.set(x, y, z);
+    sphere.visible = false;
+
+    this.target.add(sphere);
+    if (animate) this._addAnimated(sphere);
+
+    return sphere;
   }
 
   /**
@@ -450,6 +514,105 @@ class Stimulus {
     if (animate) this._addAnimated(mesh);
 
     return mesh;
+  }
+
+  _createConfidenceText(x, y, z, text, fill = 'black') {
+    const confidenceContainer = new Block({
+      justifyContent: 'center',
+      padding: 0.025,
+      margin: 0.1,
+      width: 6.0,
+      fontFamily: FontJSON,
+      fontTexture: FontImage,
+      backgroundOpacity: 0,
+    });
+    confidenceContainer.position.set(x, y, z);
+    this.target.add(confidenceContainer);
+
+    const descriptionContainer = new Block({
+      height: 0.8,
+      width: 2.8,
+      margin: 0.02,
+      padding: 0.04,
+      borderRadius: 0.04,
+      justifyContent: 'center',
+      fontSize: 0.07,
+      bestFit: 'auto',
+      fontColor: new Color('black'),
+      backgroundColor: new Color(0xededed),
+    });
+    descriptionContainer.add(
+      new Text({
+        content: text,
+      })
+    );
+    confidenceContainer.add(descriptionContainer);
+
+    const actionButtons = this._createActionButtons(
+      `Prior trial\n(Press X)`,
+      `Last trial\n(Press A)`,
+      1.5,
+      0.8
+    );
+    confidenceContainer.add(actionButtons);
+
+    return confidenceContainer;
+  }
+
+  _createActionButtons(
+    leftText,
+    rightText,
+    spacing = 1.7,
+    width = 0.8,
+    leftBackgroundColor = 0xededed,
+    leftFontColor = 'black',
+    rightBackgroundColor = 0xededed,
+    rightFontColor = 'black'
+  ) {
+    const actionContainer = new Block({
+      contentDirection: 'row',
+      justifyContent: 'center',
+      padding: 0.025,
+      width: 8.0,
+      fontFamily: FontJSON,
+      fontTexture: FontImage,
+      backgroundOpacity: 0,
+    });
+    const leftContainer = new Block({
+      height: 0.5,
+      width: width,
+      margin: spacing,
+      borderRadius: 0.04,
+      justifyContent: 'center',
+      fontSize: 0.07,
+      bestFit: 'auto',
+      fontColor: new Color(leftFontColor),
+      backgroundColor: new Color(leftBackgroundColor),
+    });
+    leftContainer.add(
+      new Text({
+        content: leftText,
+      })
+    );
+    const rightContainer = new Block({
+      height: 0.5,
+      width: width,
+      margin: spacing,
+      borderRadius: 0.04,
+      justifyContent: 'center',
+      fontSize: 0.07,
+      bestFit: 'auto',
+      fontColor: new Color(rightFontColor),
+      backgroundColor: new Color(rightBackgroundColor),
+    });
+    rightContainer.add(
+      new Text({
+        content: rightText,
+      })
+    );
+    actionContainer.add(leftContainer, rightContainer);
+    this.target.add(actionContainer);
+    return actionContainer;
   }
 
   /**

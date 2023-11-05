@@ -5,9 +5,6 @@ import { update as tweenUpdate } from '@tweenjs/tween.js'; // https://github.com
 // Package imports
 import { Experiment, Block } from 'ouvrai';
 
-// Static asset imports (https://vitejs.dev/guide/assets.html)
-import environmentLightingURL from 'ouvrai/lib/environments/IndoorHDRI003_1K-HDR.exr?url'; // absolute path from ouvrai
-
 // Custom classes
 import Stimulus from './classes/Stimulus';
 
@@ -17,8 +14,8 @@ import _ from 'lodash';
 
 // Visual constants
 const VIEW_DISTANCE = 2.0;
-const VIEW_SCALE = 2.0;
-const DEFAULT_CAMERA_LAYOUT = 2;
+const VIEW_SCALE = 3.0;
+const DEFAULT_CAMERA_LAYOUT = 0;
 
 /*
  * Main function contains all experiment logic. At a minimum you should:
@@ -47,15 +44,12 @@ async function main() {
     controllerModels: false,
 
     // Three.js settings
-    environmentLighting: environmentLightingURL,
-    gridRoom: false,
     backgroundColor: 'black',
     audio: true,
 
     // Assume meters and seconds for three.js, but note tween.js uses milliseconds
     taskPosition: new Vector3(0, 1.6, -VIEW_DISTANCE * VIEW_SCALE),
     cameraLayout: 2,
-    cameraFixed: false,
 
     // Frame and rendering count
     frameCount: 0,
@@ -119,11 +113,6 @@ async function main() {
   exp.sceneManager.scene.add(taskGroup);
   const stimulus = new Stimulus(taskGroup, VIEW_DISTANCE);
 
-  // Attach the camera to the task if specified
-  if (exp.cfg.cameraFixed) {
-    exp.sceneManager.camera.attach(taskGroup);
-  }
-
   /*
    * Create trial sequence from array of block objects.
    */
@@ -132,7 +121,6 @@ async function main() {
       variables: {
         coherence: 0.3,
         coherences: [0.3, 0.6],
-        duration: 2,
         showFeedback: true,
         cameraLayout: DEFAULT_CAMERA_LAYOUT,
       },
@@ -145,7 +133,6 @@ async function main() {
       variables: {
         coherence: 0.3,
         coherences: [0.3, 0.6],
-        duration: 2,
         showFeedback: false,
         cameraLayout: DEFAULT_CAMERA_LAYOUT,
       },
@@ -158,7 +145,6 @@ async function main() {
       variables: {
         coherence: 0.2,
         coherences: [0.2, 0.2],
-        duration: 2,
         showFeedback: false,
         cameraLayout: DEFAULT_CAMERA_LAYOUT,
       },
@@ -171,7 +157,6 @@ async function main() {
       variables: {
         coherence: 0.2,
         coherences: [0.2, 0.2],
-        duration: 2,
         showFeedback: false,
         cameraLayout: DEFAULT_CAMERA_LAYOUT,
       },
@@ -265,8 +250,8 @@ async function main() {
           }
           break;
         case 'RESPONSE':
-          const validInput = [exp.cfg.input.left, exp.cfg.input.right];
-          if (validInput.includes(event.key)) {
+          const responseInput = [exp.cfg.input.left, exp.cfg.input.right];
+          if (responseInput.includes(event.key)) {
             // Valid input was received, store responses and outcome
             if (event.key === exp.cfg.input.left) {
               trial.data.response = 'left';
@@ -276,7 +261,7 @@ async function main() {
               trial.data.correct = trial.referenceDirection === 0 ? 1 : 0;
             }
             // Clear graphics and proceed to next state
-            stimulus.clear();
+            stimulus.reset();
             if (trial.showFeedback) {
               exp.state.next('FEEDBACK');
             } else {
@@ -285,8 +270,15 @@ async function main() {
           }
           break;
         case 'CONFIDENCE':
-          if (event.key === exp.cfg.input.right) {
-            exp.state.next('FINISH');
+          const confidenceInput = [exp.cfg.input.left, exp.cfg.input.right];
+          if (confidenceInput.includes(event.key)) {
+            if (event.key === exp.cfg.input.right) {
+              trial.data.confidence = 1;
+              exp.state.next('FINISH');
+            } else {
+              trial.data.confidence = 0;
+              exp.state.next('FINISH');
+            }
           }
           break;
       }
@@ -488,6 +480,10 @@ async function main() {
             dots: {
               visible: false,
             },
+            text: {
+              confidence: false,
+              response: false,
+            },
           });
         });
         // Proceed to the next state upon time expiration
@@ -511,11 +507,15 @@ async function main() {
               coherence: trial.coherence,
               direction: trial.referenceDirection,
             },
+            text: {
+              confidence: false,
+              response: false,
+            },
           });
         });
 
         // Proceed to the next state upon time expiration
-        if (exp.state.expired(trial.duration)) {
+        if (exp.state.expired(2.0)) {
           stimulus.reset();
           exp.state.next('RESPONSE');
         }
@@ -533,6 +533,10 @@ async function main() {
             dots: {
               visible: false,
             },
+            text: {
+              confidence: false,
+              response: true,
+            },
           });
         });
         break;
@@ -549,6 +553,10 @@ async function main() {
             dots: {
               visible: false,
             },
+            text: {
+              confidence: false,
+              response: false,
+            },
           });
         });
 
@@ -556,7 +564,9 @@ async function main() {
         if (exp.state.expired(exp.cfg.postResponseDuration)) {
           stimulus.reset();
           // Check if we need to show confidence
-          if (trial.trialNumber % exp.cfg.confidenceGap === 0) {
+          const realTrialNumber =
+            trial.block.repetition * 2 + trial.block.trial + 1;
+          if (realTrialNumber % exp.cfg.confidenceGap === 0) {
             exp.state.next('CONFIDENCE');
           } else {
             exp.state.next('FINISH');
@@ -568,6 +578,19 @@ async function main() {
         exp.state.once(() => {
           exp.VRUI.visible = false;
           // Construct 'CONFIDENCE'-type stimulus
+          stimulus.setParameters({
+            background: true,
+            outline: false,
+            fixation: 'none',
+            reference: false,
+            dots: {
+              visible: false,
+            },
+            text: {
+              confidence: true,
+              response: false,
+            },
+          });
         });
         break;
 
@@ -582,6 +605,10 @@ async function main() {
             reference: false,
             dots: {
               visible: false,
+            },
+            text: {
+              confidence: false,
+              response: false,
             },
           });
         });
@@ -618,11 +645,13 @@ async function main() {
             trialType === 'tutorial' &&
             elapsed.length === exp.cfg.numTutorialTrials * 2
           ) {
+            stimulus.reset();
             exp.state.next('PREPRACTICE');
           } else if (
             trialType === 'practice' &&
             elapsed.length === exp.cfg.numPracticeTrials * 2
           ) {
+            stimulus.reset();
             exp.state.next('PREMAIN');
           } else {
             exp.state.next('START');
