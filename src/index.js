@@ -111,7 +111,6 @@ async function main() {
   const taskGroup = new Group();
   taskGroup.position.copy(exp.cfg.taskPosition);
   exp.sceneManager.scene.add(taskGroup);
-  console.info(exp.sceneManager.scene.children);
   const stimulus = new Stimulus(taskGroup, VIEW_DISTANCE);
 
   /*
@@ -122,7 +121,6 @@ async function main() {
       variables: {
         coherence: 0.3,
         coherences: [0.3, 0.6],
-        duration: 2,
         showFeedback: true,
         cameraLayout: DEFAULT_CAMERA_LAYOUT,
       },
@@ -135,7 +133,6 @@ async function main() {
       variables: {
         coherence: 0.3,
         coherences: [0.3, 0.6],
-        duration: 2,
         showFeedback: false,
         cameraLayout: DEFAULT_CAMERA_LAYOUT,
       },
@@ -148,7 +145,6 @@ async function main() {
       variables: {
         coherence: 0.2,
         coherences: [0.2, 0.2],
-        duration: 2,
         showFeedback: false,
         cameraLayout: DEFAULT_CAMERA_LAYOUT,
       },
@@ -161,7 +157,6 @@ async function main() {
       variables: {
         coherence: 0.2,
         coherences: [0.2, 0.2],
-        duration: 2,
         showFeedback: false,
         cameraLayout: DEFAULT_CAMERA_LAYOUT,
       },
@@ -520,7 +515,7 @@ async function main() {
         });
 
         // Proceed to the next state upon time expiration
-        if (exp.state.expired(trial.duration)) {
+        if (exp.state.expired(2.0)) {
           stimulus.reset();
           exp.state.next('RESPONSE');
         }
@@ -569,7 +564,9 @@ async function main() {
         if (exp.state.expired(exp.cfg.postResponseDuration)) {
           stimulus.reset();
           // Check if we need to show confidence
-          if (trial.trialNumber % exp.cfg.confidenceGap === 0) {
+          const realTrialNumber =
+            trial.block.repetition * 2 + trial.block.trial + 1;
+          if (realTrialNumber % exp.cfg.confidenceGap === 0) {
             exp.state.next('CONFIDENCE');
           } else {
             exp.state.next('FINISH');
