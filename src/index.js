@@ -279,6 +279,12 @@ async function main() {
           }
           break;
         case 'PRETUTORIAL':
+          if (event.key === exp.cfg.input.left) {
+            exp.state.next('WELCOME');
+          } else if (event.key === exp.cfg.input.right) {
+            exp.state.next('START');
+          }
+          break;
         case 'PREPRACTICE':
         case 'PREMAIN':
           if (event.key === exp.cfg.input.right) {
@@ -382,8 +388,9 @@ async function main() {
       case 'WELCOME':
         exp.state.once(() => {
           stimulus.usePreset('navigation');
-          exp.VRUI.visible = true;
           exp.sceneManager.setCameraLayout(DEFAULT_CAMERA_LAYOUT);
+          exp.VRUI.visible = true;
+          exp.VRUI.progress.visible = false;
           exp.VRUI.edit({
             title: 'Instructions',
             instructions: `In each game, you will be briefly shown dots moving inside a circular area.\nAfter watching the dots, a blue section and an orange section will appear on the perimeter of the circle.\n\nYour task: Determine whether there was movement of dots towards the blue or the orange section.`,
@@ -392,15 +399,15 @@ async function main() {
             backButtonState: 'disabled',
             nextButtonState: 'disabled',
           });
-          exp.VRUI.updateProgressBar(1, 4);
         });
         break;
 
       case 'PRETUTORIAL':
         exp.state.once(() => {
           stimulus.usePreset('navigation');
-          exp.VRUI.visible = true;
           exp.sceneManager.setCameraLayout(DEFAULT_CAMERA_LAYOUT);
+          exp.VRUI.visible = true;
+          exp.VRUI.progress.visible = false;
           exp.VRUI.edit({
             title: 'Practice Games',
             instructions: `Play a few games now and practice watching the dots while observing the appearance of the game. Use the controller buttons to interact with the game.\n\nWhen you are ready and comfortable, use the controller in your right hand to start the task.`,
@@ -409,15 +416,15 @@ async function main() {
             backButtonState: 'disabled',
             nextButtonState: 'disabled',
           });
-          exp.VRUI.updateProgressBar(2, 4);
         });
         break;
 
       case 'PREPRACTICE':
         exp.state.once(() => {
           stimulus.usePreset('navigation');
-          exp.VRUI.visible = true;
           exp.sceneManager.setCameraLayout(DEFAULT_CAMERA_LAYOUT);
+          exp.VRUI.visible = true;
+          exp.VRUI.progress.visible = false;
           exp.VRUI.edit({
             title: 'Practice Games',
             instructions: `You will now play another ${
@@ -428,15 +435,15 @@ async function main() {
             backButtonState: 'disabled',
             nextButtonState: 'disabled',
           });
-          exp.VRUI.updateProgressBar(3, 4);
         });
         break;
 
       case 'PREMAIN':
         exp.state.once(() => {
           stimulus.usePreset('navigation');
-          exp.VRUI.visible = true;
           exp.sceneManager.setCameraLayout(DEFAULT_CAMERA_LAYOUT);
+          exp.VRUI.visible = true;
+          exp.VRUI.progress.visible = false;
           exp.VRUI.edit({
             title: 'Instructions',
             instructions: `That concludes all the practice games. You will now play ${
@@ -447,7 +454,6 @@ async function main() {
             backButtonState: 'disabled',
             nextButtonState: 'disabled',
           });
-          exp.VRUI.updateProgressBar(4, 4);
         });
         break;
 
