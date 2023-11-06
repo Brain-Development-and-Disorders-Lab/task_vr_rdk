@@ -678,9 +678,6 @@ async function main() {
           }
         } else {
           exp.complete();
-
-          // Clean up
-          taskGroup.visible = false;
           exp.state.next('DONE');
         }
         break;
@@ -690,6 +687,8 @@ async function main() {
           break;
         }
         exp.state.once(function () {
+          stimulus.usePreset('default');
+          exp.VRUI.visible = true;
           exp.VRUI.edit({
             title: 'Complete',
             instructions: `The game is now complete. Thank you for your participation!`,
