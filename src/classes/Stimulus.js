@@ -189,6 +189,7 @@ class Stimulus {
       // Hide the dots
       this._components.dots.forEach((dot) => {
         dot.setActive(false);
+        dot.resetPosition();
       });
     }
 

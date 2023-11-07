@@ -8,6 +8,7 @@ class Dot {
   x;
   y;
   z;
+  initialPosition;
 
   // Dot parameters
   type;
@@ -35,6 +36,7 @@ class Dot {
     this.x = x;
     this.y = y;
     this.z = z;
+    this.initialPosition = new Vector3(x, y, z);
 
     // Unpack parameters
     this.type = parameters.type;
@@ -76,7 +78,10 @@ class Dot {
   }
 
   setPosition(x, y, z) {
-    this.dot.position.set(new Vector3(x, y, z));
+    this.x = x;
+    this.y = y;
+    this.z = z;
+    this.dot.position.set(x, y, z);
   }
 
   /**
@@ -98,6 +103,14 @@ class Dot {
   setActive(active) {
     this.active = active;
     this.dot.visible = this.active;
+  }
+
+  resetPosition() {
+    this.setPosition(
+      this.initialPosition.x,
+      this.initialPosition.y,
+      this.initialPosition.z
+    );
   }
 
   /**
@@ -147,9 +160,7 @@ class Dot {
         Math.sqrt(x ** 2 + y ** 2) <= this.apertureRadius + this.radius / 2;
 
       // Apply the updated dot position
-      this.x = x;
-      this.y = y;
-      this.dot.position.set(this.x, this.y, this.z);
+      this.setPosition(x, y, this.z);
     }
   }
 }
