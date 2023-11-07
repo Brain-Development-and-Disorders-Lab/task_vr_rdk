@@ -43,8 +43,8 @@ class Dot {
     this.direction = parameters.direction;
     this.apertureRadius = parameters.apertureRadius;
 
-    // Dot is within the aperture bounds or not
-    this.reset = false;
+    this.reset = false; // Dot is within the aperture bounds or not
+    this.active = true; // Activate the 'step' function and visibility
   }
 
   /**
@@ -95,16 +95,21 @@ class Dot {
     return this.dot;
   }
 
+  setActive(active) {
+    this.active = active;
+    this.dot.visible = this.active;
+  }
+
   /**
    * Generic step method that is called sixty times per second
    * @param {number} frameCount the number of elapsed frames
    */
   step(frameCount) {
-    if (this.dot) {
+    if (this.dot && this.active) {
       let x = this.x;
       let y = this.y;
 
-      if (this.type === 'random' && frameCount % 6 === 0) {
+      if (this.type === 'random' && frameCount % 10 === 0) {
         // Adjust the direction
         const delta = Math.random();
         if (delta > 0.5) {
