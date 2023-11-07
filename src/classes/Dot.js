@@ -8,6 +8,7 @@ class Dot {
   x;
   y;
   z;
+  initialPosition;
 
   // Dot parameters
   type;
@@ -35,6 +36,7 @@ class Dot {
     this.x = x;
     this.y = y;
     this.z = z;
+    this.initialPosition = new Vector3(x, y, z);
 
     // Unpack parameters
     this.type = parameters.type;
@@ -43,8 +45,8 @@ class Dot {
     this.direction = parameters.direction;
     this.apertureRadius = parameters.apertureRadius;
 
-    // Dot is within the aperture bounds or not
-    this.reset = false;
+    this.reset = false; // Dot is within the aperture bounds or not
+    this.active = true; // Activate the 'step' function and visibility
   }
 
   /**
@@ -76,7 +78,10 @@ class Dot {
   }
 
   setPosition(x, y, z) {
-    this.dot.position.set(new Vector3(x, y, z));
+    this.x = x;
+    this.y = y;
+    this.z = z;
+    this.dot.position.set(x, y, z);
   }
 
   /**
@@ -95,16 +100,29 @@ class Dot {
     return this.dot;
   }
 
+  setActive(active) {
+    this.active = active;
+    this.dot.visible = this.active;
+  }
+
+  resetPosition() {
+    this.setPosition(
+      this.initialPosition.x,
+      this.initialPosition.y,
+      this.initialPosition.z
+    );
+  }
+
   /**
    * Generic step method that is called sixty times per second
    * @param {number} frameCount the number of elapsed frames
    */
   step(frameCount) {
-    if (this.dot) {
+    if (this.dot && this.active) {
       let x = this.x;
       let y = this.y;
 
-      if (this.type === 'random' && frameCount % 6 === 0) {
+      if (this.type === 'random' && frameCount % 10 === 0) {
         // Adjust the direction
         const delta = Math.random();
         if (delta > 0.5) {
@@ -142,9 +160,7 @@ class Dot {
         Math.sqrt(x ** 2 + y ** 2) <= this.apertureRadius + this.radius / 2;
 
       // Apply the updated dot position
-      this.x = x;
-      this.y = y;
-      this.dot.position.set(this.x, this.y, this.z);
+      this.setPosition(x, y, this.z);
     }
   }
 }

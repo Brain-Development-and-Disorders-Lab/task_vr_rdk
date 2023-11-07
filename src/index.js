@@ -40,6 +40,7 @@ async function main() {
     audio: true,
     taskPosition: new Vector3(0, 1.6, -VIEW_DISTANCE * VIEW_SCALE),
     cameraLayout: 2,
+    cameraFixed: true,
 
     // Frame and rendering count
     frameCount: 0,
@@ -54,10 +55,10 @@ async function main() {
     confidenceGap: 2,
 
     // Trial structure, n: number of repetitions (n * 2)
-    numTutorialTrials: 5, // 10
-    numPracticeTrials: 5, // 10
-    numCalibrationTrials: 60, // 120
-    numMainTrials: 100, // 200
+    numTutorialTrials: 5, // 5 (10)
+    numPracticeTrials: 5, // 5 (10)
+    numCalibrationTrials: 60, // 60 (120)
+    numMainTrials: 100, // 100 (200)
 
     // Trial durations
     fixationDuration: 1.0, // seconds
@@ -100,6 +101,12 @@ async function main() {
   const taskGroup = new Group();
   taskGroup.position.copy(exp.cfg.taskPosition);
   exp.sceneManager.scene.add(taskGroup);
+
+  // Fix the camera to the task if
+  if (exp.cfg.cameraFixed === true) {
+    exp.sceneManager.camera.attach(exp.VRUI); // UI
+    exp.sceneManager.camera.attach(taskGroup); // Task
+  }
 
   /**
    * Create 'Stimulus' presets
@@ -477,7 +484,7 @@ async function main() {
            * 'main'-type operations
            */
           if (trial.block.name === 'main') {
-            if (trial.block.trial === 0) {
+            if (trial.block.repetition === 0 && trial.block.trial === 0) {
               let trials = d3.filter(
                 data,
                 (t) => t.block.name === 'calibration'
@@ -487,7 +494,7 @@ async function main() {
                 // This allows us to test with fewer calibration trials
                 trials = _.takeRight(trials, 20);
               }
-              let kArray = d3.map(data, (d) => d.coherence);
+              let kArray = d3.map(trials, (d) => d.coherence);
               let kMedian = d3.median(kArray);
               if (kMedian > 0.5) {
                 kMedian = 0.5;

@@ -29,7 +29,8 @@ const APERTURE_RADIUS = 4; // degrees
 const FIXATION_RADIUS = 0.1; // degrees
 const DOT_RADIUS = 0.03; // degrees
 const DOT_OFFSET = 0.25; // units
-const DOT_VELOCITY = 2 / REFRESH_RATE;
+const DOT_VELOCITY = 2.0 / REFRESH_RATE; // degrees
+const DOT_COUNT = 20 ** 2;
 
 /**
  * Stimulus class used to interface with the renderer class and generate the aperture
@@ -60,8 +61,8 @@ class Stimulus {
       reference: false,
       dots: {
         visible: false,
-        coherence: 0.0,
-        direction: 0.0,
+        coherence: 0.5,
+        direction: Math.PI,
       },
       ui: {
         confidence: false,
@@ -86,7 +87,7 @@ class Stimulus {
         left: this._addLeftArc(),
         right: this._addRightArc(),
       },
-      dots: this._addDots(),
+      dots: this._addDots(0.5, Math.PI),
       ui: {
         confidence: this._addConfidenceText(),
         response: this._addResponseButtons(),
@@ -176,14 +177,20 @@ class Stimulus {
 
     // Dots (composite components)
     if (this._parameters.dots.visible === true) {
+      // Update dot coherence and direction
+      this._setDotCoherence(this._parameters.dots.coherence);
+      this._setDotDirection(this._parameters.dots.direction);
+
       // Show the dots
-      this._components.dots = this._addDots(
-        this._parameters.dots.coherence,
-        this._parameters.dots.direction
-      );
+      this._components.dots.forEach((dot) => {
+        dot.setActive(true);
+      });
     } else {
       // Hide the dots
-      this._clearAnimated();
+      this._components.dots.forEach((dot) => {
+        dot.setActive(false);
+        dot.resetPosition();
+      });
     }
 
     // Text
@@ -275,47 +282,6 @@ class Stimulus {
     );
   }
 
-  /**
-   * Create the arrays of dots seen in each stimuli
-   */
-  _addDots(coherence, referenceDirection) {
-    const dotCount = 20 ** 2;
-    const dotRowCount = Math.floor(Math.sqrt(dotCount));
-    const apertureRadius = this.distance * Math.tan(APERTURE_RADIUS);
-    for (let i = -dotRowCount / 2; i < dotRowCount / 2; i++) {
-      for (let j = -dotRowCount / 2; j < dotRowCount / 2; j++) {
-        const delta = Math.random();
-        const x =
-          (i * apertureRadius * 2) / dotRowCount +
-          (delta * apertureRadius * 2) / dotRowCount;
-        const y =
-          (j * apertureRadius * 2) / dotRowCount +
-          (delta * apertureRadius * 2) / dotRowCount;
-
-        if (delta > coherence) {
-          // Non-dynamic dot that is just moving in random paths
-          const dot = new Dot(x, y, -this.distance - DOT_OFFSET, {
-            type: 'random',
-            radius: this.distance * Math.tan(DOT_RADIUS),
-            velocity: DOT_VELOCITY,
-            direction: 2 * Math.PI * Math.random(),
-            apertureRadius: apertureRadius,
-          });
-          this._createDot(dot, true);
-        } else {
-          const dot = new Dot(x, y, -this.distance - DOT_OFFSET, {
-            type: 'reference',
-            radius: this.distance * Math.tan(DOT_RADIUS),
-            velocity: DOT_VELOCITY,
-            direction: referenceDirection,
-            apertureRadius: apertureRadius,
-          });
-          this._createDot(dot, true);
-        }
-      }
-    }
-  }
-
   _addConfidenceText(fill = 'black') {
     return this._createConfidenceText(
       0,
@@ -346,6 +312,79 @@ class Stimulus {
       0.4,
       0.8
     ).translateY(-1.6);
+  }
+
+  /**
+   * Create the arrays of dots seen in each stimuli
+   */
+  _addDots(initialCoherence, initialDirection) {
+    const dots = [];
+    const dotRowCount = Math.floor(Math.sqrt(DOT_COUNT));
+    const apertureRadius = this.distance * Math.tan(APERTURE_RADIUS);
+    for (let i = -dotRowCount / 2; i < dotRowCount / 2; i++) {
+      for (let j = -dotRowCount / 2; j < dotRowCount / 2; j++) {
+        const delta = Math.random();
+        const x =
+          (i * apertureRadius * 2) / dotRowCount +
+          (delta * apertureRadius * 2) / dotRowCount;
+        const y =
+          (j * apertureRadius * 2) / dotRowCount +
+          (delta * apertureRadius * 2) / dotRowCount;
+
+        if (delta > initialCoherence) {
+          // Non-dynamic dot that is just moving in random paths
+          const dot = new Dot(x, y, -this.distance - DOT_OFFSET, {
+            type: 'random',
+            radius: this.distance * Math.tan(DOT_RADIUS),
+            velocity: DOT_VELOCITY,
+            direction: 2 * Math.PI * Math.random(),
+            apertureRadius: apertureRadius,
+          });
+          this._createDot(dot, true);
+          dots.push(dot);
+        } else {
+          const dot = new Dot(x, y, -this.distance - DOT_OFFSET, {
+            type: 'reference',
+            radius: this.distance * Math.tan(DOT_RADIUS),
+            velocity: DOT_VELOCITY,
+            direction: initialDirection,
+            apertureRadius: apertureRadius,
+          });
+          this._createDot(dot, true);
+          dots.push(dot);
+        }
+      }
+    }
+    return dots;
+  }
+
+  _setDotCoherence(coherence) {
+    // Update the coherence of the dots by modifying the number
+    // of 'random' vs. 'reference' dots
+    this._components.dots.forEach((dot) => {
+      if (Math.random() > coherence) {
+        dot.type = 'random';
+      } else {
+        dot.type = 'reference';
+      }
+    });
+  }
+
+  _setDotDirection(direction) {
+    // Set the direction of all reference dots
+    this._components.dots.forEach((dot) => {
+      if (dot.type === 'reference') {
+        dot.direction = direction;
+      } else {
+        // Adjust 'random' dot direction
+        const delta = Math.random();
+        if (delta > 0.5) {
+          dot.direction -= (Math.PI / 8) * delta;
+        } else {
+          dot.direction += (Math.PI / 8) * delta;
+        }
+      }
+    });
   }
 
   /**
