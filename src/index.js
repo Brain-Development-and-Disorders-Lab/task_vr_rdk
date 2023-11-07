@@ -484,7 +484,7 @@ async function main() {
            * 'main'-type operations
            */
           if (trial.block.name === 'main') {
-            if (trial.block.trial === 0) {
+            if (trial.block.repetition === 0 && trial.block.trial === 0) {
               let trials = d3.filter(
                 data,
                 (t) => t.block.name === 'calibration'
@@ -494,7 +494,7 @@ async function main() {
                 // This allows us to test with fewer calibration trials
                 trials = _.takeRight(trials, 20);
               }
-              let kArray = d3.map(data, (d) => d.coherence);
+              let kArray = d3.map(trials, (d) => d.coherence);
               let kMedian = d3.median(kArray);
               if (kMedian > 0.5) {
                 kMedian = 0.5;
