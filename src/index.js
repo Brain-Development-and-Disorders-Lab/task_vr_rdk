@@ -15,7 +15,13 @@ import _ from 'lodash';
 // Visual constants
 const VIEW_DISTANCE = 2.0;
 const VIEW_SCALE = 3.0;
+const LEFT_CAMERA_LAYOUT = 0;
+const RIGHT_CAMERA_LAYOUT = 1;
 const DEFAULT_CAMERA_LAYOUT = 2;
+
+// Experiment constants
+const DEFAULT_BLOCK_SIZE = 5;
+const DEFAULT_BLOCK_LENGTH = 10;
 
 /*
  * Main function contains all experiment logic
@@ -55,9 +61,17 @@ async function main() {
     confidenceGap: 2,
 
     // Trial structure, n: number of repetitions (n * 2)
-    numTutorialTrials: 5, // 5 (10)
-    numPracticeTrials: 5, // 5 (10)
-    numCalibrationTrials: 60, // 60 (120)
+    // 'tutorial'-type block
+    tutorialBlockLength: DEFAULT_BLOCK_SIZE, // 5 (10)
+    tutorialTotalLength: DEFAULT_BLOCK_LENGTH, // 10 (20)
+
+    practiceBlockLength: DEFAULT_BLOCK_SIZE, // 5 (10)
+    practiceTotalLength: DEFAULT_BLOCK_LENGTH, // 5 (10)
+
+    // 'calibration'-type block
+    calibrationBlockLength: DEFAULT_BLOCK_SIZE, // 5 (10)
+    calibrationTotalLength: 60, // 60 (120)
+
     numMainTrials: 100, // 100 (200)
 
     // Trial durations
@@ -170,50 +184,189 @@ async function main() {
   };
   const stimulus = new Stimulus(taskGroup, VIEW_DISTANCE, presets);
 
+  /**
+   * Calculate the coherence values from a set of trials
+   */
+  function calculateCoherences(trials, coherenceType) {
+    // Generate the array of coherence values
+    let kArray;
+    if (coherenceType === 'left') {
+      kArray = d3.map(trials, (d) => d.coherences.left[0]);
+    } else if (coherenceType === 'right') {
+      kArray = d3.map(trials, (d) => d.coherences.right[0]);
+    } else {
+      kArray = d3.map(trials, (d) => d.coherences.combined[0]);
+    }
+
+    // Calculate and cap the median if required
+    let kMedian = d3.median(kArray);
+    if (kMedian > 0.5) {
+      kMedian = 0.5;
+    } else if (kMedian < 0.12) {
+      kMedian = 0.12;
+    }
+
+    return [kMedian * 0.5, kMedian * 2.0];
+  }
+
+  /**
+   * Create block sequence
+   */
+  function generateSequence(type, blockSize, totalSize) {
+    const blocks = [];
+
+    // Calculate the number of blocks to generate
+    const repeats = totalSize / (blockSize * 2);
+    for (let i = 0; i < repeats; i++) {
+      if (type === 'tutorial') {
+        blocks.push(
+          new Block({
+            variables: {
+              coherence: 0.3,
+              coherences: {
+                left: [0.3, 0.6],
+                right: [0.3, 0.6],
+                combined: [0.3, 0.6],
+              },
+              showFeedback: false,
+              cameraLayout: LEFT_CAMERA_LAYOUT,
+            },
+            options: {
+              name: type,
+              reps: blockSize,
+            },
+          }),
+          new Block({
+            variables: {
+              coherence: 0.3,
+              coherences: {
+                left: [0.3, 0.6],
+                right: [0.3, 0.6],
+                combined: [0.3, 0.6],
+              },
+              showFeedback: false,
+              cameraLayout: RIGHT_CAMERA_LAYOUT,
+            },
+            options: {
+              name: type,
+              reps: blockSize,
+            },
+          })
+        );
+      } else if (type === 'practice') {
+        blocks.push(
+          new Block({
+            variables: {
+              coherence: 0.3,
+              coherences: {
+                left: [0.3, 0.6],
+                right: [0.3, 0.6],
+                combined: [0.3, 0.6],
+              },
+              showFeedback: true,
+              cameraLayout: LEFT_CAMERA_LAYOUT,
+            },
+            options: {
+              name: type,
+              reps: blockSize,
+            },
+          }),
+          new Block({
+            variables: {
+              coherence: 0.3,
+              coherences: {
+                left: [0.3, 0.6],
+                right: [0.3, 0.6],
+                combined: [0.3, 0.6],
+              },
+              showFeedback: true,
+              cameraLayout: RIGHT_CAMERA_LAYOUT,
+            },
+            options: {
+              name: type,
+              reps: blockSize,
+            },
+          })
+        );
+      } else if (type === 'calibration') {
+        // 'calibration'-type trials
+        // Add a pair of blocks, one left-eye, one right-eye
+        blocks.push(
+          new Block({
+            variables: {
+              coherence: 0.2,
+              coherences: {
+                left: [0.2, 0.2],
+                right: [0.2, 0.2],
+                combined: [0.2, 0.2],
+              },
+              showFeedback: false,
+              cameraLayout: LEFT_CAMERA_LAYOUT,
+            },
+            options: {
+              name: type,
+              reps: blockSize,
+            },
+          }),
+          new Block({
+            variables: {
+              coherence: 0.2,
+              coherences: {
+                left: [0.2, 0.2],
+                right: [0.2, 0.2],
+                combined: [0.2, 0.2],
+              },
+              showFeedback: false,
+              cameraLayout: RIGHT_CAMERA_LAYOUT,
+            },
+            options: {
+              name: type,
+              reps: blockSize,
+            },
+          })
+        );
+      } else {
+        console.warn('Unknown sequence type:', type);
+      }
+    }
+
+    // Return the shuffled list of blocks
+    return _.shuffle(blocks);
+  }
+
+  // 'tutorial'-type trials
+  let tutorialBlocks = generateSequence(
+    'tutorial',
+    exp.cfg.tutorialBlockLength,
+    exp.cfg.tutorialTotalLength
+  );
+  // 'practice'-type trials
+  let practiceBlocks = generateSequence(
+    'practice',
+    exp.cfg.practiceBlockLength,
+    exp.cfg.practiceTotalLength
+  );
+  // 'calibration'-type trials
+  let calibrationBlocks = generateSequence(
+    'calibration',
+    exp.cfg.calibrationBlockLength,
+    exp.cfg.calibrationTotalLength
+  );
+
   /*
    * Create trial sequence
    */
   exp.createTrialSequence([
+    ...tutorialBlocks, // 'tutorial'-type trials
+    ...practiceBlocks, // 'practice'-type trials
+    ...calibrationBlocks, // 'calibration'-type trials
     new Block({
       variables: {
-        coherence: 0.3,
-        coherences: [0.3, 0.6],
-        showFeedback: false,
-        cameraLayout: DEFAULT_CAMERA_LAYOUT,
-      },
-      options: {
-        name: 'tutorial',
-        reps: exp.cfg.numTutorialTrials,
-      },
-    }),
-    new Block({
-      variables: {
-        coherence: 0.3,
-        coherences: [0.3, 0.6],
-        showFeedback: true,
-        cameraLayout: DEFAULT_CAMERA_LAYOUT,
-      },
-      options: {
-        name: 'practice',
-        reps: exp.cfg.numPracticeTrials,
-      },
-    }),
-    new Block({
-      variables: {
-        coherence: 0.2,
-        coherences: [0.2, 0.2],
-        showFeedback: false,
-        cameraLayout: DEFAULT_CAMERA_LAYOUT,
-      },
-      options: {
-        name: 'calibration',
-        reps: exp.cfg.numCalibrationTrials,
-      },
-    }),
-    new Block({
-      variables: {
-        coherence: 0.2,
-        coherences: [0.2, 0.2],
+        coherences: {
+          left: [0.2, 0.2],
+          right: [0.2, 0.2],
+          combined: [0.2, 0.2],
+        },
         showFeedback: false,
         cameraLayout: DEFAULT_CAMERA_LAYOUT,
       },
@@ -314,6 +467,7 @@ async function main() {
               trial.data.referenceSelection = 'right';
               trial.data.correct = trial.referenceDirection === 0 ? 1 : 0;
             }
+
             // Clear graphics and proceed to next state
             stimulus.reset();
             if (trial.showFeedback) {
@@ -485,7 +639,7 @@ async function main() {
           exp.VRUI.edit({
             title: 'Instructions',
             instructions: `That concludes all the practice games. You will now play ${
-              (exp.cfg.numCalibrationTrials + exp.cfg.numMainTrials) * 2
+              (exp.cfg.calibrationTotalLength + exp.cfg.numMainTrials) * 2
             } games.\nYou will not be shown if you answered correctly or not, and you will be asked to rate your confidence after some of the games.\n\nWhen you are ready and comfortable, use the controller in your right hand to start the task.`,
             interactive: false,
             buttons: false,
@@ -498,68 +652,163 @@ async function main() {
       case 'START':
         exp.state.once(() => {
           exp.VRUI.visible = false;
+          // Store the previous trial type and camera layout
+          let lastTrialType = 'none';
+          let lastCameraLayout = LEFT_CAMERA_LAYOUT;
+          if (trial.block) {
+            lastTrialType = trial.block.name;
+            lastCameraLayout = trial.cameraLayout;
+          }
+
           // Copy and instantiate the 'trial' object
           trial = structuredClone(exp.trials[exp.trialNumber]);
           trial.trialNumber = exp.trialNumber;
           trial.startTime = performance.now();
           trial.referenceDirection = Math.random() > 0.5 ? Math.PI : 0;
 
-          // Assign coherence to the trial
-          if (data.length > 0) {
-            let lastTrial = data[data.length - 1];
-            trial.coherence = lastTrial.coherence;
-            trial.coherences = lastTrial.coherences;
-          }
-
           /**
-           * 'main'-type operations
+           * 'tutorial' and 'practice'-type operations
            */
-          if (trial.block.name === 'main') {
-            if (trial.block.repetition === 0 && trial.block.trial === 0) {
-              let trials = d3.filter(
-                data,
-                (t) => t.block.name === 'calibration'
-              );
-              if (exp.cfg.numCalibrationTrials > 20) {
-                // If we have more than 20 calibration trials, take the median from the last 20
-                // This allows us to test with fewer calibration trials
-                trials = _.takeRight(trials, 20);
-              }
-              let kArray = d3.map(trials, (d) => d.coherence);
-              let kMedian = d3.median(kArray);
-              if (kMedian > 0.5) {
-                kMedian = 0.5;
-              } else if (kMedian < 0.12) {
-                kMedian = 0.12;
-              }
-              trial.coherences = [kMedian * 0.5, kMedian * 2.0];
+          if (['tutorial', 'practice'].includes(trial.block.name)) {
+            // Select coherences randomly
+            if (trial.cameraLayout === LEFT_CAMERA_LAYOUT) {
+              trial.coherence =
+                trial.coherences.left[Math.random() > 0.5 ? 0 : 1];
+            } else {
+              trial.coherence =
+                trial.coherences.right[Math.random() > 0.5 ? 0 : 1];
             }
-            // Select a coherence
-            trial.coherence = trial.coherences[Math.random() > 0.5 ? 0 : 1];
           }
 
           /**
            * 'calibration'-type operations
+           * The updating of coherence values is performed AFTER all 'calibration'-type trials,
+           * regardless of the current trial type. The coherence values need to be updated
+           * prior to calculating the median coherences for the first 'main'-type trial.
            */
-          if (trial.block.name === 'calibration') {
-            // Update the coherence of the current trial based on the outcome
-            // of up to the last two trials
+          if (lastTrialType === 'calibration') {
+            // Note: 'calibration'-type trials do not have a 'harder' or 'easier' coherence
+            // Store the overall 'coherence' value, not specific to each eye
             let trials = d3.filter(data, (t) => t.block.name === 'calibration');
             if (trials.length > 0) {
-              let lastTrial = trials[trials.length - 1];
-              if (lastTrial.data.correct === 0) {
+              trial.coherences = _.cloneDeep(data[data.length - 1].coherences);
+              if (trials[trials.length - 1].data.correct === 0) {
                 // If last answer was incorrect, increase the coherence
-                trial.coherence = trial.coherence + 0.01;
+                trial.coherences.combined = [
+                  parseFloat((trial.coherences.combined[0] + 0.01).toFixed(2)),
+                  parseFloat((trial.coherences.combined[0] + 0.01).toFixed(2)),
+                ];
               } else if (trials.length > 1) {
                 // If the previous two answers were correct, decrease the coherence
-                let a = lastTrial;
+                let a = trials[trials.length - 1];
                 let b = trials[trials.length - 2];
-                if (a.data.correct === 1 && b.data.correct === 1) {
-                  trial.coherence = trial.coherence - 0.01;
+                if (
+                  a.data.correct === 1 &&
+                  b.data.correct === 1 &&
+                  a.coherence === b.coherence
+                ) {
+                  trial.coherences.combined = [
+                    parseFloat(
+                      (trial.coherences.combined[0] - 0.01).toFixed(2)
+                    ),
+                    parseFloat(
+                      (trial.coherences.combined[0] - 0.01).toFixed(2)
+                    ),
+                  ];
+                }
+              }
+            }
+
+            // Get the last 'calibration'-type trials with the same camera
+            trials = d3.filter(trials, (t) => {
+              return t.cameraLayout === lastCameraLayout;
+            });
+            if (trials.length > 0) {
+              if (trials[trials.length - 1].data.correct === 0) {
+                // If last answer was incorrect, increase the coherence
+                if (lastCameraLayout === LEFT_CAMERA_LAYOUT) {
+                  trial.coherences.left = [
+                    parseFloat((trial.coherences.left[0] + 0.01).toFixed(2)),
+                    parseFloat((trial.coherences.left[0] + 0.01).toFixed(2)),
+                  ];
+                } else {
+                  trial.coherences.right = [
+                    parseFloat((trial.coherences.right[0] + 0.01).toFixed(2)),
+                    parseFloat((trial.coherences.right[0] + 0.01).toFixed(2)),
+                  ];
+                }
+              } else if (trials.length > 1) {
+                // If the previous two answers were correct, decrease the coherence
+                let a = trials[trials.length - 1];
+                let b = trials[trials.length - 2];
+                if (
+                  a.data.correct === 1 &&
+                  b.data.correct === 1 &&
+                  a.coherence === b.coherence
+                ) {
+                  if (lastCameraLayout === LEFT_CAMERA_LAYOUT) {
+                    trial.coherences.left = [
+                      parseFloat((trial.coherences.left[0] - 0.01).toFixed(2)),
+                      parseFloat((trial.coherences.left[0] - 0.01).toFixed(2)),
+                    ];
+                  } else {
+                    trial.coherences.right = [
+                      parseFloat((trial.coherences.right[0] - 0.01).toFixed(2)),
+                      parseFloat((trial.coherences.right[0] - 0.01).toFixed(2)),
+                    ];
+                  }
                 }
               }
             }
           }
+
+          /**
+           * 'main'-type operations
+           * If this is the first 'main'-type trial, calculate the median coherences from the
+           * previous 'calibration'-type trials. Otherwise, copy the coherence values from the
+           * previous 'main'-type trial.
+           */
+          if (trial.block.name === 'main') {
+            if (lastTrialType === 'calibration') {
+              // Retrieve all 'calibration'-type trials
+              let trials = d3.filter(
+                data,
+                (t) => t.block.name === 'calibration'
+              );
+
+              // Group trials by left and right layouts
+              let leftTrials = d3.filter(
+                trials,
+                (t) => t.cameraLayout === LEFT_CAMERA_LAYOUT
+              );
+              let rightTrials = d3.filter(
+                trials,
+                (t) => t.cameraLayout === RIGHT_CAMERA_LAYOUT
+              );
+
+              if (exp.cfg.calibrationTotalLength > 20) {
+                // If we have more than 20 calibration trials, take the median from the last 20
+                // This allows us to test with fewer calibration trials
+                trials = _.takeRight(trials, 20);
+                leftTrials = _.takeRight(leftTrials, 20);
+                rightTrials = _.takeRight(rightTrials, 20);
+              }
+
+              // Calculate the median coherences from the multiple staircases
+              trial.coherences.left = calculateCoherences(leftTrials, 'left');
+              trial.coherences.right = calculateCoherences(
+                rightTrials,
+                'right'
+              );
+              trial.coherences.combined = calculateCoherences(
+                trials,
+                'combined'
+              );
+            } else {
+              trial.coherences = _.cloneDeep(data[data.length - 1].coherences);
+            }
+          }
+
           // Create the 'trial.data' structure
           trial.data = {
             confidenceSelection: null,
@@ -603,6 +852,17 @@ async function main() {
       case 'MOTION':
         exp.state.once(() => {
           exp.VRUI.visible = false;
+
+          // Select 'difficulty' of the coherence value used
+          const difficulty = Math.random() > 0.5 ? 0 : 1;
+          if (trial.cameraLayout === LEFT_CAMERA_LAYOUT) {
+            // Left eye coherence
+            trial.coherence = trial.coherences.left[difficulty];
+          } else {
+            // Right eye coherence
+            trial.coherence = trial.coherences.right[difficulty];
+          }
+
           // Construct 'MOTION'-type stimulus
           stimulus.setParameters({
             background: true,
