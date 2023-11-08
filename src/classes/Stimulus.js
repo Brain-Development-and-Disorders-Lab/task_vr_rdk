@@ -287,7 +287,7 @@ class Stimulus {
       0,
       0,
       -this.distance,
-      `Between the last two trials, did you feel more confident about your response to the last trial (1 trial ago), or the trial prior to it (2 trials ago)?`,
+      `Between the last two trials, did you feel more confident about your response to the last trial (1 trial ago), or the trial prior to that (2 trials ago)?`,
       fill
     );
   }
@@ -581,13 +581,14 @@ class Stimulus {
       fontFamily: FontJSON,
       fontTexture: FontImage,
       backgroundOpacity: 0,
+      backgroundColor: new Color('white'),
     });
     confidenceContainer.position.set(x, y, z);
     this.target.add(confidenceContainer);
 
     const descriptionContainer = new Block({
       height: 0.8,
-      width: 2.8,
+      width: 3.0,
       margin: 0.02,
       padding: 0.04,
       borderRadius: 0.04,
@@ -595,7 +596,7 @@ class Stimulus {
       fontSize: 0.07,
       bestFit: 'auto',
       fontColor: new Color('black'),
-      backgroundColor: new Color(0xededed),
+      backgroundColor: new Color('white'),
     });
     descriptionContainer.add(
       new Text({
@@ -605,8 +606,8 @@ class Stimulus {
     confidenceContainer.add(descriptionContainer);
 
     const actionButtons = this._createActionButtons(
-      `Prior trial\n(Press X)`,
-      `Last trial\n(Press A)`,
+      `2 trials ago\n(Press X)`,
+      `1 trial ago\n(Press A)`,
       0.6,
       0.8
     );
