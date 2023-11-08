@@ -303,10 +303,10 @@ async function main() {
           if (responseInput.includes(event.key)) {
             // Valid input was received, store responses and outcome
             if (event.key === exp.cfg.input.left) {
-              trial.data.response = 'left';
+              trial.data.referenceSelection = 'left';
               trial.data.correct = trial.referenceDirection === Math.PI ? 1 : 0;
             } else {
-              trial.data.response = 'right';
+              trial.data.referenceSelection = 'right';
               trial.data.correct = trial.referenceDirection === 0 ? 1 : 0;
             }
             // Clear graphics and proceed to next state
@@ -321,11 +321,11 @@ async function main() {
         case 'CONFIDENCE':
           const confidenceInput = [exp.cfg.input.left, exp.cfg.input.right];
           if (confidenceInput.includes(event.key)) {
-            if (event.key === exp.cfg.input.right) {
-              trial.data.confidence = 1;
+            if (event.key === exp.cfg.input.left) {
+              trial.data.confidenceSelection = 'left';
               exp.state.next('FINISH');
             } else {
-              trial.data.confidence = 0;
+              trial.data.confidenceSelection = 'right';
               exp.state.next('FINISH');
             }
           }
@@ -531,8 +531,12 @@ async function main() {
           }
           // Create the 'trial.data' structure
           trial.data = {
-            response: null,
-            correct: 0,
+            referenceSelection: null,
+            correct: 0, // 0: incorrect, 1: correct
+            confidenceSelection: null,
+            confidenceRT: 0,
+            referenceRT: 0,
+            trialRT: 0,
           };
 
           // Setup the cameras
@@ -756,7 +760,7 @@ async function main() {
     tweenUpdate();
     exp.VRUI.updateUI();
 
-    // Execute the "step()" function on all animated components
+    // Execute the 'step()' function on all animated components
     stimulus.getAnimated().forEach((element) => {
       element.step(exp.cfg.frameCount);
     });
