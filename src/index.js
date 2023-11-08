@@ -301,6 +301,11 @@ async function main() {
         case 'RESPONSE':
           const responseInput = [exp.cfg.input.left, exp.cfg.input.right];
           if (responseInput.includes(event.key)) {
+            // Handle RT calculation
+            timings.referenceRT.end = performance.now();
+            trial.data.referenceRT =
+              timings.referenceRT.end - timings.referenceRT.start;
+
             // Valid input was received, store responses and outcome
             if (event.key === exp.cfg.input.left) {
               trial.data.referenceSelection = 'left';
@@ -321,6 +326,11 @@ async function main() {
         case 'CONFIDENCE':
           const confidenceInput = [exp.cfg.input.left, exp.cfg.input.right];
           if (confidenceInput.includes(event.key)) {
+            // Handle RT calculation
+            timings.confidenceRT.end = performance.now();
+            trial.data.confidenceRT =
+              timings.confidenceRT.end - timings.confidenceRT.start;
+
             if (event.key === exp.cfg.input.left) {
               trial.data.confidenceSelection = 'left';
               exp.state.next('FINISH');
@@ -340,9 +350,24 @@ async function main() {
   let data = [];
 
   /*
-   * You must initialize an empty object called trial
+   * Initialize empty trial object
    */
   let trial = {};
+
+  /**
+   * Initialize structure to manage RTs
+   */
+
+  const timings = {
+    referenceRT: {
+      start: 0,
+      end: 0,
+    },
+    confidenceRT: {
+      start: 0,
+      end: 0,
+    },
+  };
 
   exp.start(calcFunc, stateFunc, displayFunc);
 
@@ -592,6 +617,7 @@ async function main() {
           exp.VRUI.visible = false;
           // Construct 'RESPONSE'-type stimulus
           stimulus.usePreset('response');
+          timings.referenceRT.start = performance.now();
         });
         break;
 
@@ -621,6 +647,7 @@ async function main() {
           exp.VRUI.visible = false;
           // Construct 'CONFIDENCE'-type stimulus
           stimulus.usePreset('confidence');
+          timings.confidenceRT.start = performance.now();
         });
         break;
 
