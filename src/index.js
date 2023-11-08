@@ -303,6 +303,8 @@ async function main() {
           if (responseInput.includes(event.key)) {
             // Handle RT calculation
             timings.referenceRT.end = performance.now();
+            trial.data.referenceStart = timings.referenceRT.start;
+            trial.data.referenceEnd = timings.referenceRT.end;
             trial.data.referenceRT =
               timings.referenceRT.end - timings.referenceRT.start;
 
@@ -328,6 +330,8 @@ async function main() {
           if (confidenceInput.includes(event.key)) {
             // Handle RT calculation
             timings.confidenceRT.end = performance.now();
+            trial.data.confidenceStart = timings.confidenceRT.start;
+            trial.data.confidenceEnd = timings.confidenceRT.end;
             trial.data.confidenceRT =
               timings.confidenceRT.end - timings.confidenceRT.start;
 
@@ -364,6 +368,10 @@ async function main() {
       end: 0,
     },
     confidenceRT: {
+      start: 0,
+      end: 0,
+    },
+    trial: {
       start: 0,
       end: 0,
     },
@@ -556,13 +564,24 @@ async function main() {
           }
           // Create the 'trial.data' structure
           trial.data = {
+            confidenceSelection: null,
             referenceSelection: null,
             correct: 0, // 0: incorrect, 1: correct
-            confidenceSelection: null,
+            // Confidence timings
+            confidenceStart: 0,
+            confidenceEnd: 0,
             confidenceRT: 0,
+            // Reference timings
+            referenceStart: 0,
+            referenceEnd: 0,
             referenceRT: 0,
-            trialRT: 0,
+            // Trial timings
+            trialStart: 0,
+            trialEnd: 0,
           };
+
+          // Start the trial timer
+          timings.trial.start = performance.now();
 
           // Setup the cameras
           exp.sceneManager.setCameraLayout(trial.cameraLayout);
@@ -680,6 +699,10 @@ async function main() {
 
       case 'FINISH':
         exp.state.once(function () {
+          // Handle trial duration calculation
+          timings.trial.end = performance.now();
+          trial.data.trialStart = timings.trial.start;
+          trial.data.trialEnd = timings.trial.end;
           stimulus.reset();
         });
         exp.firebase.saveTrial(trial);
@@ -688,7 +711,7 @@ async function main() {
 
       case 'ADVANCE':
         if (!exp.firebase.saveSuccessful) {
-          break; // wait until firebase save returns successful
+          break;
         } else if (exp.firebase.saveFailed) {
           exp.blocker.fatal(err);
           exp.state.push('BLOCKED');
