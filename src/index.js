@@ -20,8 +20,7 @@ const RIGHT_CAMERA_LAYOUT = 1;
 const DEFAULT_CAMERA_LAYOUT = 2;
 
 // Experiment constants
-const DEFAULT_BLOCK_SIZE = 5;
-const DEFAULT_BLOCK_LENGTH = 10;
+const DEFAULT_BLOCK_SIZE = 10;
 
 /*
  * Main function contains all experiment logic
@@ -60,19 +59,11 @@ async function main() {
     // Experiment behavior
     confidenceGap: 2,
 
-    // Trial structure, n: number of repetitions (n * 2)
-    // 'tutorial'-type block
-    tutorialBlockLength: DEFAULT_BLOCK_SIZE, // 5 (10)
-    tutorialTotalLength: DEFAULT_BLOCK_LENGTH, // 10 (20)
-
-    practiceBlockLength: DEFAULT_BLOCK_SIZE, // 5 (10)
-    practiceTotalLength: DEFAULT_BLOCK_LENGTH, // 5 (10)
-
-    // 'calibration'-type block
-    calibrationBlockLength: DEFAULT_BLOCK_SIZE, // 5 (10)
-    calibrationTotalLength: 60, // 60 (120)
-
-    numMainTrials: 100, // 100 (200)
+    // Number of left-right trial sequences per sequence type (n * 20 trials)
+    numTutorialSequences: 1, // 20
+    numPracticeSequences: 1, // 20
+    numCalibrationSequences: 6, // 120
+    numMainSequences: 10, // 200
 
     // Trial durations
     fixationDuration: 1.0, // seconds
@@ -115,7 +106,7 @@ async function main() {
   taskGroup.position.copy(exp.cfg.taskPosition);
   exp.sceneManager.scene.add(taskGroup);
 
-  // Fix the camera to the task if
+  // Fix the camera to the task if specified
   if (exp.cfg.cameraFixed === true) {
     exp.sceneManager.camera.attach(exp.VRUI); // UI
     exp.sceneManager.camera.attach(taskGroup); // Task
@@ -186,6 +177,9 @@ async function main() {
 
   /**
    * Calculate the coherence values from a set of trials
+   * @param {any[]} trials a collection of trials with coherence values
+   * @param {number} coherenceType one of three types: 'left', 'right', or 'combined'
+   * coherence, referring to monocular or binocular camera layouts
    */
   function calculateCoherences(trials, coherenceType) {
     // Generate the array of coherence values
@@ -210,46 +204,46 @@ async function main() {
   }
 
   /**
-   * Create block sequence
+   * Create shuffled left-right block sequences for types of trials
+   * @param {string} type the type of trial block to generate
+   * @param {number} repetitions the number of repeated left-right blocks, different to
+   * the inbuilt 'reps' parameters
    */
-  function generateSequence(type, blockSize, totalSize) {
+  function generateSequence(type, repetitions) {
     const blocks = [];
-
-    // Calculate the number of blocks to generate
-    const repeats = totalSize / (blockSize * 2);
-    for (let i = 0; i < repeats; i++) {
+    for (let i = 0; i < repetitions; i++) {
       if (type === 'tutorial') {
         blocks.push(
           new Block({
             variables: {
-              coherence: 0.3,
-              coherences: {
+              coherence: Array(DEFAULT_BLOCK_SIZE).fill(0.3),
+              coherences: Array(DEFAULT_BLOCK_SIZE).fill({
                 left: [0.3, 0.6],
                 right: [0.3, 0.6],
                 combined: [0.3, 0.6],
-              },
-              showFeedback: false,
-              cameraLayout: LEFT_CAMERA_LAYOUT,
+              }),
+              showFeedback: Array(DEFAULT_BLOCK_SIZE).fill(false),
+              cameraLayout: Array(DEFAULT_BLOCK_SIZE).fill(LEFT_CAMERA_LAYOUT),
             },
             options: {
-              name: type,
-              reps: blockSize,
+              name: 'tutorial',
+              reps: 1,
             },
           }),
           new Block({
             variables: {
-              coherence: 0.3,
-              coherences: {
+              coherence: Array(DEFAULT_BLOCK_SIZE).fill(0.3),
+              coherences: Array(DEFAULT_BLOCK_SIZE).fill({
                 left: [0.3, 0.6],
                 right: [0.3, 0.6],
                 combined: [0.3, 0.6],
-              },
-              showFeedback: false,
-              cameraLayout: RIGHT_CAMERA_LAYOUT,
+              }),
+              showFeedback: Array(DEFAULT_BLOCK_SIZE).fill(false),
+              cameraLayout: Array(DEFAULT_BLOCK_SIZE).fill(RIGHT_CAMERA_LAYOUT),
             },
             options: {
-              name: type,
-              reps: blockSize,
+              name: 'tutorial',
+              reps: 1,
             },
           })
         );
@@ -257,34 +251,34 @@ async function main() {
         blocks.push(
           new Block({
             variables: {
-              coherence: 0.3,
-              coherences: {
+              coherence: Array(DEFAULT_BLOCK_SIZE).fill(0.3),
+              coherences: Array(DEFAULT_BLOCK_SIZE).fill({
                 left: [0.3, 0.6],
                 right: [0.3, 0.6],
                 combined: [0.3, 0.6],
-              },
-              showFeedback: true,
-              cameraLayout: LEFT_CAMERA_LAYOUT,
+              }),
+              showFeedback: Array(DEFAULT_BLOCK_SIZE).fill(true),
+              cameraLayout: Array(DEFAULT_BLOCK_SIZE).fill(LEFT_CAMERA_LAYOUT),
             },
             options: {
-              name: type,
-              reps: blockSize,
+              name: 'practice',
+              reps: 1,
             },
           }),
           new Block({
             variables: {
-              coherence: 0.3,
-              coherences: {
+              coherence: Array(DEFAULT_BLOCK_SIZE).fill(0.3),
+              coherences: Array(DEFAULT_BLOCK_SIZE).fill({
                 left: [0.3, 0.6],
                 right: [0.3, 0.6],
                 combined: [0.3, 0.6],
-              },
-              showFeedback: true,
-              cameraLayout: RIGHT_CAMERA_LAYOUT,
+              }),
+              showFeedback: Array(DEFAULT_BLOCK_SIZE).fill(true),
+              cameraLayout: Array(DEFAULT_BLOCK_SIZE).fill(RIGHT_CAMERA_LAYOUT),
             },
             options: {
-              name: type,
-              reps: blockSize,
+              name: 'practice',
+              reps: 1,
             },
           })
         );
@@ -294,34 +288,71 @@ async function main() {
         blocks.push(
           new Block({
             variables: {
-              coherence: 0.2,
-              coherences: {
+              coherence: Array(DEFAULT_BLOCK_SIZE).fill(0.2),
+              coherences: Array(DEFAULT_BLOCK_SIZE).fill({
                 left: [0.2, 0.2],
                 right: [0.2, 0.2],
                 combined: [0.2, 0.2],
-              },
-              showFeedback: false,
-              cameraLayout: LEFT_CAMERA_LAYOUT,
+              }),
+              showFeedback: Array(DEFAULT_BLOCK_SIZE).fill(false),
+              cameraLayout: Array(DEFAULT_BLOCK_SIZE).fill(LEFT_CAMERA_LAYOUT),
             },
             options: {
-              name: type,
-              reps: blockSize,
+              name: 'calibration',
+              reps: 1,
             },
           }),
           new Block({
             variables: {
-              coherence: 0.2,
-              coherences: {
+              coherence: Array(DEFAULT_BLOCK_SIZE).fill(0.2),
+              coherences: Array(DEFAULT_BLOCK_SIZE).fill({
                 left: [0.2, 0.2],
                 right: [0.2, 0.2],
                 combined: [0.2, 0.2],
-              },
-              showFeedback: false,
-              cameraLayout: RIGHT_CAMERA_LAYOUT,
+              }),
+              showFeedback: Array(DEFAULT_BLOCK_SIZE).fill(false),
+              cameraLayout: Array(DEFAULT_BLOCK_SIZE).fill(RIGHT_CAMERA_LAYOUT),
             },
             options: {
-              name: type,
-              reps: blockSize,
+              name: 'calibration',
+              reps: 1,
+            },
+          })
+        );
+      } else if (type === 'main') {
+        // 'main'-type trials
+        // Add a pair of blocks, one left-eye, one right-eye
+        blocks.push(
+          new Block({
+            variables: {
+              coherence: Array(DEFAULT_BLOCK_SIZE).fill(0.2),
+              coherences: Array(DEFAULT_BLOCK_SIZE).fill({
+                left: [0.2, 0.2],
+                right: [0.2, 0.2],
+                combined: [0.2, 0.2],
+              }),
+              showFeedback: Array(DEFAULT_BLOCK_SIZE).fill(false),
+              cameraLayout: Array(DEFAULT_BLOCK_SIZE).fill(LEFT_CAMERA_LAYOUT),
+            },
+            options: {
+              name: 'main',
+              reps: 1,
+            },
+          }),
+          new Block({
+            variables: {
+              coherence: Array(DEFAULT_BLOCK_SIZE).fill(0.2),
+              coherences: Array(DEFAULT_BLOCK_SIZE).fill({
+                left: [0.2, 0.2],
+                right: [0.2, 0.2],
+                combined: [0.2, 0.2],
+              }),
+              showFeedback: Array(DEFAULT_BLOCK_SIZE).fill(false),
+              cameraLayout: Array(DEFAULT_BLOCK_SIZE).fill(RIGHT_CAMERA_LAYOUT),
+            },
+            options: {
+              name: 'main',
+              reps: 1,
             },
           })
         );
@@ -334,47 +365,14 @@ async function main() {
     return _.shuffle(blocks);
   }
 
-  // 'tutorial'-type trials
-  let tutorialBlocks = generateSequence(
-    'tutorial',
-    exp.cfg.tutorialBlockLength,
-    exp.cfg.tutorialTotalLength
-  );
-  // 'practice'-type trials
-  let practiceBlocks = generateSequence(
-    'practice',
-    exp.cfg.practiceBlockLength,
-    exp.cfg.practiceTotalLength
-  );
-  // 'calibration'-type trials
-  let calibrationBlocks = generateSequence(
-    'calibration',
-    exp.cfg.calibrationBlockLength,
-    exp.cfg.calibrationTotalLength
-  );
-
   /*
-   * Create trial sequence
+   * Create the experiment trial sequence
    */
   exp.createTrialSequence([
-    ...tutorialBlocks, // 'tutorial'-type trials
-    ...practiceBlocks, // 'practice'-type trials
-    ...calibrationBlocks, // 'calibration'-type trials
-    new Block({
-      variables: {
-        coherences: {
-          left: [0.2, 0.2],
-          right: [0.2, 0.2],
-          combined: [0.2, 0.2],
-        },
-        showFeedback: false,
-        cameraLayout: DEFAULT_CAMERA_LAYOUT,
-      },
-      options: {
-        name: 'main',
-        reps: exp.cfg.numMainTrials,
-      },
-    }),
+    ...generateSequence('tutorial', exp.cfg.numTutorialSequences),
+    ...generateSequence('practice', exp.cfg.numPracticeSequences),
+    ...generateSequence('calibration', exp.cfg.numCalibrationSequences),
+    ...generateSequence('main', exp.cfg.numMainSequences),
   ]);
 
   /**
