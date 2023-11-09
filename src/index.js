@@ -20,7 +20,8 @@ const RIGHT_CAMERA_LAYOUT = 1;
 const DEFAULT_CAMERA_LAYOUT = 2;
 
 // Experiment constants
-const DEFAULT_BLOCK_SIZE = 10;
+const DEFAULT_BLOCK_SIZE = 10; // number of trials per 'block'
+const TIME_MULTIPLER = 1.0; // factor to adjust the length of timings (use for testing)
 
 /*
  * Main function contains all experiment logic
@@ -31,6 +32,7 @@ async function main() {
     devOptions: {
       skipConsent: true,
       orbitControls: false,
+      autoplay: false,
     },
     demo: false,
     noPoints: true,
@@ -66,9 +68,10 @@ async function main() {
     numMainSequences: 10, // 200
 
     // Trial durations
-    fixationDuration: 1.0, // seconds
-    postResponseDuration: 0.25, // seconds
-    feedbackDuration: 0.25, // seconds
+    fixationDuration: 1.0 * TIME_MULTIPLER, // seconds
+    postResponseDuration: 0.25 * TIME_MULTIPLER, // seconds
+    feedbackDuration: 0.25 * TIME_MULTIPLER, // seconds
+    motionDuration: 2.0 * TIME_MULTIPLER, // seconds
   });
 
   /**
@@ -423,6 +426,19 @@ async function main() {
   }
 
   /**
+   * If the autoplayer is enabled, setup keypresses function
+   */
+  if (exp.cfg.devOptions.autoplay) {
+    window.setInterval(() => {
+      window.dispatchEvent(
+        new KeyboardEvent('keyup', {
+          key: Math.random() > 0.5 ? exp.cfg.input.left : exp.cfg.input.right,
+        })
+      );
+    }, 100);
+  }
+
+  /**
    * Bind an event listener to listen for keyboard events
    */
   window.addEventListener('keyup', keyboardInput);
@@ -618,7 +634,7 @@ async function main() {
           exp.VRUI.edit({
             title: 'Practice Games',
             instructions: `You will now play another ${
-              exp.cfg.numPracticeTrials * 2
+              exp.cfg.numPracticeSequences * 2 * DEFAULT_BLOCK_SIZE
             } practice games. You won't have to rate your confidence after each game, but the cross in the center of the circlular area will briefly change color if your answer was correct or not. Green is a correct answer, red is an incorrect answer.\n\nWhen you are ready and comfortable, use the controller in your right hand to start the task.`,
             interactive: false,
             buttons: false,
@@ -637,7 +653,9 @@ async function main() {
           exp.VRUI.edit({
             title: 'Instructions',
             instructions: `That concludes all the practice games. You will now play ${
-              (exp.cfg.calibrationTotalLength + exp.cfg.numMainTrials) * 2
+              (exp.cfg.numCalibrationSequences + exp.cfg.numMainSequences) *
+              2 *
+              DEFAULT_BLOCK_SIZE
             } games.\nYou will not be shown if you answered correctly or not, and you will be asked to rate your confidence after some of the games.\n\nWhen you are ready and comfortable, use the controller in your right hand to start the task.`,
             interactive: false,
             buttons: false,
@@ -784,7 +802,7 @@ async function main() {
                 (t) => t.cameraLayout === RIGHT_CAMERA_LAYOUT
               );
 
-              if (exp.cfg.calibrationTotalLength > 20) {
+              if (exp.cfg.numCalibrationSequences > 1) {
                 // If we have more than 20 calibration trials, take the median from the last 20
                 // This allows us to test with fewer calibration trials
                 trials = _.takeRight(trials, 20);
@@ -881,7 +899,7 @@ async function main() {
         });
 
         // Proceed to the next state upon time expiration
-        if (exp.state.expired(2.0)) {
+        if (exp.state.expired(exp.cfg.motionDuration)) {
           stimulus.reset();
           exp.state.next('RESPONSE');
         }
@@ -980,13 +998,15 @@ async function main() {
           let elapsed = d3.filter(data, (t) => t.block.name === trialType);
           if (
             trialType === 'tutorial' &&
-            elapsed.length === exp.cfg.numTutorialTrials * 2
+            elapsed.length ===
+              exp.cfg.numTutorialSequences * 2 * DEFAULT_BLOCK_SIZE
           ) {
             stimulus.reset();
             exp.state.next('PREPRACTICE');
           } else if (
             trialType === 'practice' &&
-            elapsed.length === exp.cfg.numPracticeTrials * 2
+            elapsed.length ===
+              exp.cfg.numPracticeSequences * 2 * DEFAULT_BLOCK_SIZE
           ) {
             stimulus.reset();
             exp.state.next('PREMAIN');
