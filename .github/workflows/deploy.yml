@@ -16,6 +16,8 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
       - name: Fix permissions
         run: |
           chmod -v -R +rX "static/" | while read line; do
