@@ -79,8 +79,6 @@ async function main() {
    */
   exp.state.init(
     [
-      'CONSENT',
-      'SIGNIN',
       'WELCOME',
       'PRETUTORIAL',
       'PREPRACTICE',
@@ -95,11 +93,9 @@ async function main() {
       'FINISH',
       'ADVANCE',
       'DONE',
-      'CONTROLLER',
-      'DATABASE',
-      'BLOCKED',
     ],
-    handleStateChange
+    handleStateChange,
+    'WELCOME'
   );
 
   /*
@@ -543,6 +539,7 @@ async function main() {
     },
   };
 
+  exp.setupDisplay(); // Manually trigger display functionality
   exp.start(calcFunc, stateFunc, displayFunc);
 
   /**
@@ -557,40 +554,7 @@ async function main() {
    * @method `exp.state.once(function)` Runs function one time on entering state.
    */
   function stateFunc() {
-    /**
-     * If one of these checks fails, divert into an interrupt state.
-     * Interrupt states wait for the condition to be satisfied, then return to the previous state.
-     * Interrupt states are included at the end of the stateFunc() switch statement.
-     */
-    if (exp.databaseInterrupt()) {
-      exp.blocker.show('database');
-      exp.state.push('DATABASE');
-    } else if (exp.controllerInterrupt(false, true)) {
-      exp.state.push('CONTROLLER');
-    }
-
     switch (exp.state.current) {
-      // CONSENT state can be left alone
-      case 'CONSENT':
-        exp.state.once(function () {
-          if (exp.checkDeviceCompatibility()) {
-            exp.state.next('BLOCKED');
-          } else {
-            exp.consent.show();
-          }
-        });
-        if (exp.waitForConsent()) {
-          exp.state.next('SIGNIN');
-        }
-        break;
-
-      // SIGNIN state can be left alone
-      case 'SIGNIN':
-        if (exp.waitForAuthentication()) {
-          exp.state.next('WELCOME');
-        }
-        break;
-
       case 'WELCOME':
         exp.state.once(() => {
           stimulus.usePreset('navigation');
@@ -979,17 +943,10 @@ async function main() {
           trial.data.trialEnd = timings.trial.end;
           stimulus.reset();
         });
-        exp.firebase.saveTrial(trial);
         exp.state.next('ADVANCE');
         break;
 
       case 'ADVANCE':
-        if (!exp.firebase.saveSuccessful) {
-          break;
-        } else if (exp.firebase.saveFailed) {
-          exp.blocker.fatal(err);
-          exp.state.push('BLOCKED');
-        }
         data.push(trial); // Add trial data
         exp.nextTrial();
         if (exp.trialNumber < exp.numTrials) {
@@ -1020,9 +977,6 @@ async function main() {
         break;
 
       case 'DONE':
-        if (!exp.firebase.saveSuccessful) {
-          break;
-        }
         exp.state.once(function () {
           stimulus.usePreset('default');
           exp.VRUI.visible = true;
@@ -1034,43 +988,9 @@ async function main() {
             backButtonState: 'disabled',
             nextButtonState: 'disabled',
           });
-          exp.firebase.localSave();
         });
         if (exp.VRUI.clickedNext) {
           exp.xrSession.end();
-        }
-        break;
-
-      case 'CONTROLLER':
-        exp.state.once(function () {
-          if (exp.state.last !== 'REST') {
-            exp.VRUI.edit({
-              title: 'Controller?',
-              instructions: 'Please connect right hand controller.',
-              buttons: false,
-              interactive: false,
-            });
-          }
-        });
-        if (!exp.controllerInterrupt(false, true)) {
-          exp.state.pop();
-        }
-        break;
-
-      case 'DATABASE':
-        exp.state.once(function () {
-          exp.blocker.show('database');
-          exp.VRUI.edit({
-            title: 'Not connected',
-            instructions:
-              'Your device is not connected to the internet. Reconnect to resume.',
-            buttons: false,
-            interactive: false,
-          });
-        });
-        if (!exp.databaseInterrupt()) {
-          exp.blocker.hide();
-          exp.state.pop();
         }
         break;
 
