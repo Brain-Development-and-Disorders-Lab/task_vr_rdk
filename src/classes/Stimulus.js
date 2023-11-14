@@ -74,6 +74,9 @@ class Stimulus {
     // Collection of dynamic (animated) components
     this._animated = [];
 
+    // 'reference'-type dots that will remain invisible
+    this.referenceError = 0.0;
+
     // Instantiate the collection of components
     this._components = {
       background: this._addBackground(),
@@ -318,57 +321,80 @@ class Stimulus {
    * Create the arrays of dots seen in each stimuli
    */
   _addDots(initialCoherence, initialDirection) {
-    const dots = [];
+    const referenceDots = [];
+    const randomDots = [];
     const dotRowCount = Math.floor(Math.sqrt(DOT_COUNT));
     const apertureRadius = this.distance * Math.tan(APERTURE_RADIUS);
     for (let i = -dotRowCount / 2; i < dotRowCount / 2; i++) {
       for (let j = -dotRowCount / 2; j < dotRowCount / 2; j++) {
-        const delta = Math.random();
         const x =
           (i * apertureRadius * 2) / dotRowCount +
-          (delta * apertureRadius * 2) / dotRowCount;
+          (Math.random() * apertureRadius * 2) / dotRowCount;
         const y =
           (j * apertureRadius * 2) / dotRowCount +
-          (delta * apertureRadius * 2) / dotRowCount;
+          (Math.random() * apertureRadius * 2) / dotRowCount;
 
-        if (Math.sqrt(x ** 2 + y ** 2) <= apertureRadius) {
-          if (delta > initialCoherence) {
-            // Non-dynamic dot that is just moving in random paths
-            const dot = new Dot(x, y, -this.distance - DOT_OFFSET, {
+        if (Math.random() > initialCoherence) {
+          // Dynamic dot that is just moving in a random path
+          randomDots.push(
+            new Dot(x, y, -this.distance - DOT_OFFSET, {
               type: 'random',
               radius: this.distance * Math.tan(DOT_RADIUS),
               velocity: DOT_VELOCITY,
               direction: 2 * Math.PI * Math.random(),
               apertureRadius: apertureRadius,
-            });
-            this._createDot(dot, true);
-            dots.push(dot);
-          } else {
-            const dot = new Dot(x, y, -this.distance - DOT_OFFSET, {
+            })
+          );
+        } else {
+          referenceDots.push(
+            new Dot(x, y, -this.distance - DOT_OFFSET, {
               type: 'reference',
               radius: this.distance * Math.tan(DOT_RADIUS),
               velocity: DOT_VELOCITY,
               direction: initialDirection,
               apertureRadius: apertureRadius,
-            });
-            this._createDot(dot, true);
-            dots.push(dot);
-          }
+            })
+          );
         }
       }
     }
-    return dots;
+
+    // Calculate the number of 'reference'-type dots that will be hidden
+    let hiddenReferenceCount = 0;
+    referenceDots.forEach((dot) => {
+      if (
+        Math.sqrt(dot.getX() ** 2 + dot.getY() ** 2) >=
+        dot.apertureRadius + dot.radius / 2
+      ) {
+        hiddenReferenceCount++;
+      }
+    });
+    this.referenceError = hiddenReferenceCount / DOT_COUNT;
+
+    // Create all remaining Dots
+    const allDots = _.concat(referenceDots, randomDots);
+    allDots.forEach((dot) => {
+      this._createDot(dot, true);
+    });
+
+    return allDots;
   }
 
   _setDotCoherence(coherence) {
     // Update the coherence of the dots by modifying the number
     // of 'random' vs. 'reference' dots
+    let dotIndex = 0;
+    this._components.dots = _.shuffle(this._components.dots);
     this._components.dots.forEach((dot) => {
-      if (Math.random() > coherence) {
+      if (
+        dotIndex / this._components.dots.length >
+        coherence * (1 + this.referenceError)
+      ) {
         dot.type = 'random';
       } else {
         dot.type = 'reference';
       }
+      dotIndex++;
     });
   }
 
@@ -378,13 +404,7 @@ class Stimulus {
       if (dot.type === 'reference') {
         dot.direction = direction;
       } else {
-        // Adjust 'random' dot direction
-        const delta = Math.random();
-        if (delta > 0.5) {
-          dot.direction -= (Math.PI / 8) * delta;
-        } else {
-          dot.direction += (Math.PI / 8) * delta;
-        }
+        dot.direction = 2 * Math.PI * Math.random();
       }
     });
   }

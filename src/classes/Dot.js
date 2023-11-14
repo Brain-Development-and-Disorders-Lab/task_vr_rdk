@@ -69,6 +69,10 @@ class Dot {
     return this.z;
   }
 
+  getDirection() {
+    return this.direction;
+  }
+
   getRadius() {
     return this.radius;
   }
@@ -125,10 +129,10 @@ class Dot {
       if (this.type === 'random' && frameCount % 10 === 0) {
         // Adjust the direction
         const delta = Math.random();
-        if (delta > 0.5) {
-          this.direction -= (Math.PI / 8) * delta;
+        if (Math.random() > 0.5) {
+          this.direction -= (Math.PI / 4) * delta;
         } else {
-          this.direction += (Math.PI / 8) * delta;
+          this.direction += (Math.PI / 4) * delta;
         }
       }
 
@@ -142,7 +146,7 @@ class Dot {
           x = x - 2 * this.apertureRadius * Math.cos(this.direction);
           y = y - 2 * this.apertureRadius * Math.sin(this.direction);
         } else if (this.type === 'random') {
-          // Reset the direction of "random"-type dots to avoid disappearance
+          // Reverse the direction of "random"-type dots to avoid disappearance
           this.direction -= Math.PI;
         }
         this.reset = true;
