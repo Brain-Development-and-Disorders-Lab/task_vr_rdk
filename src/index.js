@@ -12,6 +12,9 @@ import Stimulus from './classes/Stimulus';
 import * as d3 from 'd3-array';
 import _ from 'lodash';
 
+// Date and timestamp imports
+import { DateTime } from 'luxon';
+
 // Visual constants
 const VIEW_DISTANCE = 2.0;
 const VIEW_SCALE = 3.0;
@@ -35,6 +38,7 @@ async function main() {
       autoplay: false,
     },
     demo: false,
+    supervised: true,
     noPoints: true,
 
     // Platform settings
@@ -678,9 +682,20 @@ async function main() {
 
           // Copy and instantiate the 'trial' object
           trial = structuredClone(exp.trials[exp.trialNumber]);
+          trial.localTimezone = DateTime.local().zoneName;
+          trial.localDate = DateTime.now().toFormat('y-MM-dd');
+          trial.localTime = DateTime.now().toFormat('TT');
           trial.trialNumber = exp.trialNumber;
           trial.startTime = performance.now();
           trial.referenceDirection = Math.random() > 0.5 ? Math.PI : 0;
+
+          // Log the trial start time
+          console.info(
+            'START:',
+            trial.localDate,
+            trial.localTime,
+            trial.localTimezone
+          );
 
           /**
            * 'tutorial' and 'practice'-type operations
