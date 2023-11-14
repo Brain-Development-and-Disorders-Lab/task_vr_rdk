@@ -938,7 +938,6 @@ async function main() {
 
         // Proceed to the next state upon time expiration
         if (exp.state.expired(exp.cfg.postResponseDuration)) {
-          stimulus.reset();
           // Check if we need to show confidence
           const realTrialNumber =
             trial.block.repetition * 2 + trial.block.trial + 1;
@@ -979,7 +978,7 @@ async function main() {
           });
         });
         if (exp.state.expired(exp.cfg.feedbackDuration)) {
-          stimulus.reset();
+          stimulus.usePreset('default');
           if (trial.block.name === 'practice') {
             exp.state.next('FINISH');
           }
@@ -992,7 +991,6 @@ async function main() {
           timings.trial.end = performance.now();
           trial.data.trialStart = timings.trial.start;
           trial.data.trialEnd = timings.trial.end;
-          stimulus.reset();
         });
         exp.firebase.saveTrial(trial);
         exp.state.next('ADVANCE');
@@ -1051,9 +1049,6 @@ async function main() {
           });
           exp.firebase.localSave();
         });
-        if (exp.VRUI.clickedNext) {
-          exp.xrSession.end();
-        }
         break;
 
       case 'CONTROLLER':
