@@ -331,27 +331,29 @@ class Stimulus {
           (j * apertureRadius * 2) / dotRowCount +
           (delta * apertureRadius * 2) / dotRowCount;
 
-        if (delta > initialCoherence) {
-          // Non-dynamic dot that is just moving in random paths
-          const dot = new Dot(x, y, -this.distance - DOT_OFFSET, {
-            type: 'random',
-            radius: this.distance * Math.tan(DOT_RADIUS),
-            velocity: DOT_VELOCITY,
-            direction: 2 * Math.PI * Math.random(),
-            apertureRadius: apertureRadius,
-          });
-          this._createDot(dot, true);
-          dots.push(dot);
-        } else {
-          const dot = new Dot(x, y, -this.distance - DOT_OFFSET, {
-            type: 'reference',
-            radius: this.distance * Math.tan(DOT_RADIUS),
-            velocity: DOT_VELOCITY,
-            direction: initialDirection,
-            apertureRadius: apertureRadius,
-          });
-          this._createDot(dot, true);
-          dots.push(dot);
+        if (Math.sqrt(x ** 2 + y ** 2) <= apertureRadius) {
+          if (delta > initialCoherence) {
+            // Non-dynamic dot that is just moving in random paths
+            const dot = new Dot(x, y, -this.distance - DOT_OFFSET, {
+              type: 'random',
+              radius: this.distance * Math.tan(DOT_RADIUS),
+              velocity: DOT_VELOCITY,
+              direction: 2 * Math.PI * Math.random(),
+              apertureRadius: apertureRadius,
+            });
+            this._createDot(dot, true);
+            dots.push(dot);
+          } else {
+            const dot = new Dot(x, y, -this.distance - DOT_OFFSET, {
+              type: 'reference',
+              radius: this.distance * Math.tan(DOT_RADIUS),
+              velocity: DOT_VELOCITY,
+              direction: initialDirection,
+              apertureRadius: apertureRadius,
+            });
+            this._createDot(dot, true);
+            dots.push(dot);
+          }
         }
       }
     }
