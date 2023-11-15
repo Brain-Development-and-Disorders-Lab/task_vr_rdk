@@ -29,7 +29,6 @@ const TIME_MULTIPLER = 1.0; // factor to adjust the length of timings (use for t
 /*
  * Main function contains all experiment logic
  */
-
 async function main() {
   const exp = new Experiment({
     devOptions: {
@@ -413,49 +412,88 @@ async function main() {
   ]);
 
   /**
-   * Implement a function to poll the gamepad button schema, checking for
-   * buttons that are pressed or have changed state
+   * Device: Meta Quest Pro
+   * Documentation: https://www.w3.org/TR/webxr-gamepads-module-1/
+   * Define the controller state and the key dispatched in place of the button input. Specify
+   * a key as a string, or use `null` to signify that the button has no function in-game.
    */
-  let input = {
-    left: {
-      x: false,
-    },
-    right: {
-      a: false,
-    },
+  const controllerState = {
+    left: [
+      { name: 'L_trigger', pressed: false, key: exp.cfg.input.left },
+      { name: 'L_grip', pressed: false, key: null },
+      { name: 'L_unused', pressed: false, key: null },
+      { name: 'L_joystick', pressed: false, key: null },
+      { name: 'L_x', pressed: false, key: null },
+      { name: 'L_y', pressed: false, key: null },
+      { name: 'L_unused', pressed: false, key: null },
+      { name: 'L_unused', pressed: false, key: null },
+      { name: 'L_unused', pressed: false, key: null },
+      { name: 'L_unused', pressed: false, key: null },
+      { name: 'L_unused', pressed: false, key: null },
+      { name: 'L_unused', pressed: false, key: null },
+    ],
+    right: [
+      { name: 'R_trigger', pressed: false, key: exp.cfg.input.right },
+      { name: 'R_grip', pressed: false, key: null },
+      { name: 'R_unused', pressed: false, key: null },
+      { name: 'R_joystick', pressed: false, key: null },
+      { name: 'R_x', pressed: false, key: null },
+      { name: 'R_y', pressed: false, key: null },
+      { name: 'R_unused', pressed: false, key: null },
+      { name: 'R_unused', pressed: false, key: null },
+      { name: 'R_unused', pressed: false, key: null },
+      { name: 'R_unused', pressed: false, key: null },
+      { name: 'R_unused', pressed: false, key: null },
+      { name: 'R_unused', pressed: false, key: null },
+    ],
   };
 
   /**
    * Bind a function to an interval to poll controller input
    */
-  window.setInterval(pollControllerInput, 10, input);
-  function pollControllerInput(inputState) {
-    if (exp.sceneManager.renderer.xr.isPresenting) {
-      // 'A' button
-      if (exp.rightGrip.input.gamepad.buttons[4].pressed === true) {
-        if (inputState.right.a === false) {
-          inputState.right.a = true;
-          window.dispatchEvent(
-            new KeyboardEvent('keyup', { key: exp.cfg.input.right })
-          );
-        }
-      }
-      if (exp.rightGrip.input.gamepad.buttons[4].pressed === false) {
-        inputState.right.a = false;
-      }
+  window.setInterval(pollController, 10, controllerState);
 
-      // 'X' button
-      if (exp.leftGrip.input.gamepad.buttons[4].pressed === true) {
-        if (inputState.left.x === false) {
-          inputState.left.x = true;
-          window.dispatchEvent(
-            new KeyboardEvent('keyup', { key: exp.cfg.input.left })
-          );
+  /**
+   * Implement a function to poll the gamepad button schema, checking for
+   * buttons that are pressed or have changed state
+   */
+  function pollController(controllerState) {
+    if (exp.sceneManager.renderer.xr.isPresenting) {
+      // Iterate over the left controller buttons
+      exp.leftGrip.input.gamepad.buttons.forEach((button, index) => {
+        // Check 'pressed' buttons
+        if (button.pressed === true) {
+          if (controllerState.left[index].pressed === false) {
+            controllerState.left[index].pressed = true;
+            if (controllerState.left[index].key !== null) {
+              window.dispatchEvent(
+                new KeyboardEvent('keyup', {
+                  key: controllerState.left[index].key,
+                })
+              );
+            }
+          }
+        } else {
+          controllerState.left[index].pressed = false;
         }
-      }
-      if (exp.leftGrip.input.gamepad.buttons[4].pressed === false) {
-        inputState.left.x = false;
-      }
+      });
+
+      // Iterate over the right controller buttons
+      exp.rightGrip.input.gamepad.buttons.forEach((button, index) => {
+        // Check 'pressed' buttons
+        if (button.pressed === true) {
+          if (controllerState.right[index].pressed === false) {
+            controllerState.right[index].pressed = true;
+            window.dispatchEvent(
+              new KeyboardEvent('keyup', {
+                key: controllerState.right[index].key,
+              })
+            );
+          }
+        } else {
+          controllerState.right[index].pressed = false;
+        }
+      });
     }
   }
 

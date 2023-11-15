@@ -297,8 +297,8 @@ class Stimulus {
 
   _addResponseButtons() {
     return this._createActionButtons(
-      'Left (X)',
-      'Right (A)',
+      'Left',
+      'Right',
       2.0,
       0.8,
       'orange',
@@ -309,12 +309,9 @@ class Stimulus {
   }
 
   _addNavigationButtons() {
-    return this._createActionButtons(
-      'Back (X)',
-      'Next (A)',
-      0.4,
-      0.8
-    ).translateY(-1.6);
+    return this._createActionButtons('Back', 'Next >', 0.4, 0.8).translateY(
+      -1.6
+    );
   }
 
   /**
@@ -625,8 +622,8 @@ class Stimulus {
     confidenceContainer.add(descriptionContainer);
 
     const actionButtons = this._createActionButtons(
-      `2 trials ago\n(Press X)`,
-      `1 trial ago\n(Press A)`,
+      `2 trials ago`,
+      `1 trial ago`,
       0.6,
       0.8
     );
