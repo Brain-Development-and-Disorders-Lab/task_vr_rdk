@@ -16,8 +16,8 @@ import {
 import { MeshLine, MeshLineMaterial } from 'three.meshline';
 
 // Three-Mesh-UI
-import FontJSON from 'three-mesh-ui/examples/assets/Roboto-msdf.json';
-import FontImage from 'three-mesh-ui/examples/assets/Roboto-msdf.png';
+import FontJSON from '../fonts/Arial-msdf.json';
+import FontImage from '../fonts/Arial.png';
 import { Block, Text } from 'three-mesh-ui';
 
 // Utility modules
