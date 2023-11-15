@@ -75,7 +75,7 @@ async function main() {
     fixationDuration: 1.0 * TIME_MULTIPLER, // seconds
     postResponseDuration: 0.25 * TIME_MULTIPLER, // seconds
     feedbackDuration: 0.25 * TIME_MULTIPLER, // seconds
-    motionDuration: 2.0 * TIME_MULTIPLER, // seconds
+    motionDuration: 1.5 * TIME_MULTIPLER, // seconds
   });
 
   /**
@@ -229,6 +229,12 @@ async function main() {
                 right: [0.3, 0.6],
                 combined: [0.3, 0.6],
               }),
+              motionDuration: _.shuffle(
+                Array.from(
+                  { length: DEFAULT_BLOCK_SIZE },
+                  () => 1.0 + Math.random() * 4
+                )
+              ),
               showFeedback: Array(DEFAULT_BLOCK_SIZE).fill(false),
               cameraLayout: Array(DEFAULT_BLOCK_SIZE).fill(LEFT_CAMERA_LAYOUT),
             },
@@ -245,6 +251,12 @@ async function main() {
                 right: [0.3, 0.6],
                 combined: [0.3, 0.6],
               }),
+              motionDuration: _.shuffle(
+                Array.from(
+                  { length: DEFAULT_BLOCK_SIZE },
+                  () => 1.0 + Math.random() * 4
+                )
+              ),
               showFeedback: Array(DEFAULT_BLOCK_SIZE).fill(false),
               cameraLayout: Array(DEFAULT_BLOCK_SIZE).fill(RIGHT_CAMERA_LAYOUT),
             },
@@ -264,6 +276,9 @@ async function main() {
                 right: [0.3, 0.6],
                 combined: [0.3, 0.6],
               }),
+              motionDuration: Array(DEFAULT_BLOCK_SIZE).fill(
+                exp.cfg.motionDuration
+              ),
               showFeedback: Array(DEFAULT_BLOCK_SIZE).fill(true),
               cameraLayout: Array(DEFAULT_BLOCK_SIZE).fill(LEFT_CAMERA_LAYOUT),
             },
@@ -280,6 +295,9 @@ async function main() {
                 right: [0.3, 0.6],
                 combined: [0.3, 0.6],
               }),
+              motionDuration: Array(DEFAULT_BLOCK_SIZE).fill(
+                exp.cfg.motionDuration
+              ),
               showFeedback: Array(DEFAULT_BLOCK_SIZE).fill(true),
               cameraLayout: Array(DEFAULT_BLOCK_SIZE).fill(RIGHT_CAMERA_LAYOUT),
             },
@@ -301,6 +319,9 @@ async function main() {
                 right: [0.2, 0.2],
                 combined: [0.2, 0.2],
               }),
+              motionDuration: Array(DEFAULT_BLOCK_SIZE).fill(
+                exp.cfg.motionDuration
+              ),
               showFeedback: Array(DEFAULT_BLOCK_SIZE).fill(false),
               cameraLayout: Array(DEFAULT_BLOCK_SIZE).fill(LEFT_CAMERA_LAYOUT),
             },
@@ -317,6 +338,9 @@ async function main() {
                 right: [0.2, 0.2],
                 combined: [0.2, 0.2],
               }),
+              motionDuration: Array(DEFAULT_BLOCK_SIZE).fill(
+                exp.cfg.motionDuration
+              ),
               showFeedback: Array(DEFAULT_BLOCK_SIZE).fill(false),
               cameraLayout: Array(DEFAULT_BLOCK_SIZE).fill(RIGHT_CAMERA_LAYOUT),
             },
@@ -338,6 +362,9 @@ async function main() {
                 right: [0.2, 0.2],
                 combined: [0.2, 0.2],
               }),
+              motionDuration: Array(DEFAULT_BLOCK_SIZE).fill(
+                exp.cfg.motionDuration
+              ),
               showFeedback: Array(DEFAULT_BLOCK_SIZE).fill(false),
               cameraLayout: Array(DEFAULT_BLOCK_SIZE).fill(LEFT_CAMERA_LAYOUT),
             },
@@ -354,6 +381,9 @@ async function main() {
                 right: [0.2, 0.2],
                 combined: [0.2, 0.2],
               }),
+              motionDuration: Array(DEFAULT_BLOCK_SIZE).fill(
+                exp.cfg.motionDuration
+              ),
               showFeedback: Array(DEFAULT_BLOCK_SIZE).fill(false),
               cameraLayout: Array(DEFAULT_BLOCK_SIZE).fill(RIGHT_CAMERA_LAYOUT),
             },
@@ -885,7 +915,7 @@ async function main() {
           exp.VRUI.visible = false;
 
           // Select 'difficulty' of the coherence value used
-          const difficulty = Math.random() > 0.5 ? 0 : 1;
+          const difficulty = Math.random() > 0.5 ? 1 : 0;
           if (trial.cameraLayout === LEFT_CAMERA_LAYOUT) {
             // Left eye coherence
             trial.coherence = trial.coherences.left[difficulty];
@@ -914,7 +944,7 @@ async function main() {
         });
 
         // Proceed to the next state upon time expiration
-        if (exp.state.expired(exp.cfg.motionDuration)) {
+        if (exp.state.expired(trial.motionDuration)) {
           stimulus.reset();
           exp.state.next('RESPONSE');
         }
@@ -1103,7 +1133,7 @@ async function main() {
     exp.sceneManager.render();
 
     // Increment the frame count
-    exp.cfg.frameCount += 1;
+    exp.cfg.frameCount++;
   }
 
   /**
