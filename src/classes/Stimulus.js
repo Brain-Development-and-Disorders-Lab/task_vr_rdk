@@ -386,10 +386,7 @@ class Stimulus {
     let dotIndex = 0;
     this._components.dots = _.shuffle(this._components.dots);
     this._components.dots.forEach((dot) => {
-      if (
-        dotIndex / this._components.dots.length >
-        coherence * (1 + this.referenceError)
-      ) {
+      if (dotIndex / this._components.dots.length > coherence) {
         dot.type = 'random';
       } else {
         dot.type = 'reference';

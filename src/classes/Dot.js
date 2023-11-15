@@ -137,31 +137,26 @@ class Dot {
       }
 
       const inAperture =
-        Math.sqrt(x ** 2 + y ** 2) < this.apertureRadius + this.radius / 2;
+        Math.sqrt(x ** 2 + y ** 2) < this.apertureRadius + this.radius / 8;
 
-      // Check if the dot needs to be translated
-      if (!inAperture && !this.reset) {
-        if (this.type === 'reference') {
-          // Translate the location of "reference"-type dots to remain synchronized
+      if (this.type === 'reference') {
+        // Check if outside boundary
+        if (Math.abs(x) > this.apertureRadius) {
           x = x - 2 * this.apertureRadius * Math.cos(this.direction);
           y = y - 2 * this.apertureRadius * Math.sin(this.direction);
-        } else if (this.type === 'random') {
-          // Reverse the direction of "random"-type dots to avoid disappearance
-          this.direction -= Math.PI;
         }
-        this.reset = true;
-      } else {
-        // Calculate the updated position
-        x = x + this.velocity * Math.cos(this.direction);
-        y = y + this.velocity * Math.sin(this.direction);
+      } else if (this.type === 'random' && !inAperture) {
+        // Reverse the direction of "random"-type dots to avoid disappearance
+        this.direction -= Math.PI;
       }
 
-      // Update the reset toggle if required
-      if (this.dot.visible) this.reset = false;
+      // Update position
+      x = x + this.velocity * Math.cos(this.direction);
+      y = y + this.velocity * Math.sin(this.direction);
 
       // Show the dot only when within the aperture
       this.dot.visible =
-        Math.sqrt(x ** 2 + y ** 2) <= this.apertureRadius + this.radius / 2;
+        Math.sqrt(x ** 2 + y ** 2) <= this.apertureRadius + this.radius / 8;
 
       // Apply the updated dot position
       this.setPosition(x, y, this.z);
