@@ -290,7 +290,7 @@ class Stimulus {
       0,
       0,
       -this.distance,
-      `Between the last two trials, did you feel more confident about your response to the last trial (1 trial ago), or the trial prior to that (2 trials ago)?`,
+      `Between the last two trials, did you feel more confident about your response to:\n\n\tThe previous trial (1 trial ago), or\n\tThe trial before that (2 trials ago)?`,
       fill
     );
   }
@@ -309,7 +309,7 @@ class Stimulus {
   }
 
   _addNavigationButtons() {
-    return this._createActionButtons('Back', 'Next >', 0.4, 0.8).translateY(
+    return this._createActionButtons('< Back', 'Next >', 0.4, 0.8).translateY(
       -1.6
     );
   }
@@ -593,7 +593,7 @@ class Stimulus {
       justifyContent: 'center',
       padding: 0.025,
       margin: 0.1,
-      width: 6.0,
+      width: 4.0,
       fontFamily: FontJSON,
       fontTexture: FontImage,
       backgroundOpacity: 0,
@@ -603,13 +603,13 @@ class Stimulus {
     this.target.add(confidenceContainer);
 
     const descriptionContainer = new Block({
-      height: 0.8,
-      width: 3.0,
+      height: 1.4,
+      width: 4.0,
       margin: 0.02,
       padding: 0.04,
       borderRadius: 0.04,
       justifyContent: 'center',
-      fontSize: 0.07,
+      fontSize: 0.1,
       bestFit: 'auto',
       fontColor: new Color('black'),
       backgroundColor: new Color('white'),
@@ -624,8 +624,8 @@ class Stimulus {
     const actionButtons = this._createActionButtons(
       `2 trials ago`,
       `1 trial ago`,
-      0.6,
-      0.8
+      0.8,
+      1.0
     );
     confidenceContainer.add(actionButtons);
 
@@ -637,9 +637,9 @@ class Stimulus {
     rightText,
     spacing = 1.7,
     width = 0.8,
-    leftBackgroundColor = 0xededed,
+    leftBackgroundColor = 0xc9c9c9,
     leftFontColor = 'black',
-    rightBackgroundColor = 0xededed,
+    rightBackgroundColor = 0xc9c9c9,
     rightFontColor = 'black'
   ) {
     const actionContainer = new Block({
@@ -652,12 +652,12 @@ class Stimulus {
       backgroundOpacity: 0,
     });
     const leftContainer = new Block({
-      height: 0.5,
+      height: 0.4,
       width: width,
       margin: spacing,
       borderRadius: 0.04,
       justifyContent: 'center',
-      fontSize: 0.07,
+      fontSize: 0.08,
       bestFit: 'auto',
       fontColor: new Color(leftFontColor),
       backgroundColor: new Color(leftBackgroundColor),
@@ -668,12 +668,12 @@ class Stimulus {
       })
     );
     const rightContainer = new Block({
-      height: 0.5,
+      height: 0.4,
       width: width,
       margin: spacing,
       borderRadius: 0.04,
       justifyContent: 'center',
-      fontSize: 0.07,
+      fontSize: 0.08,
       bestFit: 'auto',
       fontColor: new Color(rightFontColor),
       backgroundColor: new Color(rightBackgroundColor),
