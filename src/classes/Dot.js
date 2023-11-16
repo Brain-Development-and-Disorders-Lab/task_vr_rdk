@@ -8,21 +8,19 @@ class Dot {
   x;
   y;
   z;
-  initialPosition;
+  initialPosition; // Vector3
 
   // Dot parameters
-  type;
-  velocity;
-  radius;
-  direction;
-  reset;
+  type; // 'random' or 'reference'
+  velocity; // float
+  radius; // float, radians
+  direction; // float, radians
 
   // Aperture parameters
   apertureRadius;
 
-  // Dot-specific attributes
+  // Dot Three.js component
   dot;
-  shown;
 
   /**
    * Dot class constructor
@@ -30,6 +28,10 @@ class Dot {
    * @param {number} y the y coordinate of the dot
    * @param {number} z the z coordinate of the dot
    * @param {any} parameters a parameters object containing properties
+   * @param {'random' | 'reference'} parameters.type
+   * @param {number} parameters.velocity
+   * @param {number} parameters.radius
+   * @param {number} parameters.apertureRadius
    */
   constructor(x, y, z, parameters) {
     // Positional coordinates
@@ -45,7 +47,6 @@ class Dot {
     this.direction = parameters.direction;
     this.apertureRadius = parameters.apertureRadius;
 
-    this.reset = false; // Dot is within the aperture bounds or not
     this.active = true; // Activate the 'step' function and visibility
   }
 
@@ -65,22 +66,44 @@ class Dot {
     return this.y;
   }
 
+  /**
+   * Get the z position of the dot
+   * @return {number} z position
+   */
   getZ() {
     return this.z;
   }
 
+  /**
+   * Get the angular direction of the dot
+   * @return {number} angular direction
+   */
   getDirection() {
     return this.direction;
   }
 
+  /**
+   * Get the radius of the dot
+   * @return {number} dot radius
+   */
   getRadius() {
     return this.radius;
   }
 
+  /**
+   * Get the current position of the dot
+   * @return {Vector3}
+   */
   getPosition() {
     return new Vector3(this.x, this.y, this.z);
   }
 
+  /**
+   * Set the current position of the dot
+   * @param {number} x x coordinate
+   * @param {number} y y coordinate
+   * @param {number} z z coordinate
+   */
   setPosition(x, y, z) {
     this.x = x;
     this.y = y;
@@ -90,25 +113,40 @@ class Dot {
 
   /**
    * Get the type of dot
-   * @return {string} the dot type
+   * @return {'random' | 'reference'} the dot type
    */
   getType() {
     return this.type;
   }
 
+  /**
+   * Set the mesh component of the dot
+   * @param {THREE.Mesh} dot Three.js Mesh component
+   */
   setObject(dot) {
     this.dot = dot;
   }
 
+  /**
+   * Get the mesh component of the dot
+   * @return {THREE.Mesh}
+   */
   getObject() {
     return this.dot;
   }
 
+  /**
+   * Enable or disable the dot activity and visibility
+   * @param {boolean} active activity status of the dot
+   */
   setActive(active) {
     this.active = active;
     this.dot.visible = this.active;
   }
 
+  /**
+   * Replace the dot to its original position
+   */
   resetPosition() {
     this.setPosition(
       this.initialPosition.x,
