@@ -133,7 +133,7 @@ async function main() {
       ui: {
         confidence: false,
         response: false,
-        navigation: false,
+        navigation: 'none',
       },
     },
     response: {
@@ -147,7 +147,7 @@ async function main() {
       ui: {
         confidence: false,
         response: true,
-        navigation: false,
+        navigation: 'none',
       },
     },
     confidence: {
@@ -161,7 +161,7 @@ async function main() {
       ui: {
         confidence: true,
         response: false,
-        navigation: false,
+        navigation: 'none',
       },
     },
     navigation: {
@@ -175,7 +175,35 @@ async function main() {
       ui: {
         confidence: false,
         response: false,
-        navigation: true,
+        navigation: 'both',
+      },
+    },
+    navigationLeft: {
+      background: true,
+      outline: false,
+      fixation: 'none',
+      reference: false,
+      dots: {
+        visible: false,
+      },
+      ui: {
+        confidence: false,
+        response: false,
+        navigation: 'left',
+      },
+    },
+    navigationRight: {
+      background: true,
+      outline: false,
+      fixation: 'none',
+      reference: false,
+      dots: {
+        visible: false,
+      },
+      ui: {
+        confidence: false,
+        response: false,
+        navigation: 'right',
       },
     },
   };
@@ -637,7 +665,7 @@ async function main() {
     if (exp.databaseInterrupt()) {
       exp.blocker.show('database');
       exp.state.push('DATABASE');
-    } else if (exp.controllerInterrupt(false, true)) {
+    } else if (exp.controllerInterrupt(true, true)) {
       exp.state.push('CONTROLLER');
     }
 
@@ -665,13 +693,13 @@ async function main() {
 
       case 'WELCOME':
         exp.state.once(() => {
-          stimulus.usePreset('navigation');
+          stimulus.usePreset('navigationRight');
           exp.sceneManager.setCameraLayout(DEFAULT_CAMERA_LAYOUT);
           exp.VRUI.visible = true;
           exp.VRUI.progress.visible = false;
           exp.VRUI.edit({
-            title: 'Instructions',
-            instructions: `In each game, you will be briefly shown dots moving inside a circular area.\nAfter watching the dots, a blue section and an orange section will appear on the perimeter of the circle.\n\nYour task: Determine whether there was movement of dots towards the blue or the orange section.`,
+            title: 'Information',
+            instructions: `You are about to start the task. Before you start, please let the facilitator know if the headset feels uncomfortable or you cannot read this text.\n\nWhen you are ready and comfortable, press the right controller trigger to select 'Next >' and continue.`,
             interactive: false,
             buttons: false,
             backButtonState: 'disabled',
@@ -687,8 +715,8 @@ async function main() {
           exp.VRUI.visible = true;
           exp.VRUI.progress.visible = false;
           exp.VRUI.edit({
-            title: 'Practice Games',
-            instructions: `Play a few games now and practice watching the dots while observing the appearance of the game. Use the controller buttons to interact with the game.\n\nWhen you are ready and comfortable, use the controller in your right hand to start the task.`,
+            title: 'Practice Trials',
+            instructions: `These practice trials are identical to the actual trials, except the moving dots will be displayed a few seconds longer.\n\nPractice watching the dots and observing the appearance of the task.\n\nUse the triggers on the left and right controllers to interact with the task.`,
             interactive: false,
             buttons: false,
             backButtonState: 'disabled',
@@ -699,15 +727,15 @@ async function main() {
 
       case 'PREPRACTICE':
         exp.state.once(() => {
-          stimulus.usePreset('navigation');
+          stimulus.usePreset('navigationRight');
           exp.sceneManager.setCameraLayout(DEFAULT_CAMERA_LAYOUT);
           exp.VRUI.visible = true;
           exp.VRUI.progress.visible = false;
           exp.VRUI.edit({
-            title: 'Practice Games',
-            instructions: `You will now play another ${
+            title: 'Practice Trials',
+            instructions: `You will now complete another ${
               exp.cfg.numPracticeSequences * 2 * DEFAULT_BLOCK_SIZE
-            } practice games. You won't have to rate your confidence after each game, but the cross in the center of the circlular area will briefly change color if your answer was correct or not. Green is a correct answer, red is an incorrect answer.\n\nWhen you are ready and comfortable, use the controller in your right hand to start the task.`,
+            } practice trials. After selecting a direction, the cross in the center of the circlular area will briefly change color if your answer was correct or not. Green is a correct answer, red is an incorrect answer.\nYou will not need to choose a trial you felt most confident \n\nWhen you are ready and comfortable, press the right controller trigger to select 'Next >' and continue.`,
             interactive: false,
             buttons: false,
             backButtonState: 'disabled',
@@ -718,17 +746,17 @@ async function main() {
 
       case 'PREMAIN':
         exp.state.once(() => {
-          stimulus.usePreset('navigation');
+          stimulus.usePreset('navigationRight');
           exp.sceneManager.setCameraLayout(DEFAULT_CAMERA_LAYOUT);
           exp.VRUI.visible = true;
           exp.VRUI.progress.visible = false;
           exp.VRUI.edit({
-            title: 'Instructions',
-            instructions: `That concludes all the practice games. You will now play ${
+            title: 'Main Trials',
+            instructions: `That concludes the practice trials. You will now play ${
               (exp.cfg.numCalibrationSequences + exp.cfg.numMainSequences) *
               2 *
               DEFAULT_BLOCK_SIZE
-            } games.\nYou will not be shown if you answered correctly or not, and you will be asked to rate your confidence after some of the games.\n\nWhen you are ready and comfortable, use the controller in your right hand to start the task.`,
+            } main trials.\n\nYou will not be shown if you answered correctly or not, but you will be asked to estimate your confidence after every few trials.\n\nWhen you are ready and comfortable, press the right controller trigger to select 'Next >' and continue.`,
             interactive: false,
             buttons: false,
             backButtonState: 'disabled',
@@ -1046,7 +1074,6 @@ async function main() {
           });
         });
         if (exp.state.expired(exp.cfg.feedbackDuration)) {
-          stimulus.usePreset('default');
           if (trial.block.name === 'practice') {
             exp.state.next('FINISH');
           }
@@ -1108,8 +1135,8 @@ async function main() {
           stimulus.usePreset('default');
           exp.VRUI.visible = true;
           exp.VRUI.edit({
-            title: 'Complete',
-            instructions: `The game is now complete. Thank you for your participation!`,
+            title: 'Finished',
+            instructions: `You have reached the end of the task. Thank you for your participation!`,
             interactive: false,
             buttons: false,
             backButtonState: 'disabled',
@@ -1123,14 +1150,14 @@ async function main() {
         exp.state.once(function () {
           if (exp.state.last !== 'REST') {
             exp.VRUI.edit({
-              title: 'Controller?',
-              instructions: 'Please connect right hand controller.',
+              title: 'Controller Disconnected',
+              instructions: 'Please connect both controllers to continue.',
               buttons: false,
               interactive: false,
             });
           }
         });
-        if (!exp.controllerInterrupt(false, true)) {
+        if (!exp.controllerInterrupt(true, true)) {
           exp.state.pop();
         }
         break;
@@ -1139,7 +1166,7 @@ async function main() {
         exp.state.once(function () {
           exp.blocker.show('database');
           exp.VRUI.edit({
-            title: 'Not connected',
+            title: 'Not Connected!',
             instructions:
               'Your device is not connected to the internet. Reconnect to resume.',
             buttons: false,

@@ -67,7 +67,7 @@ class Stimulus {
       ui: {
         confidence: false,
         response: false,
-        navigation: false,
+        navigation: 'none',
       },
     };
 
@@ -94,7 +94,11 @@ class Stimulus {
       ui: {
         confidence: this._addConfidenceText(),
         response: this._addResponseButtons(),
-        navigation: this._addNavigationButtons(),
+        navigation: {
+          both: this._addNavigationButtons(),
+          left: this._addNavigationButtons('left'),
+          right: this._addNavigationButtons('right'),
+        },
       },
     };
 
@@ -199,7 +203,25 @@ class Stimulus {
     // Text
     this._components.ui.confidence.visible = this._parameters.ui.confidence;
     this._components.ui.response.visible = this._parameters.ui.response;
-    this._components.ui.navigation.visible = this._parameters.ui.navigation;
+
+    // Text - Navigation
+    if (this._parameters.ui.navigation === 'left') {
+      this._components.ui.navigation.both.visible = false;
+      this._components.ui.navigation.left.visible = true;
+      this._components.ui.navigation.right.visible = false;
+    } else if (this._parameters.ui.navigation === 'right') {
+      this._components.ui.navigation.both.visible = false;
+      this._components.ui.navigation.left.visible = false;
+      this._components.ui.navigation.right.visible = true;
+    } else if (this._parameters.ui.navigation === 'both') {
+      this._components.ui.navigation.both.visible = true;
+      this._components.ui.navigation.left.visible = false;
+      this._components.ui.navigation.right.visible = false;
+    } else {
+      this._components.ui.navigation.both.visible = false;
+      this._components.ui.navigation.left.visible = false;
+      this._components.ui.navigation.right.visible = false;
+    }
   }
 
   getComponents() {
@@ -301,17 +323,43 @@ class Stimulus {
       'Right',
       2.0,
       0.8,
-      'orange',
-      'black',
-      'teal',
-      'white'
+      {
+        bg: 'orange',
+        fontColor: 'black',
+        state: 'enabled',
+      },
+      {
+        bg: 'teal',
+        fontColor: 'white',
+        state: 'enabled',
+      }
     );
   }
 
-  _addNavigationButtons() {
-    return this._createActionButtons('< Back', 'Next >', 0.4, 0.8).translateY(
-      -1.6
-    );
+  _addNavigationButtons(style = 'both') {
+    if (style === 'left') {
+      return this._createActionButtons(
+        '< Back',
+        'Next >',
+        0.4,
+        0.8,
+        { state: 'enabled' },
+        { state: 'disabled' }
+      ).translateY(-1.6);
+    } else if (style === 'right') {
+      return this._createActionButtons(
+        '< Back',
+        'Next >',
+        0.4,
+        0.8,
+        { state: 'disabled' },
+        { state: 'enabled' }
+      ).translateY(-1.6);
+    } else {
+      return this._createActionButtons('< Back', 'Next >', 0.4, 0.8).translateY(
+        -1.6
+      );
+    }
   }
 
   /**
@@ -637,11 +685,18 @@ class Stimulus {
     rightText,
     spacing = 1.7,
     width = 0.8,
-    leftBackgroundColor = 0xc9c9c9,
-    leftFontColor = 'black',
-    rightBackgroundColor = 0xc9c9c9,
-    rightFontColor = 'black'
+    leftOptions = {
+      bg: 0xc9c9c9,
+      fontColor: 'black',
+      state: 'enabled',
+    },
+    rightOptions = {
+      bg: 0xc9c9c9,
+      fontColor: 'black',
+      state: 'enabled',
+    }
   ) {
+    // Container for buttons
     const actionContainer = new Block({
       contentDirection: 'row',
       justifyContent: 'center',
@@ -651,6 +706,17 @@ class Stimulus {
       fontTexture: FontImage,
       backgroundOpacity: 0,
     });
+
+    // Left action button
+    // Apply background color
+    let leftBackgroundColor = leftOptions.bg ?? 0xc9c9c9;
+    let leftFontColor = leftOptions.fontColor ?? 'black';
+    if (leftOptions.state === 'disabled') {
+      leftBackgroundColor = 0xededed;
+      leftFontColor = 0x757575;
+    }
+
+    // Create button `Block` and add `Text`
     const leftContainer = new Block({
       height: 0.4,
       width: width,
@@ -659,14 +725,25 @@ class Stimulus {
       justifyContent: 'center',
       fontSize: 0.08,
       bestFit: 'auto',
-      fontColor: new Color(leftFontColor),
       backgroundColor: new Color(leftBackgroundColor),
+      fontColor: new Color(leftFontColor),
     });
     leftContainer.add(
       new Text({
         content: leftText,
       })
     );
+
+    // Right action button
+    // Apply background color
+    let rightBackgroundColor = rightOptions.bg ?? 0xc9c9c9;
+    let rightFontColor = rightOptions.fontColor ?? 'black';
+    if (rightOptions.state === 'disabled') {
+      rightBackgroundColor = 0xededed;
+      rightFontColor = 0x757575;
+    }
+
+    // Create button `Block` and add `Text`
     const rightContainer = new Block({
       height: 0.4,
       width: width,
@@ -675,14 +752,15 @@ class Stimulus {
       justifyContent: 'center',
       fontSize: 0.08,
       bestFit: 'auto',
-      fontColor: new Color(rightFontColor),
       backgroundColor: new Color(rightBackgroundColor),
+      fontColor: new Color(rightFontColor),
     });
     rightContainer.add(
       new Text({
         content: rightText,
       })
     );
+
     actionContainer.add(leftContainer, rightContainer);
     this.target.add(actionContainer);
     return actionContainer;
