@@ -250,11 +250,11 @@ async function main() {
         blocks.push(
           new Block({
             variables: {
-              coherence: Array(DEFAULT_BLOCK_SIZE).fill(0.3),
+              coherence: Array(DEFAULT_BLOCK_SIZE).fill(0.2),
               coherences: Array(DEFAULT_BLOCK_SIZE).fill({
-                left: [0.3, 0.6],
-                right: [0.3, 0.6],
-                combined: [0.3, 0.6],
+                left: [0.2, 0.7],
+                right: [0.2, 0.7],
+                combined: [0.2, 0.7],
               }),
               motionDuration: _.shuffle(
                 Array.from(
@@ -272,11 +272,11 @@ async function main() {
           }),
           new Block({
             variables: {
-              coherence: Array(DEFAULT_BLOCK_SIZE).fill(0.3),
+              coherence: Array(DEFAULT_BLOCK_SIZE).fill(0.2),
               coherences: Array(DEFAULT_BLOCK_SIZE).fill({
-                left: [0.3, 0.6],
-                right: [0.3, 0.6],
-                combined: [0.3, 0.6],
+                left: [0.2, 0.7],
+                right: [0.2, 0.7],
+                combined: [0.2, 0.7],
               }),
               motionDuration: _.shuffle(
                 Array.from(

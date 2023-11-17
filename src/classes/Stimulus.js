@@ -54,6 +54,8 @@ class Stimulus {
     this.target = target;
     this.distance = distance;
     this.presets = presets;
+
+    // Create a 'default' preset with only the background visible
     this.presets.default = {
       background: true,
       outline: false,
@@ -107,6 +109,11 @@ class Stimulus {
     this.setParameters(this._parameters);
   }
 
+  /**
+   * Add a new preset to the collection of stored presets
+   * @param {string} name the preset name
+   * @param {any} parameters the set of preset parameters
+   */
   addPreset(name, parameters) {
     if (_.isUndefined(this.presets[name])) {
       this.presets[name] = parameters;
@@ -115,6 +122,10 @@ class Stimulus {
     }
   }
 
+  /**
+   * Activate a specific preset if it exists
+   * @param {string} name the preset name
+   */
   usePreset(name) {
     if (_.isUndefined(this.presets[name])) {
       console.error(`Preset '${name}' does not exist`);
