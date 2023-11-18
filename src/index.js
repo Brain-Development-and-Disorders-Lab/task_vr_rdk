@@ -75,6 +75,7 @@ async function main() {
     postResponseDuration: 0.25 * TIME_MULTIPLER, // seconds
     feedbackDuration: 0.25 * TIME_MULTIPLER, // seconds
     motionDuration: 1.5 * TIME_MULTIPLER, // seconds
+    resetTimer: 20.0 * TIME_MULTIPLER, // seconds
   });
 
   /**
@@ -705,6 +706,10 @@ async function main() {
 
       case 'WELCOME':
         exp.state.once(() => {
+          if (exp.cfg.requireVR && exp.cfg.supervised) {
+            // Click the 'Enter VR' button
+            document.getElementById('VRButton')?.click();
+          }
           stimulus.usePreset('navigationRight');
           exp.sceneManager.setCameraLayout(DEFAULT_CAMERA_LAYOUT);
           exp.VRUI.visible = true;
@@ -799,7 +804,7 @@ async function main() {
 
           // Log the trial start time
           console.info(
-            'START:',
+            '(START) Local Timestamp:',
             trial.localDate,
             trial.localTime,
             trial.localTimezone
@@ -1156,6 +1161,13 @@ async function main() {
           });
           exp.firebase.localSave();
         });
+        if (
+          exp.state.expired(exp.cfg.resetTimer) &&
+          exp.cfg.supervised === true
+        ) {
+          // Reload the page if supervised
+          location.reload();
+        }
         break;
 
       case 'CONTROLLER':
