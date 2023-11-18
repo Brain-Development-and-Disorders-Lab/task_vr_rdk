@@ -544,6 +544,18 @@ async function main() {
   window.addEventListener('keyup', keyboardInput);
   function keyboardInput(event) {
     if (event.key) {
+      // Check for a number of 'developer' options
+      if (event.key === 'D' && event.shiftKey === true) {
+        // `shift` + `d` to download current task data
+        console.info('DEVELOPER: Saving local data...');
+        exp.firebase.localSave();
+      } else if (event.key === 'S' && event.shiftKey === true) {
+        // `shift` + `s` to skip to the end of the task
+        console.info('DEVELOPER: Skipping to end of task...');
+        exp.state.next('DONE');
+      }
+
+      // Response to keypresses depending on the state
       switch (exp.state.current) {
         case 'WELCOME':
           if (event.key === exp.cfg.input.right) {
