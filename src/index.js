@@ -815,7 +815,7 @@ async function main() {
           exp.VRUI.progress.visible = false;
           exp.VRUI.edit({
             title: 'Practice Trials',
-            instructions: `These practice trials are identical to the actual trials, except the moving dots will be displayed a few seconds longer.\n\nPractice watching the dots and observing the appearance of the task.\n\nUse the triggers on the left and right controllers to interact with the task.`,
+            instructions: `These practice trials are similar to the actual trials, except the moving dots will be displayed a few seconds longer.\n\nPractice watching the dots and observing the appearance of the task.\n\nUse the triggers on the left and right controllers to interact with the task.`,
             interactive: false,
             buttons: false,
             backButtonState: 'disabled',
@@ -834,7 +834,7 @@ async function main() {
             title: 'Practice Trials',
             instructions: `You will now complete another ${
               exp.cfg.numPracticeSequences * 2 * DEFAULT_BLOCK_SIZE
-            } practice trials. After selecting a direction, the cross in the center of the circlular area will briefly change color if your answer was correct or not. Green is a correct answer, red is an incorrect answer.\nYou will not need to choose a trial you felt most confident \n\nWhen you are ready and comfortable, press the right controller trigger to select 'Next >' and continue.`,
+            } practice trials. After selecting a direction, the cross in the center of the circlular area will briefly change color if your answer was correct or not.\n\nGreen is a correct answer, red is an incorrect answer.\n\nWhen you are ready and comfortable, press the right controller trigger to select 'Next >' and continue.`,
             interactive: false,
             buttons: false,
             backButtonState: 'disabled',
@@ -855,7 +855,7 @@ async function main() {
               (exp.cfg.numCalibrationSequences + exp.cfg.numMainSequences) *
               2 *
               DEFAULT_BLOCK_SIZE
-            } main trials.\n\nYou will not be shown if you answered correctly or not, but you will be asked to estimate your confidence after every few trials.\n\nWhen you are ready and comfortable, press the right controller trigger to select 'Next >' and continue.`,
+            } main trials.\n\nYou will not be shown if you answered correctly or not, but sometimes you will be asked whether you were more confident in that trial than in the previous trial.\n\nWhen you are ready and comfortable, press the right controller trigger to select 'Next >' and continue.`,
             interactive: false,
             buttons: false,
             backButtonState: 'disabled',

@@ -247,7 +247,7 @@ class Stimulus {
   }
 
   _addBackground() {
-    return this._createSphere(0, 0, 0, 10, false, 'white');
+    return this._createSphere(0, 0, 0, 10, false, 'black');
   }
 
   /**
@@ -264,14 +264,14 @@ class Stimulus {
       false,
       0.05 * Math.tan(APERTURE_RADIUS),
       false,
-      'black'
+      'white'
     );
   }
 
   /**
    * Create a fixation cross
    */
-  _addFixation(style = 'black') {
+  _addFixation(style = 'white') {
     return this._createFixation(
       0,
       0,
@@ -318,7 +318,7 @@ class Stimulus {
     );
   }
 
-  _addConfidenceText(fill = 'black') {
+  _addConfidenceText(fill = 'white') {
     return this._createConfidenceText(
       0,
       -0.6,
@@ -472,7 +472,7 @@ class Stimulus {
    * @param {string} fill the colour of the fill
    * @return {THREE.Mesh} a Three.js Circle object
    */
-  _createCircle(x, y, z, r, animate = false, fill = 'black') {
+  _createCircle(x, y, z, r, animate = false, fill = 'white') {
     const circle = new Mesh(
       new CircleGeometry(r, 64, 0),
       new MeshBasicMaterial({
@@ -496,7 +496,7 @@ class Stimulus {
    * @param {string} fill the colour of the Dot
    * @return {THREE.Mesh} a Three.js Circle object
    */
-  _createDot(dot, animate = false, fill = 'black') {
+  _createDot(dot, animate = false, fill = 'white') {
     // Create three.js components
     const circle = new Mesh(
       new CircleGeometry(dot.getRadius(), 32, 0),
@@ -544,7 +544,7 @@ class Stimulus {
    * @param {string} fill the colour of the rectangle
    * @return {THREE.Mesh} a Three.js PlaneGeometry object
    */
-  _createRectangle(x, y, z, w, h, animate = false, fill = 'black') {
+  _createRectangle(x, y, z, w, h, animate = false, fill = 'white') {
     const rectangle = new Mesh(
       new PlaneGeometry(w, h),
       new MeshBasicMaterial({
@@ -571,7 +571,7 @@ class Stimulus {
    * @param {string} fill the colour of the fixation cross
    * @return {Array} array containing two Two.Rectangle objects
    */
-  _createFixation(x, y, z, d, animate = false, fill = 'black') {
+  _createFixation(x, y, z, d, animate = false, fill = 'white') {
     // Add a white circle behind the cross to improve contrast
     const background = this._createCircle(
       x,
@@ -579,7 +579,7 @@ class Stimulus {
       z - 0.05,
       d * 0.8,
       animate,
-      'white'
+      'black'
     );
 
     // Bars of the fixation cross
@@ -656,7 +656,7 @@ class Stimulus {
       fontFamily: FontJSON,
       fontTexture: FontImage,
       backgroundOpacity: 0,
-      backgroundColor: new Color('white'),
+      backgroundColor: new Color('black'),
     });
     confidenceContainer.position.set(x, y, z);
     this.target.add(confidenceContainer);
@@ -670,8 +670,8 @@ class Stimulus {
       justifyContent: 'center',
       fontSize: 0.1,
       bestFit: 'auto',
-      fontColor: new Color('black'),
-      backgroundColor: new Color('white'),
+      fontColor: new Color('white'),
+      backgroundColor: new Color('black'),
     });
     descriptionContainer.add(
       new Text({
@@ -697,12 +697,12 @@ class Stimulus {
     spacing = 1.7,
     width = 0.8,
     leftOptions = {
-      bg: 0xc9c9c9,
+      bg: 'white',
       fontColor: 'black',
       state: 'enabled',
     },
     rightOptions = {
-      bg: 0xc9c9c9,
+      bg: 'white',
       fontColor: 'black',
       state: 'enabled',
     }
@@ -720,7 +720,7 @@ class Stimulus {
 
     // Left action button
     // Apply background color
-    let leftBackgroundColor = leftOptions.bg ?? 0xc9c9c9;
+    let leftBackgroundColor = leftOptions.bg ?? 'white';
     let leftFontColor = leftOptions.fontColor ?? 'black';
     if (leftOptions.state === 'disabled') {
       leftBackgroundColor = 0xededed;
@@ -732,7 +732,7 @@ class Stimulus {
       height: 0.4,
       width: width,
       margin: spacing,
-      borderRadius: 0.04,
+      borderRadius: 0.07,
       justifyContent: 'center',
       fontSize: 0.08,
       bestFit: 'auto',
@@ -747,7 +747,7 @@ class Stimulus {
 
     // Right action button
     // Apply background color
-    let rightBackgroundColor = rightOptions.bg ?? 0xc9c9c9;
+    let rightBackgroundColor = rightOptions.bg ?? 'white';
     let rightFontColor = rightOptions.fontColor ?? 'black';
     if (rightOptions.state === 'disabled') {
       rightBackgroundColor = 0xededed;
@@ -759,7 +759,7 @@ class Stimulus {
       height: 0.4,
       width: width,
       margin: spacing,
-      borderRadius: 0.04,
+      borderRadius: 0.07,
       justifyContent: 'center',
       fontSize: 0.08,
       bestFit: 'auto',
