@@ -520,6 +520,16 @@ async function main() {
 
       // Response to keypresses depending on the state
       switch (exp.state.current) {
+        case 'TEST_CONTROLLER_LEFT':
+          if (event.key === exp.cfg.input.left) {
+            exp.state.next('TEST_CONTROLLER_RIGHT');
+          }
+          break;
+        case 'TEST_CONTROLLER_RIGHT':
+          if (event.key === exp.cfg.input.right) {
+            exp.state.next('WELCOME');
+          }
+          break;
         case 'WELCOME':
           if (event.key === exp.cfg.input.right) {
             exp.state.next('PRETUTORIAL');
@@ -618,6 +628,48 @@ async function main() {
   let trial = {};
 
   /**
+   * Initialize Finite State Machine (FSM) that manages the flow of your experiment
+   */
+  exp.state.init(
+    [
+      'CONSENT',
+      'SIGNIN',
+      'TEST_CONTROLLER_LEFT',
+      'TEST_CONTROLLER_RIGHT',
+      'WELCOME',
+      'PRETUTORIAL',
+      'PREPRACTICE',
+      'PREMAIN',
+      'START',
+      'FIXATION',
+      'MOTION',
+      'RESPONSE',
+      'POSTRESPONSE',
+      'FEEDBACK',
+      'CONFIDENCE',
+      'FINISH',
+      'ADVANCE',
+      'DONE',
+      'CONTROLLER',
+      'DATABASE',
+      'BLOCKED',
+    ],
+    handleStateChange
+  );
+
+  /*
+   * Create the experiment trial sequence
+   */
+  exp.createTrialSequence([
+    ...generateSequence('tutorial', exp.cfg.numTutorialSequences),
+    ...generateSequence('practice', exp.cfg.numPracticeSequences),
+    ...generateSequence('calibration', exp.cfg.numCalibrationSequences),
+    ...generateSequence('main', exp.cfg.numMainSequences),
+  ]);
+
+  exp.start(calcFunc, stateFunc, displayFunc);
+
+  /**
    * Experiment function to re-initialize all data structures and reset the entire experiment
    */
   function resetExperiment() {
@@ -644,36 +696,8 @@ async function main() {
     // Reset trial object
     trial = {};
 
-    /**
-     * Initialize Finite State Machine (FSM) that manages the flow of your experiment
-     */
-    exp.state.init(
-      [
-        'CONSENT',
-        'SIGNIN',
-        'WELCOME',
-        'PRETUTORIAL',
-        'PREPRACTICE',
-        'PREMAIN',
-        'START',
-        'FIXATION',
-        'MOTION',
-        'RESPONSE',
-        'POSTRESPONSE',
-        'FEEDBACK',
-        'CONFIDENCE',
-        'FINISH',
-        'ADVANCE',
-        'DONE',
-        'CONTROLLER',
-        'DATABASE',
-        'BLOCKED',
-      ],
-      handleStateChange
-    );
-
     /*
-     * Create the experiment trial sequence
+     * Recreate the experiment trial sequence
      */
     exp.createTrialSequence([
       ...generateSequence('tutorial', exp.cfg.numTutorialSequences),
@@ -681,13 +705,10 @@ async function main() {
       ...generateSequence('calibration', exp.cfg.numCalibrationSequences),
       ...generateSequence('main', exp.cfg.numMainSequences),
     ]);
-    exp.start(calcFunc, stateFunc, displayFunc);
-  }
 
-  /**
-   * On first launch, run the `resetExperiment` function to start the experiment
-   */
-  resetExperiment();
+    // Reset the experiment state
+    exp.state.next('TEST_CONTROLLER_LEFT');
+  }
 
   /**
    * Use `calcFunc` for calculations used in multiple states
@@ -731,8 +752,42 @@ async function main() {
       // SIGNIN state can be left alone
       case 'SIGNIN':
         if (exp.waitForAuthentication()) {
-          exp.state.next('WELCOME');
+          exp.state.next('TEST_CONTROLLER_LEFT');
         }
+        break;
+
+      case 'TEST_CONTROLLER_LEFT':
+        exp.state.once(() => {
+          stimulus.usePreset('default');
+          exp.sceneManager.setCameraLayout(DEFAULT_CAMERA_LAYOUT);
+          exp.VRUI.visible = true;
+          exp.VRUI.progress.visible = false;
+          exp.VRUI.edit({
+            title: 'Controller Setup',
+            instructions: `To check that your controller is working correctly, press the left controller trigger to continue.`,
+            interactive: false,
+            buttons: false,
+            backButtonState: 'disabled',
+            nextButtonState: 'disabled',
+          });
+        });
+        break;
+
+      case 'TEST_CONTROLLER_RIGHT':
+        exp.state.once(() => {
+          stimulus.usePreset('default');
+          exp.sceneManager.setCameraLayout(DEFAULT_CAMERA_LAYOUT);
+          exp.VRUI.visible = true;
+          exp.VRUI.progress.visible = false;
+          exp.VRUI.edit({
+            title: 'Controller Setup',
+            instructions: `Now press the right controller trigger to continue.`,
+            interactive: false,
+            buttons: false,
+            backButtonState: 'disabled',
+            nextButtonState: 'disabled',
+          });
+        });
         break;
 
       case 'WELCOME':
@@ -1081,7 +1136,10 @@ async function main() {
           // Check if we need to show confidence
           const realTrialNumber =
             trial.block.repetition * 2 + trial.block.trial + 1;
-          if (realTrialNumber % exp.cfg.confidenceGap === 0 && trial.block.name !== 'tutorial') {
+          if (
+            realTrialNumber % exp.cfg.confidenceGap === 0 &&
+            trial.block.name !== 'tutorial'
+          ) {
             exp.state.next('CONFIDENCE');
           } else {
             exp.state.next('FINISH');
