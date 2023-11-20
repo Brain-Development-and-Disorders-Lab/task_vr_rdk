@@ -1081,7 +1081,7 @@ async function main() {
           // Check if we need to show confidence
           const realTrialNumber =
             trial.block.repetition * 2 + trial.block.trial + 1;
-          if (realTrialNumber % exp.cfg.confidenceGap === 0) {
+          if (realTrialNumber % exp.cfg.confidenceGap === 0 && trial.block.name !== 'tutorial') {
             exp.state.next('CONFIDENCE');
           } else {
             exp.state.next('FINISH');
