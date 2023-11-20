@@ -323,7 +323,7 @@ class Stimulus {
       0,
       -0.6,
       -this.distance,
-      `Between the last two trials, did you feel more confident about your response to:\n\n\tThe trial before last (2 ago) or the last trial (1 ago)?`,
+      `Between the previous trial and this trial, did you feel more confident about your response to:\n\n\tThe previous trial or this trial?`,
       fill
     );
   }
@@ -681,8 +681,8 @@ class Stimulus {
     confidenceContainer.add(descriptionContainer);
 
     const actionButtons = this._createActionButtons(
-      `Trial before last`,
-      `Last trial`,
+      `Previous trial`,
+      `This trial`,
       0.8,
       1.2
     );
