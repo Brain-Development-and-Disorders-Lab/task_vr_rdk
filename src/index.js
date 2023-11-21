@@ -206,6 +206,12 @@ async function main() {
     } else if (kMedian < 0.12) {
       kMedian = 0.12;
     }
+    console.info(
+      `(CALIBRATION) Calculated kMedian for type "${coherenceType}":`,
+      kMedian,
+      kMedian * 0.5,
+      kMedian * 2.0
+    );
 
     return [kMedian * 0.5, kMedian * 2.0];
   }
@@ -706,6 +712,9 @@ async function main() {
       ...generateSequence('main', exp.cfg.numMainSequences),
     ]);
 
+    // Reset the trial number
+    exp.trialNumber = 0;
+
     // Reset the experiment state
     exp.state.next('TEST_CONTROLLER_LEFT');
   }
@@ -886,7 +895,7 @@ async function main() {
 
           // Log the trial start time
           console.info(
-            '(START) Local Timestamp:',
+            `(START) Trial: ${exp.trialNumber}\n(START) Timestamp (localized):`,
             trial.localDate,
             trial.localTime,
             trial.localTimezone
@@ -957,11 +966,19 @@ async function main() {
                     parseFloat((trial.coherences.left[0] + 0.01).toFixed(2)),
                     parseFloat((trial.coherences.left[0] + 0.01).toFixed(2)),
                   ];
+                  console.info(
+                    '(CALIBRATION) Increased left coherence value:',
+                    trial.coherences.left[0]
+                  );
                 } else {
                   trial.coherences.right = [
                     parseFloat((trial.coherences.right[0] + 0.01).toFixed(2)),
                     parseFloat((trial.coherences.right[0] + 0.01).toFixed(2)),
                   ];
+                  console.info(
+                    '(CALIBRATION) Increased right coherence value:',
+                    trial.coherences.right[0]
+                  );
                 }
               } else if (trials.length > 1) {
                 // If the previous two answers were correct, decrease the coherence
@@ -977,11 +994,19 @@ async function main() {
                       parseFloat((trial.coherences.left[0] - 0.01).toFixed(2)),
                       parseFloat((trial.coherences.left[0] - 0.01).toFixed(2)),
                     ];
+                    console.info(
+                      '(CALIBRATION) Decreased left coherence value:',
+                      trial.coherences.left[0]
+                    );
                   } else {
                     trial.coherences.right = [
                       parseFloat((trial.coherences.right[0] - 0.01).toFixed(2)),
                       parseFloat((trial.coherences.right[0] - 0.01).toFixed(2)),
                     ];
+                    console.info(
+                      '(CALIBRATION) Decreased right coherence value:',
+                      trial.coherences.right[0]
+                    );
                   }
                 }
               }
