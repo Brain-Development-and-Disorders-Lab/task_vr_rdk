@@ -75,7 +75,6 @@ async function main() {
     postResponseDuration: 0.25 * TIME_MULTIPLER, // seconds
     feedbackDuration: 0.25 * TIME_MULTIPLER, // seconds
     motionDuration: 1.5 * TIME_MULTIPLER, // seconds
-    resetTimer: 20.0 * TIME_MULTIPLER, // seconds
   });
 
   /*
@@ -676,50 +675,6 @@ async function main() {
   exp.start(calcFunc, stateFunc, displayFunc);
 
   /**
-   * Experiment function to re-initialize all data structures and reset the entire experiment
-   */
-  function resetExperiment() {
-    console.info('(RESET) Running experiment reset...');
-    // Reset timing data
-    timings = {
-      referenceRT: {
-        start: 0,
-        end: 0,
-      },
-      confidenceRT: {
-        start: 0,
-        end: 0,
-      },
-      trial: {
-        start: 0,
-        end: 0,
-      },
-    };
-
-    // Clear experiment data
-    data = [];
-
-    // Reset trial object
-    trial = {};
-
-    /*
-     * Recreate the experiment trial sequence
-     */
-    exp.createTrialSequence([
-      ...generateSequence('tutorial', exp.cfg.numTutorialSequences),
-      ...generateSequence('practice', exp.cfg.numPracticeSequences),
-      ...generateSequence('calibration', exp.cfg.numCalibrationSequences),
-      ...generateSequence('main', exp.cfg.numMainSequences),
-    ]);
-
-    // Reset the trial number
-    exp.trialNumber = 0;
-
-    // Reset the experiment state
-    exp.state.next('TEST_CONTROLLER_LEFT');
-  }
-
-  /**
    * Use `calcFunc` for calculations used in multiple states
    */
   function calcFunc() {}
@@ -1260,6 +1215,7 @@ async function main() {
         }
         exp.state.once(function () {
           stimulus.usePreset('default');
+          exp.sceneManager.setCameraLayout(DEFAULT_CAMERA_LAYOUT);
           exp.VRUI.visible = true;
           exp.VRUI.edit({
             title: 'Finished',
@@ -1271,13 +1227,6 @@ async function main() {
           });
           exp.firebase.localSave();
         });
-        if (
-          exp.state.expired(exp.cfg.resetTimer) &&
-          exp.cfg.supervised === true
-        ) {
-          // Reset the experiment if supervised
-          resetExperiment();
-        }
         break;
 
       case 'CONTROLLER':
