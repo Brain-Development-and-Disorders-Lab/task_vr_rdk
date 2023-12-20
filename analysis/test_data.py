@@ -42,11 +42,17 @@ class TestTaskData(unittest.TestCase):
         self.df = pd.DataFrame(columns=COLUMNS)
         with open(FILE_NAME) as file:
             data = json.load(file)
-            trial_data = data[list(data.keys())[0]]
+            # trial_data = data[list(data.keys())]
             for i in range(0, TRIAL_COUNT):
-                self.df = self.df.append(pd.json_normalize(trial_data[str(i)]), ignore_index=True)
+                self.df = self.df.append(pd.json_normalize(data[str(i)]), ignore_index=True)
             file.close()
         return super().setUp()
+
+
+    def test_analysis(self):
+        print("------ ANALYSIS ------")
+        print("Correct:", round((self.df["data.correct"].sum() / TRIAL_COUNT) * 100, 2), "%")
+        print("------ ANALYSIS ------")
 
 
     def test_trial_count(self):
