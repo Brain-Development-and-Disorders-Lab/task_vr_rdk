@@ -60,6 +60,9 @@ def reformat(filename: str):
     df = pd.DataFrame(columns=COLUMNS)
     with open(filename) as file:
         data = json.load(file)
+        # Extract data from the randomly generated identifier at the top-level of the JSON structure
+        data = data[list(data.keys())[0]]
+        # Iterate over all trials
         data_length = len(data.keys())
         for i in range(0, data_length - 1):
             df = df.append(pd.json_normalize(data[str(i)]), ignore_index=True)
