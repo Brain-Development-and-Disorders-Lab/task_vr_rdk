@@ -24,6 +24,7 @@ const DEFAULT_CAMERA_LAYOUT = 2;
 
 // Experiment constants
 const DEFAULT_BLOCK_SIZE = 10; // number of trials per 'block'
+const DEMO_BLOCK_SIZE = 4; // number of trials per demo 'block'
 const TIME_MULTIPLER = 1.0; // factor to adjust the length of timings (use for testing)
 
 /*
@@ -37,6 +38,7 @@ async function main() {
       autoplay: false,
     },
     demo: false,
+    technicalDemo: false,
     supervised: true,
     noPoints: true,
 
@@ -64,11 +66,12 @@ async function main() {
     // Experiment behavior
     confidenceGap: 2,
 
-    // Number of left-right trial sequences per sequence type (n * 20 trials)
+    // Number of left-right trial sequences per sequence type (n * 20 trials, assuming default block size is 10)
     numTutorialSequences: 1, // 20
     numPracticeSequences: 1, // 20
     numCalibrationSequences: 6, // 120
     numMainSequences: 10, // 200
+    numTechnicalDemoSequences: 50, // 400, default block size for technical 'demo' trials is 8, 4 on each eye
 
     // Trial durations
     fixationDuration: 1.0 * TIME_MULTIPLER, // seconds
@@ -398,6 +401,47 @@ async function main() {
             },
           })
         );
+      } else if (type === 'demo') {
+        blocks.push(
+          new Block({
+            variables: {
+              coherence: Array(DEMO_BLOCK_SIZE).fill(0.4),
+              coherences: Array(DEMO_BLOCK_SIZE).fill({
+                left: [0.3, 0.6],
+                right: [0.3, 0.6],
+                combined: [0.3, 0.6],
+              }),
+              motionDuration: Array(DEMO_BLOCK_SIZE).fill(
+                exp.cfg.motionDuration
+              ),
+              showFeedback: Array(DEMO_BLOCK_SIZE).fill(false),
+              cameraLayout: Array(DEMO_BLOCK_SIZE).fill(LEFT_CAMERA_LAYOUT),
+            },
+            options: {
+              name: 'demo',
+              reps: 1,
+            },
+          }),
+          new Block({
+            variables: {
+              coherence: Array(DEMO_BLOCK_SIZE).fill(0.4),
+              coherences: Array(DEMO_BLOCK_SIZE).fill({
+                left: [0.3, 0.6],
+                right: [0.3, 0.6],
+                combined: [0.3, 0.6],
+              }),
+              motionDuration: Array(DEMO_BLOCK_SIZE).fill(
+                exp.cfg.motionDuration
+              ),
+              showFeedback: Array(DEMO_BLOCK_SIZE).fill(false),
+              cameraLayout: Array(DEMO_BLOCK_SIZE).fill(RIGHT_CAMERA_LAYOUT),
+            },
+            options: {
+              name: 'demo',
+              reps: 1,
+            },
+          })
+        );
       } else {
         console.warn('Unknown sequence type:', type);
       }
@@ -665,12 +709,21 @@ async function main() {
   /*
    * Create the experiment trial sequence
    */
-  exp.createTrialSequence([
-    ...generateSequence('tutorial', exp.cfg.numTutorialSequences),
-    ...generateSequence('practice', exp.cfg.numPracticeSequences),
-    ...generateSequence('calibration', exp.cfg.numCalibrationSequences),
-    ...generateSequence('main', exp.cfg.numMainSequences),
-  ]);
+  if (_.isEqual(exp.cfg.technicalDemo, true)) {
+    // Create a sequence for the technical demo, including only 'demo'-type trials
+    console.info('DEVELOPER: Generated trial sequence for technical demo');
+    exp.createTrialSequence([
+      ...generateSequence('demo', exp.cfg.numTechnicalDemoSequences),
+    ]);
+  } else {
+    // Create the regular experiment sequence
+    exp.createTrialSequence([
+      ...generateSequence('tutorial', exp.cfg.numTutorialSequences),
+      ...generateSequence('practice', exp.cfg.numPracticeSequences),
+      ...generateSequence('calibration', exp.cfg.numCalibrationSequences),
+      ...generateSequence('main', exp.cfg.numMainSequences),
+    ]);
+  }
 
   exp.start(calcFunc, stateFunc, displayFunc);
 
@@ -716,7 +769,13 @@ async function main() {
       // SIGNIN state can be left alone
       case 'SIGNIN':
         if (exp.waitForAuthentication()) {
-          exp.state.next('TEST_CONTROLLER_LEFT');
+          if (_.isEqual(exp.cfg.technicalDemo, true)) {
+            // If running a technical demo, skip straight to the task
+            exp.state.next('START');
+          } else {
+            // In regular behaviour, run through controller checks before continuing to instructions
+            exp.state.next('TEST_CONTROLLER_LEFT');
+          }
         }
         break;
 
@@ -859,7 +918,7 @@ async function main() {
           /**
            * 'tutorial' and 'practice'-type operations
            */
-          if (['tutorial', 'practice'].includes(trial.block.name)) {
+          if (['tutorial', 'practice', 'demo'].includes(trial.block.name)) {
             // Select coherences randomly
             if (trial.cameraLayout === LEFT_CAMERA_LAYOUT) {
               trial.coherence =
