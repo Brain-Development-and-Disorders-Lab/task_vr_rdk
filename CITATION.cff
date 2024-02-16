@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this task, please cite it as below."
+authors:
+- family-names: "Burgess"
+  given-names: "Henry"
+  orcid: "https://orcid.org/0000-0002-3481-952X"
+title: "RDK Task (VR)"
+version: 1.0.0
+date-released: 2024-02-16
+url: "https://github.com/Brain-Development-and-Disorders-Lab/task_vr_rdk"
