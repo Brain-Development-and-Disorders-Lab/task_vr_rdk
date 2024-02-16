@@ -1,13 +1,20 @@
-# Random Dot Kinematogram (RDK) Task
+# VR Random Dot Kinematogram (RDK) Task
 
-This task is built using [Ouvrai](https://github.com/EvanCesanek/Ouvrai) and is a VR-compatible adaptation of an existing [RDK task](https://github.com/Brain-Development-and-Disorders-Lab/task_rdk).
+> This task is a VR-compatible adaptation of an existing [RDK task](https://github.com/Brain-Development-and-Disorders-Lab/task_rdk).
 
-## Usage
+## Getting Started
 
-Once Ouvrai is installed on your system, clone this task into the `experiments` subdirectory.
+This repository contains two versions of the task, one browser-based (WebXR) implementation and an implementation using Unity. The WebXR implementation is archived at version 1.0.3, and was implemented using the [Ouvrai](https://github.com/EvanCesanek/Ouvrai) software package. The primary advantage of migrating to Unity is the ability to use eye-tracking capabilities and operate natively on the Meta Quest Pro headsets. [Unity Experiment Framework](https://immersivecognition.com/unity-experiment-framework/) is used to create experiment structure and enable data collection.
 
-Start the task by running `ouvrai dev task_vr_rdk`.
+## License
 
-## Testing and Compatibility
+<!-- CC BY-NC-SA 4.0 License -->
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
+  <img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" />
+</a>
+<br />
+This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
 
-This task will be delivered using a Meta Quest Pro.
+## Issues and Feedback
+
+Please contact **Henry Burgess** <[henry.burgess@wustl.edu](mailto:henry.burgess@wustl.edu)> for all code-related issues and feedback.
