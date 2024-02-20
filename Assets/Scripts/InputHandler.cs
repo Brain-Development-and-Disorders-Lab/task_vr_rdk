@@ -1,17 +1,17 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class NewMonoBehaviour : MonoBehaviour
+// add the UXF namespace
+using UXF;
+
+public class InputHandler : MonoBehaviour
 {
-    // Use this for initialization
-    void Start()
-    {
-
-    }
-
-    // Update is called once per frame
     void Update()
     {
-
+        // End the current trial when the trigger button is pressed
+        if (OVRInput.Get(OVRInput.Button.One) == true)
+        {
+            Session.instance.EndCurrentTrial();
+        }
     }
 }
