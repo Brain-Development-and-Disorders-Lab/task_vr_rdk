@@ -4,10 +4,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 
-// add the UXF namespace
 using UXF;
 
-public class SessionGenerator : MonoBehaviour
+public class ExperimentManager : MonoBehaviour
 {
     public void GenerateExperiment(Session session)
     {
@@ -18,5 +17,10 @@ public class SessionGenerator : MonoBehaviour
     public void BeginExperiment(Session session)
     {
         session.BeginNextTrial();
+    }
+
+    public void QuitExperiment()
+    {
+        Application.Quit();
     }
 }
