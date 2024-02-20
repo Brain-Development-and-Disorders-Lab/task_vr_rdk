@@ -14,10 +14,49 @@ namespace UXF
     {
         // Default gaze distance (should be mapped to the "surface" of the 2D stimulus)
         [SerializeField]
-        private float defaultGazeDistance = 10.0f;
+        private float gazeDistance = 10.0f;
+
+        // Fields to enable and manage the gaze indicators
+        [SerializeField]
+        private bool showIndicator = false;
+        private GameObject indicator;
+
+        // OVR classes
+        private OVREyeGaze eyeGazeComponent;
 
         public override string MeasurementDescriptor => "gaze";
         public override IEnumerable<string> CustomHeader => new string[] { "pos_x", "pos_y", "pos_z", "rot_x", "rot_y", "rot_z" };
+
+        public void Start()
+        {
+            if (showIndicator == true)
+            {
+                // Create a new indicator object
+                indicator = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                indicator.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+
+                // Assign the colour based on left or right eye
+                eyeGazeComponent = GetComponentInParent<OVREyeGaze>(); 
+                if (eyeGazeComponent != null)
+                {
+                    var indicatorRenderer = indicator.GetComponent<Renderer>();
+                    if (eyeGazeComponent.name.StartsWith("Left"))
+                    {
+                        // Left eye is red
+                        indicatorRenderer.material.SetColor("_Color", Color.red);
+                    }
+                    else
+                    {
+                        // Right eye is blue
+                        indicatorRenderer.material.SetColor("_Color", Color.blue);
+                    }
+                }
+                else
+                {
+                    Debug.LogError("Missing OVREyeGaze component. Eye tracking will not work.");
+                }
+            }
+        }
 
         /// <summary>
         /// Returns current position and rotation values of the eye
@@ -25,12 +64,16 @@ namespace UXF
         /// <returns></returns>
         protected override UXFDataRow GetCurrentValues()
         {
-            // Get the current Transform component
-            Transform activeEye = GetComponent<Transform>();
-
             // Eye position and rotation
-            Vector3 p = activeEye.position;
-            Vector3 r = activeEye.eulerAngles;
+            Vector3 p = transform.position;
+            Vector3 r = transform.eulerAngles;
+
+            // If using indicators, update the position
+            if (showIndicator == true && indicator != null)
+            {
+                Vector3 indicatorEstimate = p + transform.forward * gazeDistance;
+                indicator.transform.position = indicatorEstimate;
+            }
 
             // Return position, rotation (x, y, z) as an array
             var values = new UXFDataRow()
