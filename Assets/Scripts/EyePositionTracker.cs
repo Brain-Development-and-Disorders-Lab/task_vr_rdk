@@ -8,11 +8,11 @@ using System.Linq;
 namespace UXF
 {
     /// <summary>
-    /// Attach this component to a gameobject and assign it in the trackedObjects field in an ExperimentSession to automatically record position/rotation of the object at each frame.
+    /// Attach this component to a GameObject and assign it in the trackedObjects field in an ExperimentSession to automatically record position/rotation of the object at each frame.
     /// </summary>
     public class EyePositionTracker : Tracker
     {
-        // Default gaze distance (should be mapped to the "surface" of the 2D stimulus)
+        // Default gaze distance (should be mapped to the "surface" of the furthest 2D stimulus)
         [SerializeField]
         private float gazeDistance = 10.0f;
 
