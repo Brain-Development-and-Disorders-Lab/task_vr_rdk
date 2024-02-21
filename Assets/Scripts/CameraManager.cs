@@ -20,9 +20,30 @@ public class CameraManager : MonoBehaviour
     // Default visual field (active camera)
     private VisualField activeField = VisualField.Both;
 
+    /// <summary>
+    /// Set the active visual field
+    /// </summary>
+    /// <param name="field"></param>
     public void SetActiveField(VisualField field)
     {
-        activeField = field;
+        if (field != activeField)
+        {
+            activeField = field;
+            Debug.Log("Changed visual field: " + field.ToString());
+        }
+        else
+        {
+            Debug.LogWarning("Active visual field unchanged");
+        }
+    }
+
+    /// <summary>
+    /// Get the current active visual field
+    /// </summary>
+    /// <returns>Active visual field, member of `VisualField` enum</returns>
+    public VisualField GetActiveField()
+    {
+        return activeField;
     }
 
     // Update active cameras every frame
