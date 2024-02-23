@@ -8,13 +8,18 @@ public class CameraManager : MonoBehaviour
     private Camera leftCamera;
     [SerializeField]
     private Camera rightCamera;
+    [SerializeField]
+    private OVRCameraRig cameraRig;
 
     // Anchor for stimulus, this is critical for true dichoptic presentation
     [SerializeField]
     private GameObject stimulusAnchor;
+    [SerializeField]
+    private bool followHeadMovement;
 
     // Store the original anchor position
     private Vector3 initialAnchorPosition;
+    private float anchorDistance;
 
     // Visual offset angle to place stimulus in single hemifield
     [SerializeField]
@@ -40,7 +45,7 @@ public class CameraManager : MonoBehaviour
         // Step 1: Calculate IPD
         float ipd = Mathf.Abs(leftCamera.transform.position.x - rightCamera.transform.position.x);
 
-        float anchorDistance = Mathf.Abs(leftCamera.transform.position.z - stimulusAnchor.transform.position.z);
+        anchorDistance = Mathf.Abs(leftCamera.transform.position.z - stimulusAnchor.transform.position.z);
 
         // Step 2: Calculate lambda (angle between gaze vector and static eye position vector, using IPD)
         float lambda = Mathf.Atan((ipd / 2) / anchorDistance);
@@ -53,6 +58,13 @@ public class CameraManager : MonoBehaviour
 
         // Step 5: Calculate total offset value
         totalOffset = offsetDistance + (ipd / 2);
+
+        // Check if OVRCameraRig has been specified, required for head tracking
+        if (cameraRig == null)
+        {
+            Debug.LogWarning("OVRCameraRig instance not specified, disabling head tracking");
+            followHeadMovement = false;
+        }
     }
 
     /// <summary>
@@ -84,6 +96,14 @@ public class CameraManager : MonoBehaviour
     // Update active cameras every frame
     void Update()
     {
+        // If tracking head movement, update StimulusAnchor position
+        if (followHeadMovement)
+        {
+            // Get the head position
+            Vector3 headProjection = cameraRig.centerEyeAnchor.transform.TransformDirection(Vector3.forward) * anchorDistance;
+            stimulusAnchor.transform.position = new Vector3(headProjection.x, headProjection.y, headProjection.z);
+        }
+
         // Apply masking depending on the active visual field
         if (activeField == VisualField.Left)
         {
