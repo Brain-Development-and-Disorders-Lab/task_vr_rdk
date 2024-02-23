@@ -40,6 +40,7 @@ namespace UXF
                 if (eyeGazeComponent != null)
                 {
                     var indicatorRenderer = indicator.GetComponent<Renderer>();
+                    indicatorRenderer.material = new Material(Shader.Find("Sprites/Default"));
                     if (eyeGazeComponent.name.StartsWith("Left"))
                     {
                         // Left eye is red
