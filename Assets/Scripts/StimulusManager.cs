@@ -10,20 +10,16 @@ public class StimulusManager : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        Debug.Log("StimulusManager active");
         CreateArc(4.0f, 0.0f, 181.0f, 1000, Color.white);
-        CreateArc(4.0f, 180.0f, 361.0f, 1000, Color.white);
-        CreateArc(3.0f, 0.0f, 181.0f, 1000, Color.cyan);
-        CreateArc(3.0f, 180.0f, 361.0f, 1000, Color.magenta);
     }
 
     public void CreateArc(float radius, float startAngle, float endAngle, int segments, Color color)
     {
         // Create base GameObject
         GameObject arcObject = new GameObject();
-        arcObject.transform.parent = stimulusAnchor.transform;
         arcObject.name = "rdk_arc_object";
         arcObject.AddComponent<LineRenderer>();
+        arcObject.transform.SetParent(stimulusAnchor.transform, false);
 
         // Generate points to form the arc
         Vector3[] arcPoints = new Vector3[segments];
@@ -35,13 +31,14 @@ public class StimulusManager : MonoBehaviour
             float x = Mathf.Sin(Mathf.Deg2Rad * angle) * radius;
             float y = Mathf.Cos(Mathf.Deg2Rad * angle) * radius;
 
-            arcPoints[i] = new Vector3(x, y, stimulusAnchor.transform.position.z);
+            arcPoints[i] = new Vector3(x, y, 0.0f);
 
             angle += (arcLength / segments);
         }
 
         // Create the LineRenderer
         LineRenderer line = arcObject.GetComponent<LineRenderer>();
+        line.useWorldSpace = false;
         line.positionCount = arcPoints.Length;
         line.SetPositions(arcPoints);
         line.material = new Material(Shader.Find("Sprites/Default"));

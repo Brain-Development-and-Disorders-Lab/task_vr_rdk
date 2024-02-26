@@ -37,6 +37,9 @@ public class CameraManager : MonoBehaviour
     // Default visual field (active camera)
     private VisualField activeField = VisualField.Both;
 
+    // Logger
+    private LoggerManager logger;
+
     private void Start()
     {
         initialAnchorPosition = new Vector3(stimulusAnchor.transform.position.x, stimulusAnchor.transform.position.y, stimulusAnchor.transform.position.z);
@@ -65,6 +68,9 @@ public class CameraManager : MonoBehaviour
             Debug.LogWarning("OVRCameraRig instance not specified, disabling head tracking");
             followHeadMovement = false;
         }
+
+        // Logger
+        logger = FindAnyObjectByType<LoggerManager>();
     }
 
     /// <summary>
@@ -101,8 +107,15 @@ public class CameraManager : MonoBehaviour
         {
             // Get the head position
             Vector3 headProjection = cameraRig.centerEyeAnchor.transform.TransformDirection(Vector3.forward) * anchorDistance;
+            Vector3 headRotation = cameraRig.centerEyeAnchor.transform.eulerAngles;
+
+            // Update position and rotation
             stimulusAnchor.transform.position = new Vector3(headProjection.x, headProjection.y, headProjection.z);
+            stimulusAnchor.transform.eulerAngles = headRotation;
         }
+
+        // Get the current position
+        Vector3 currentPosition = stimulusAnchor.transform.position;
 
         // Apply masking depending on the active visual field
         if (activeField == VisualField.Left)
@@ -112,11 +125,7 @@ public class CameraManager : MonoBehaviour
             rightCamera.cullingMask = 1 << 6;
 
             // Set position
-            stimulusAnchor.transform.position = new Vector3(
-                initialAnchorPosition.x - totalOffset,
-                initialAnchorPosition.y,
-                initialAnchorPosition.z
-            );
+            stimulusAnchor.transform.position.Set(currentPosition.x - totalOffset, currentPosition.y, currentPosition.z);
         }
         else if (activeField == VisualField.Right)
         {
@@ -125,24 +134,13 @@ public class CameraManager : MonoBehaviour
             rightCamera.cullingMask = ~(1 << 6);
 
             // Set position
-            stimulusAnchor.transform.position = new Vector3(
-                initialAnchorPosition.x + totalOffset,
-                initialAnchorPosition.y,
-                initialAnchorPosition.z
-            );
+            stimulusAnchor.transform.position = new Vector3(currentPosition.x + totalOffset, currentPosition.y, currentPosition.z);
         }
         else
         {
             // Both
             leftCamera.cullingMask = ~(1 << 6);
             rightCamera.cullingMask = ~(1 << 6);
-
-            // Reset position
-            stimulusAnchor.transform.position = new Vector3(
-                initialAnchorPosition.x,
-                initialAnchorPosition.y,
-                initialAnchorPosition.z
-            );
         }
     }
 }
