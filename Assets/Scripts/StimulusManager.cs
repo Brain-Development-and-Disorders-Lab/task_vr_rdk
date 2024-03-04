@@ -11,6 +11,8 @@ public class StimulusManager : MonoBehaviour
     void Start()
     {
         CreateArc(4.0f, 0.0f, 181.0f, 1000, Color.white);
+        CreateFixation();
+        CreateDots();
     }
 
     public void CreateArc(float radius, float startAngle, float endAngle, int segments, Color color)
@@ -33,7 +35,7 @@ public class StimulusManager : MonoBehaviour
 
             arcPoints[i] = new Vector3(x, y, 0.0f);
 
-            angle += (arcLength / segments);
+            angle += arcLength / segments;
         }
 
         // Create the LineRenderer
@@ -45,5 +47,57 @@ public class StimulusManager : MonoBehaviour
         line.material.SetColor("_Color", color);
         line.startWidth = 0.1f;
         line.endWidth = 0.1f;
+    }
+
+    public void CreateFixation()
+    {
+        // Create base GameObject
+        GameObject fixationObjectParent = new GameObject();
+        fixationObjectParent.name = "rdk_fixation_object";
+        fixationObjectParent.transform.SetParent(stimulusAnchor.transform, false);
+
+        // Create horizontal component
+        GameObject fixationObjectHorizontal = new GameObject();
+        fixationObjectHorizontal.name = "rdk_fixation_object_h";
+        fixationObjectHorizontal.AddComponent<LineRenderer>();
+        fixationObjectHorizontal.transform.SetParent(fixationObjectParent.transform, false);
+
+        // Create horizontal LineRenderer
+        LineRenderer horizontalLine = fixationObjectHorizontal.GetComponent<LineRenderer>();
+        horizontalLine.useWorldSpace = false;
+        horizontalLine.positionCount = 2;
+        horizontalLine.SetPosition(0, new Vector3(-0.2f, 0.0f, 0.0f));
+        horizontalLine.SetPosition(1, new Vector3(0.2f, 0.0f, 0.0f));
+        horizontalLine.material = new Material(Shader.Find("Sprites/Default"));
+        horizontalLine.material.SetColor("_Color", Color.white);
+        horizontalLine.startWidth = 0.1f;
+        horizontalLine.endWidth = 0.1f;
+
+        // Create vertical component
+        GameObject fixationObjectVertical = new GameObject();
+        fixationObjectVertical.name = "rdk_fixation_object_v";
+        fixationObjectVertical.AddComponent<LineRenderer>();
+        fixationObjectVertical.transform.SetParent(fixationObjectParent.transform, false);
+
+        // Create vertical LineRenderer
+        LineRenderer verticalLine = fixationObjectVertical.GetComponent<LineRenderer>();
+        verticalLine.useWorldSpace = false;
+        verticalLine.positionCount = 2;
+        verticalLine.SetPosition(0, new Vector3(0.0f, -0.2f, 0.0f));
+        verticalLine.SetPosition(1, new Vector3(0.0f, 0.2f, 0.0f));
+        verticalLine.material = new Material(Shader.Find("Sprites/Default"));
+        verticalLine.material.SetColor("_Color", Color.white);
+        verticalLine.startWidth = 0.1f;
+        verticalLine.endWidth = 0.1f;
+    }
+
+    public void CreateDot()
+    {
+
+    }
+
+    public void CreateDots()
+    {
+
     }
 }
