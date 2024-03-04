@@ -11,7 +11,6 @@ public class StimulusManager : MonoBehaviour
     void Start()
     {
         CreateArc(4.0f, 0.0f, 181.0f, 1000, Color.white);
-        CreateFixation();
         CreateDots();
     }
 
@@ -93,11 +92,21 @@ public class StimulusManager : MonoBehaviour
 
     public void CreateDot()
     {
+        // Create base GameObject
+        GameObject dotObject = new GameObject();
+        dotObject.name = "rdk_dot_object";
+        dotObject.transform.SetParent(stimulusAnchor.transform, false);
+        dotObject.AddComponent<SpriteRenderer>();
 
+        // Create SpriteRenderer
+        SpriteRenderer dotRenderer = dotObject.GetComponent<SpriteRenderer>();
+        dotRenderer.drawMode = SpriteDrawMode.Sliced;
+        dotRenderer.sprite = Resources.Load<Sprite>("Sprites/Dot");;
+        dotRenderer.size = new Vector2(0.2f, 0.2f);
     }
 
     public void CreateDots()
     {
-
+        CreateDot();
     }
 }
