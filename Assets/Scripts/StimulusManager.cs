@@ -1,17 +1,37 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System;
 
 public class StimulusManager : MonoBehaviour
 {
     [SerializeField]
     private GameObject stimulusAnchor;
 
+    [SerializeField]
+    private float ScalingFactor = 4.5f;
+
+    // Calculated dimensions of stimuli
+    private float StimulusDistance;
+    private readonly float ArcDiameter = 8.0f;
+    private float ArcWorldRadius;
+    private readonly float DotDiameter = 0.12f;
+    private float DotWorldRadius;
+
     // Use this for initialization
     void Start()
     {
-        CreateArc(4.0f, 0.0f, 181.0f, 1000, Color.white);
+        CalculateValues();
+        CreateArc(ArcWorldRadius, 0.0f, 181.0f, 1000, Color.white);
+        CreateArc(ArcWorldRadius, 180.0f, 361.0f, 1000, Color.white);
         CreateDots();
+    }
+
+    private void CalculateValues()
+    {
+        StimulusDistance = Mathf.Abs(transform.position.z - stimulusAnchor.transform.position.z);
+        ArcWorldRadius = StimulusDistance * Mathf.Tan(ScalingFactor * ArcDiameter / 2 * (Mathf.PI / 180.0f));
+        DotWorldRadius = StimulusDistance * Mathf.Tan(ScalingFactor * DotDiameter / 2 * (Mathf.PI / 180.0f));
     }
 
     public void CreateArc(float radius, float startAngle, float endAngle, int segments, Color color)
@@ -90,23 +110,37 @@ public class StimulusManager : MonoBehaviour
         verticalLine.endWidth = 0.1f;
     }
 
-    public void CreateDot()
+    public void CreateDot(float radius, float x = 0.0f, float y = 0.0f)
     {
         // Create base GameObject
         GameObject dotObject = new GameObject();
         dotObject.name = "rdk_dot_object";
         dotObject.transform.SetParent(stimulusAnchor.transform, false);
         dotObject.AddComponent<SpriteRenderer>();
+        dotObject.transform.localPosition = new Vector3(x, y, 0.0f);
 
         // Create SpriteRenderer
         SpriteRenderer dotRenderer = dotObject.GetComponent<SpriteRenderer>();
         dotRenderer.drawMode = SpriteDrawMode.Sliced;
-        dotRenderer.sprite = Resources.Load<Sprite>("Sprites/Dot");;
-        dotRenderer.size = new Vector2(0.2f, 0.2f);
+        dotRenderer.sprite = Resources.Load<Sprite>("Sprites/Circle");;
+        dotRenderer.size = new Vector2(radius * 2.0f, radius * 2.0f);
     }
 
     public void CreateDots()
     {
-        CreateDot();
+        for (int i = 0; i < 30; i++)
+        {
+            for (int j = 0; j < 30; j++)
+            {
+                float dotX = (ArcWorldRadius * 2 * j / 30) - ArcWorldRadius;
+                float dotY = (ArcWorldRadius * 2 * i / 30) - ArcWorldRadius;
+
+                if (Mathf.Sqrt(Mathf.Pow(dotX, 2.0f) + Mathf.Pow(dotY, 2.0f)) <= ArcWorldRadius)
+                {
+                    CreateDot(DotWorldRadius, dotX, dotY);
+                }
+
+            }
+        }
     }
 }
