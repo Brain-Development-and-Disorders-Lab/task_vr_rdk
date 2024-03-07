@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System;
 
 public class StimulusManager : MonoBehaviour
 {
@@ -9,16 +9,19 @@ public class StimulusManager : MonoBehaviour
     private GameObject stimulusAnchor;
 
     [SerializeField]
-    private float ScalingFactor = 4.5f;
+    private float ScalingFactor = 4.5f; // Adjust scaling of stimulus to be viewable
 
     // Calculated dimensions of stimuli
     private float StimulusDistance;
-    private readonly float ArcDiameter = 8.0f;
+    private readonly float ArcDiameter = 8.0f; // Specified in supplementary materials
     private float ArcWorldRadius;
-    private readonly float DotDiameter = 0.12f;
+    private readonly float DotDiameter = 0.12f; // Specified in supplementary materials
     private float DotWorldRadius;
 
-    // Use this for initialization
+    // Collections
+    private ArrayList StimulusObjects = new ArrayList();
+
+    // Initialize StimulusManager
     void Start()
     {
         CalculateValues();
@@ -34,7 +37,7 @@ public class StimulusManager : MonoBehaviour
         DotWorldRadius = StimulusDistance * Mathf.Tan(ScalingFactor * DotDiameter / 2 * (Mathf.PI / 180.0f));
     }
 
-    public void CreateArc(float radius, float startAngle, float endAngle, int segments, Color color)
+    public GameObject CreateArc(float radius, float startAngle, float endAngle, int segments, Color color)
     {
         // Create base GameObject
         GameObject arcObject = new GameObject();
@@ -66,9 +69,11 @@ public class StimulusManager : MonoBehaviour
         line.material.SetColor("_Color", color);
         line.startWidth = 0.1f;
         line.endWidth = 0.1f;
+
+        return arcObject;
     }
 
-    public void CreateFixation()
+    public GameObject CreateFixation()
     {
         // Create base GameObject
         GameObject fixationObjectParent = new GameObject();
@@ -108,9 +113,11 @@ public class StimulusManager : MonoBehaviour
         verticalLine.material.SetColor("_Color", Color.white);
         verticalLine.startWidth = 0.1f;
         verticalLine.endWidth = 0.1f;
+
+        return fixationObjectParent;
     }
 
-    public void CreateDot(float radius, float x = 0.0f, float y = 0.0f)
+    public GameObject CreateDot(float radius, float x = 0.0f, float y = 0.0f)
     {
         // Create base GameObject
         GameObject dotObject = new GameObject();
@@ -122,8 +129,10 @@ public class StimulusManager : MonoBehaviour
         // Create SpriteRenderer
         SpriteRenderer dotRenderer = dotObject.GetComponent<SpriteRenderer>();
         dotRenderer.drawMode = SpriteDrawMode.Sliced;
-        dotRenderer.sprite = Resources.Load<Sprite>("Sprites/Circle");;
+        dotRenderer.sprite = Resources.Load<Sprite>("Sprites/Circle");
         dotRenderer.size = new Vector2(radius * 2.0f, radius * 2.0f);
+
+        return dotObject;
     }
 
     public void CreateDots()
