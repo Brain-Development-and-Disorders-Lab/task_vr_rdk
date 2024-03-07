@@ -25,9 +25,6 @@ public class StimulusManager : MonoBehaviour
     void Start()
     {
         CalculateValues();
-        CreateArc(ArcWorldRadius, 0.0f, 181.0f, 1000, Color.white);
-        CreateArc(ArcWorldRadius, 180.0f, 361.0f, 1000, Color.white);
-        CreateDots();
     }
 
     private void CalculateValues()
