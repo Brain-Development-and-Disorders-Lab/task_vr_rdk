@@ -18,9 +18,6 @@ public class StimulusManager : MonoBehaviour
     private readonly float DotDiameter = 0.12f; // Specified in supplementary materials
     private float DotWorldRadius;
 
-    // Collections
-    private ArrayList StimulusObjects = new ArrayList();
-
     // Initialize StimulusManager
     void Start()
     {
@@ -32,6 +29,22 @@ public class StimulusManager : MonoBehaviour
         StimulusDistance = Mathf.Abs(transform.position.z - stimulusAnchor.transform.position.z);
         ArcWorldRadius = StimulusDistance * Mathf.Tan(ScalingFactor * ArcDiameter / 2 * (Mathf.PI / 180.0f));
         DotWorldRadius = StimulusDistance * Mathf.Tan(ScalingFactor * DotDiameter / 2 * (Mathf.PI / 180.0f));
+    }
+
+    public ArrayList CreateStimulus(string stimulus)
+    {
+        ArrayList StimulusComponents = new ArrayList();
+        // "Fixation" stimulus
+        if (stimulus == "fixation")
+        {
+            CreateArc(ArcWorldRadius, 0.0f, 181.0f, 100, Color.white);
+            CreateArc(ArcWorldRadius, 180.0f, 361.0f, 100, Color.white);
+        }
+        else
+        {
+            Debug.LogError("Unknown Stimulus type: " + stimulus);
+        }
+        return StimulusComponents;
     }
 
     public GameObject CreateArc(float radius, float startAngle, float endAngle, int segments, Color color)
