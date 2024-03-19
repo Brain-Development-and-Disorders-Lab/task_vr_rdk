@@ -14,6 +14,8 @@ public class ExperimentManager : MonoBehaviour
     int MainTrials = 20;
     readonly int MainBlock = 2; // Expected index of the "Main"-type block
 
+    StimulusManager stimulusManager;
+
     /// <summary>
     /// Generate the experiment flow
     /// </summary>
@@ -23,6 +25,9 @@ public class ExperimentManager : MonoBehaviour
         // Create trial blocks
         session.CreateBlock(CalibrationTrials);
         session.CreateBlock(MainTrials);
+
+        // Store reference to `StimulusManager` class
+        stimulusManager = GetComponent<StimulusManager>();
     }
 
     /// <summary>
@@ -50,6 +55,7 @@ public class ExperimentManager : MonoBehaviour
         if (trial.block.number == CalibrationBlock)
         {
             Debug.Log("This is a \"Calibration\"-type trial.");
+            stimulusManager.SetVisible("fixation", true);
         }
         else if (trial.block.number == MainBlock)
         {

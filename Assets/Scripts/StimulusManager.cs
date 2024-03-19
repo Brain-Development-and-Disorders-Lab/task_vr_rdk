@@ -18,10 +18,21 @@ public class StimulusManager : MonoBehaviour
     private readonly float DotDiameter = 0.12f; // Specified in supplementary materials
     private float DotWorldRadius;
 
+    // Stimuli groups, assembled from individual components
+    private readonly List<string> AllStimuli = new() { "fixation" };
+    private Dictionary<string, List<GameObject>> Stimuli = new();
+
     // Initialize StimulusManager
     void Start()
     {
+        // Run pre-component calculations to ensure consistent world sizing
         CalculateValues();
+
+        foreach (string stimuli in AllStimuli)
+        {
+            // Create the named set of components and store
+            Stimuli.Add(stimuli, CreateStimulus(stimuli));
+        }
     }
 
     private void CalculateValues()
@@ -31,20 +42,40 @@ public class StimulusManager : MonoBehaviour
         DotWorldRadius = StimulusDistance * Mathf.Tan(ScalingFactor * DotDiameter / 2 * (Mathf.PI / 180.0f));
     }
 
-    public ArrayList CreateStimulus(string stimulus)
+    public List<GameObject> CreateStimulus(string stimulus)
     {
-        ArrayList StimulusComponents = new ArrayList();
+        List<GameObject> StimulusComponents = new();
         // "Fixation" stimulus
         if (stimulus == "fixation")
         {
-            CreateArc(ArcWorldRadius, 0.0f, 181.0f, 100, Color.white);
-            CreateArc(ArcWorldRadius, 180.0f, 361.0f, 100, Color.white);
+            // Generate aperture
+            StimulusComponents.Add(CreateArc(ArcWorldRadius, 0.0f, 181.0f, 100, Color.white));
+            StimulusComponents.Add(CreateArc(ArcWorldRadius, 180.0f, 361.0f, 100, Color.white));
         }
         else
         {
             Debug.LogError("Unknown Stimulus type: " + stimulus);
         }
         return StimulusComponents;
+    }
+
+    public void SetVisible(string stimulus, bool visibility)
+    {
+        List<GameObject> StimuliGroup;
+        Stimuli.TryGetValue(stimulus, out StimuliGroup);
+
+        if (StimuliGroup.Count > 0)
+        {
+            foreach (GameObject component in StimuliGroup)
+            {
+                component.SetActive(visibility);
+            }
+            Debug.Log("Visibility of Stimulus \"" + stimulus + "\": " + visibility);
+        }
+        else
+        {
+            Debug.LogWarning("Could not apply visibility to Stimulus: " + stimulus);
+        }
     }
 
     public GameObject CreateArc(float radius, float startAngle, float endAngle, int segments, Color color)
