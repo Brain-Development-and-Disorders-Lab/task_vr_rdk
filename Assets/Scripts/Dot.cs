@@ -16,9 +16,6 @@ public class Dot
   private bool DotVisible;
   private bool DotActive = true;
 
-  // Reset placement and motion state
-  private bool DotIsReset = false;
-
   public Dot(GameObject anchor, float radius, float aperture, string behavior, float x = 0.0f, float y = 0.0f, bool visible = true)
   {
     DotAnchor = anchor;
@@ -68,7 +65,7 @@ public class Dot
     if (DotActive == true)
     {
       // Create and store positions
-      Vector3 originalPosition = DotObject.transform.position;
+      Vector3 originalPosition = DotObject.transform.localPosition;
       float updatedX = originalPosition.x;
       float updatedY = originalPosition.y;
 
@@ -92,7 +89,7 @@ public class Dot
       updatedX += 0.01f * Mathf.Cos(DotDirection);
       updatedY += 0.01f * Mathf.Sin(DotDirection);
 
-      DotObject.transform.position = new Vector3(updatedX, updatedY, originalPosition.z);
+      DotObject.transform.localPosition = new Vector3(updatedX, updatedY, originalPosition.z);
     }
   }
 }
