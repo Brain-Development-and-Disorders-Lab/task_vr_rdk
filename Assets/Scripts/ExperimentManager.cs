@@ -55,7 +55,9 @@ public class ExperimentManager : MonoBehaviour
         if (trial.block.number == CalibrationBlock)
         {
             Debug.Log("This is a \"Calibration\"-type trial.");
-            stimulusManager.SetVisible("fixation", true);
+            stimulusManager.SetVisible("fixation", false);
+            stimulusManager.SetVisible("decision", false);
+            stimulusManager.SetVisible("motion", true);
         }
         else if (trial.block.number == MainBlock)
         {
