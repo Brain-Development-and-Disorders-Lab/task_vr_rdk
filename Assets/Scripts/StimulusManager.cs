@@ -198,7 +198,7 @@ public class StimulusManager : MonoBehaviour
                 bool initialVisibility = Mathf.Sqrt(Mathf.Pow(dotX, 2.0f) + Mathf.Pow(dotY, 2.0f)) <= ArcWorldRadius;
 
                 // Create and add dot
-                Dots.Add(CreateDot(DotWorldRadius, dotX, dotY, initialVisibility));
+                Dots.Add(new Dot(stimulusAnchor, DotWorldRadius, ArcWorldRadius, "reference", dotX, dotY, initialVisibility));
             }
         }
     }

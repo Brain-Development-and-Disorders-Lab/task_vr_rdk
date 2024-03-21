@@ -69,13 +69,30 @@ public class Dot
     {
       // Create and store positions
       Vector3 originalPosition = DotObject.transform.position;
-      Vector3 newPosition = new Vector3(originalPosition.x + 0.01f, originalPosition.y, originalPosition.z);
+      float updatedX = originalPosition.x;
+      float updatedY = originalPosition.y;
 
       // Update visibility
-      bool visibility = Mathf.Sqrt(Mathf.Pow(newPosition.x, 2.0f) + Mathf.Pow(newPosition.y, 2.0f)) <= ApertureRadius;
+      bool visibility = Mathf.Sqrt(Mathf.Pow(updatedX, 2.0f) + Mathf.Pow(updatedY, 2.0f)) <= ApertureRadius;
       DotObject.GetComponent<SpriteRenderer>().enabled = visibility;
 
-      DotObject.transform.position = newPosition;
+      if (DotBehavior == "reference")
+      {
+        if (Mathf.Abs(updatedX) > ApertureRadius)
+        {
+          updatedX -= 2.0f * ApertureRadius * Mathf.Cos(DotDirection);
+          updatedY -= 2.0f * ApertureRadius * Mathf.Sin(DotDirection);
+        }
+      }
+      else if (DotBehavior == "random" & visibility)
+      {
+        DotDirection -= Mathf.PI;
+      }
+
+      updatedX += 0.01f * Mathf.Cos(DotDirection);
+      updatedY += 0.01f * Mathf.Sin(DotDirection);
+
+      DotObject.transform.position = new Vector3(updatedX, updatedY, originalPosition.z);
     }
   }
 }
