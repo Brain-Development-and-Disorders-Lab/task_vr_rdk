@@ -22,6 +22,8 @@ public class StimulusManager : MonoBehaviour
     // Stimuli groups, assembled from individual components
     private readonly List<string> AllStimuli = new() { "fixation", "decision", "motion" };
     private Dictionary<string, List<GameObject>> Stimuli = new();
+    private Dictionary<string, bool> StimuliVisibility = new();
+    private List<Dot> Dots = new();
 
     // Initialize StimulusManager
     void Start()
@@ -33,6 +35,7 @@ public class StimulusManager : MonoBehaviour
         {
             // Create the named set of components and store
             Stimuli.Add(stimuli, CreateStimulus(stimuli));
+            StimuliVisibility.Add(stimuli, false);
         }
     }
 
@@ -45,37 +48,37 @@ public class StimulusManager : MonoBehaviour
 
     public List<GameObject> CreateStimulus(string stimulus)
     {
-        List<GameObject> StimulusComponents = new();
+        List<GameObject> StaticComponents = new();
         // "Fixation" stimulus
         if (stimulus == "fixation")
         {
             // Generate aperture
-            StimulusComponents.Add(CreateArc(ArcWorldRadius, 0.0f, 182.0f, 100, Color.white));
-            StimulusComponents.Add(CreateArc(ArcWorldRadius, 180.0f, 362.0f, 100, Color.white));
+            StaticComponents.Add(CreateArc(ArcWorldRadius, 0.0f, 182.0f, 100, Color.white));
+            StaticComponents.Add(CreateArc(ArcWorldRadius, 180.0f, 362.0f, 100, Color.white));
             // Add fixation cross
-            StimulusComponents.Add(CreateFixationCross());
+            StaticComponents.Add(CreateFixationCross());
         }
         else if (stimulus == "decision")
         {
             // Generate aperture
-            StimulusComponents.Add(CreateArc(ArcWorldRadius, 0.0f, 182.0f, 100, Color.cyan));
-            StimulusComponents.Add(CreateArc(ArcWorldRadius, 180.0f, 362.0f, 100, Color.red));
+            StaticComponents.Add(CreateArc(ArcWorldRadius, 0.0f, 182.0f, 100, Color.cyan));
+            StaticComponents.Add(CreateArc(ArcWorldRadius, 180.0f, 362.0f, 100, Color.red));
             // Add fixation cross
-            StimulusComponents.Add(CreateFixationCross());
+            StaticComponents.Add(CreateFixationCross());
         }
         else if (stimulus == "motion")
         {
             // Generate aperture
-            StimulusComponents.Add(CreateArc(ArcWorldRadius, 0.0f, 182.0f, 100, Color.white));
-            StimulusComponents.Add(CreateArc(ArcWorldRadius, 180.0f, 362.0f, 100, Color.white));
+            StaticComponents.Add(CreateArc(ArcWorldRadius, 0.0f, 182.0f, 100, Color.white));
+            StaticComponents.Add(CreateArc(ArcWorldRadius, 180.0f, 362.0f, 100, Color.white));
             // Add dots
-            StimulusComponents.AddRange(CreateDots());
+            CreateDots();
         }
         else
         {
             Debug.LogError("Unknown Stimulus type: " + stimulus);
         }
-        return StimulusComponents;
+        return StaticComponents;
     }
 
     public void SetVisible(string stimulus, bool visibility)
@@ -89,6 +92,7 @@ public class StimulusManager : MonoBehaviour
             {
                 component.SetActive(visibility);
             }
+            StimuliVisibility[stimulus] = visibility;
             Debug.Log("Visibility of Stimulus \"" + stimulus + "\": " + visibility);
         }
         else
@@ -177,28 +181,13 @@ public class StimulusManager : MonoBehaviour
         return fixationObjectParent;
     }
 
-    public GameObject CreateDot(float radius, float x = 0.0f, float y = 0.0f, bool visible = true)
+    public Dot CreateDot(float radius, float x = 0.0f, float y = 0.0f, bool visible = true)
     {
-        // Create base GameObject
-        GameObject dotObject = new GameObject();
-        dotObject.name = "rdk_dot_object";
-        dotObject.transform.SetParent(stimulusAnchor.transform, false);
-        dotObject.AddComponent<SpriteRenderer>();
-        dotObject.transform.localPosition = new Vector3(x, y, 0.0f);
-
-        // Create SpriteRenderer
-        SpriteRenderer dotRenderer = dotObject.GetComponent<SpriteRenderer>();
-        dotRenderer.drawMode = SpriteDrawMode.Sliced;
-        dotRenderer.sprite = Resources.Load<Sprite>("Sprites/Circle");
-        dotRenderer.size = new Vector2(radius * 2.0f, radius * 2.0f);
-        dotRenderer.enabled = visible;
-
-        return dotObject;
+        return new Dot(stimulusAnchor, radius, ArcWorldRadius, "reference", x, y, visible);
     }
 
-    public List<GameObject> CreateDots()
+    public void CreateDots()
     {
-        List<GameObject> AllDots = new();
         for (int i = 0; i < 30; i++)
         {
             for (int j = 0; j < 30; j++)
@@ -209,33 +198,18 @@ public class StimulusManager : MonoBehaviour
                 bool initialVisibility = Mathf.Sqrt(Mathf.Pow(dotX, 2.0f) + Mathf.Pow(dotY, 2.0f)) <= ArcWorldRadius;
 
                 // Create and add dot
-                AllDots.Add(CreateDot(DotWorldRadius, dotX, dotY, initialVisibility));
+                Dots.Add(CreateDot(DotWorldRadius, dotX, dotY, initialVisibility));
             }
         }
-        return AllDots;
     }
 
-    public void Update()
+    void Update()
     {
-        // Perform movement update on dots if enabled
-        List<GameObject> MotionObjects = Stimuli["motion"];
-        if (MotionObjects.First().activeSelf == true)
+        if (StimuliVisibility["motion"] == true)
         {
-            // Motion is active, update dot positions
-            foreach (GameObject motionObject in MotionObjects)
+            foreach (Dot dot in Dots)
             {
-                if (motionObject.name == "rdk_dot_object")
-                {
-                    // Create and store positions
-                    Vector3 originalPosition = motionObject.transform.position;
-                    Vector3 newPosition = new Vector3(originalPosition.x + 0.01f, originalPosition.y, originalPosition.z);
-
-                    // Update visibility
-                    bool visibility = Mathf.Sqrt(Mathf.Pow(newPosition.x, 2.0f) + Mathf.Pow(newPosition.y, 2.0f)) <= ArcWorldRadius;
-                    motionObject.GetComponent<SpriteRenderer>().enabled = visibility;
-
-                    motionObject.transform.position = newPosition;
-                }
+                dot.Update();
             }
         }
     }

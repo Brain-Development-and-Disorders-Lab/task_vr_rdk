@@ -1,0 +1,81 @@
+using UnityEngine;
+using System;
+
+public class Dot
+{
+  private GameObject DotAnchor;
+  private float DotRadius;
+  private float ApertureRadius;
+  private string DotBehavior;
+  private float DotX;
+  private float DotY;
+  private float DotDirection;
+  private GameObject DotObject;
+
+  // Visibility and activity state
+  private bool DotVisible;
+  private bool DotActive = true;
+
+  // Reset placement and motion state
+  private bool DotIsReset = false;
+
+  public Dot(GameObject anchor, float radius, float aperture, string behavior, float x = 0.0f, float y = 0.0f, bool visible = true)
+  {
+    DotAnchor = anchor;
+    DotRadius = radius;
+    ApertureRadius = aperture;
+    DotBehavior = behavior;
+    DotX = x;
+    DotY = y;
+    DotDirection = Mathf.PI;
+    DotVisible = visible;
+
+    CreateGameObject();
+  }
+
+  private GameObject CreateGameObject()
+  {
+    // Create base GameObject
+    DotObject = new GameObject();
+    DotObject.name = "rdk_dot_object";
+    DotObject.transform.SetParent(DotAnchor.transform, false);
+    DotObject.AddComponent<SpriteRenderer>();
+    DotObject.transform.localPosition = new Vector3(DotX, DotY, 0.0f);
+
+    // Create SpriteRenderer
+    SpriteRenderer dotRenderer = DotObject.GetComponent<SpriteRenderer>();
+    dotRenderer.drawMode = SpriteDrawMode.Sliced;
+    dotRenderer.sprite = Resources.Load<Sprite>("Sprites/Circle");
+    dotRenderer.size = new Vector2(DotRadius * 2.0f, DotRadius * 2.0f);
+    dotRenderer.enabled = DotVisible;
+
+    return DotObject;
+  }
+
+  public GameObject GetGameObject()
+  {
+    return DotObject;
+  }
+
+  public void SetActive(bool state)
+  {
+    DotActive = state;
+    DotObject.SetActive(DotActive);
+  }
+
+  public void Update()
+  {
+    if (DotActive == true)
+    {
+      // Create and store positions
+      Vector3 originalPosition = DotObject.transform.position;
+      Vector3 newPosition = new Vector3(originalPosition.x + 0.01f, originalPosition.y, originalPosition.z);
+
+      // Update visibility
+      bool visibility = Mathf.Sqrt(Mathf.Pow(newPosition.x, 2.0f) + Mathf.Pow(newPosition.y, 2.0f)) <= ApertureRadius;
+      DotObject.GetComponent<SpriteRenderer>().enabled = visibility;
+
+      DotObject.transform.position = newPosition;
+    }
+  }
+}
