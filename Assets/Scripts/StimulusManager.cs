@@ -91,7 +91,14 @@ public class StimulusManager : MonoBehaviour
         {
             foreach (Dot dot in Dots)
             {
-                dot.SetVisible(visibility);
+                // Only set the dot to be visible if it is within the aperture
+                if (visibility == true & Mathf.Sqrt(Mathf.Pow(dot.GetPosition().x, 2.0f) + Mathf.Pow(dot.GetPosition().y, 2.0f)) <= ArcWorldRadius) {
+                    dot.SetVisible(true);
+                }
+                else
+                {
+                    dot.SetVisible(false);
+                }
             }
         }
 

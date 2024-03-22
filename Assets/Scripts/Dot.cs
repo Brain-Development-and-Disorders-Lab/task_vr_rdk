@@ -72,6 +72,17 @@ public class Dot
     DotDirection = direction;
   }
 
+  public Vector2 GetPosition()
+  {
+    return new Vector2(DotX, DotY);
+  }
+
+  public void SetPosition(Vector2 position)
+  {
+    DotX = position.x;
+    DotY = position.y;
+  }
+
   public void Update()
   {
     if (DotActive == true)
@@ -112,6 +123,9 @@ public class Dot
       // Update overall position
       updatedX += 0.01f * Mathf.Cos(DotDirection);
       updatedY += 0.01f * Mathf.Sin(DotDirection);
+
+      DotX = updatedX;
+      DotY = updatedY;
 
       // Apply transform
       DotObject.transform.localPosition = new Vector3(updatedX, updatedY, originalPosition.z);
