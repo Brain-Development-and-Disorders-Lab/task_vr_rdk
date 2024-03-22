@@ -101,6 +101,14 @@ public class StimulusManager : MonoBehaviour
         }
     }
 
+    public void SetVisibleAll(bool visibility)
+    {
+        foreach (string Key in Stimuli.Keys)
+        {
+            SetVisible(Key, visibility);
+        }
+    }
+
     public GameObject CreateArc(float radius, float startAngle, float endAngle, int segments, Color color)
     {
         // Create base GameObject
@@ -108,6 +116,7 @@ public class StimulusManager : MonoBehaviour
         arcObject.name = "rdk_arc_object";
         arcObject.AddComponent<LineRenderer>();
         arcObject.transform.SetParent(stimulusAnchor.transform, false);
+        arcObject.SetActive(false);
 
         // Generate points to form the arc
         Vector3[] arcPoints = new Vector3[segments];
@@ -143,6 +152,7 @@ public class StimulusManager : MonoBehaviour
         GameObject fixationObjectParent = new GameObject();
         fixationObjectParent.name = "rdk_fixation_object";
         fixationObjectParent.transform.SetParent(stimulusAnchor.transform, false);
+        fixationObjectParent.SetActive(false);
 
         // Create horizontal component
         GameObject fixationObjectHorizontal = new GameObject();
@@ -181,28 +191,40 @@ public class StimulusManager : MonoBehaviour
         return fixationObjectParent;
     }
 
-    public Dot CreateDot(float radius, float x = 0.0f, float y = 0.0f, bool visible = true)
+    public Dot CreateDot(float radius, float x = 0.0f, float y = 0.0f, bool visible = false)
     {
         return new Dot(stimulusAnchor, radius, ArcWorldRadius, "reference", x, y, visible);
     }
 
     public void CreateDots()
     {
-        for (int i = 0; i < 30; i++)
-        {
-            for (int j = 0; j < 30; j++)
-            {
-                // Calculate distributed position and initial visibility
-                float dotX = (ArcWorldRadius * 2 * j / 30) - ArcWorldRadius;
-                float dotY = (ArcWorldRadius * 2 * i / 30) - ArcWorldRadius;
-                bool initialVisibility = Mathf.Sqrt(Mathf.Pow(dotX, 2.0f) + Mathf.Pow(dotY, 2.0f)) <= ArcWorldRadius;
+        const int RowCount = 30;
+        for (int i = -RowCount / 2; i < RowCount / 2; i++) {
+            for (int j = -RowCount / 2; j < RowCount / 2; j++) {
+                float x = (i * ArcWorldRadius * 2) / RowCount + (UnityEngine.Random.value * ArcWorldRadius * 2) / RowCount;
+                float y = (j * ArcWorldRadius * 2) / RowCount + (UnityEngine.Random.value * ArcWorldRadius * 2) / RowCount;
 
-                string dotBehavior = UnityEngine.Random.value > 0.5f ? "reference" : "random";
-
-                // Create and add dot
-                Dots.Add(new Dot(stimulusAnchor, DotWorldRadius, ArcWorldRadius, dotBehavior, dotX, dotY, initialVisibility));
+                if (UnityEngine.Random.value > 0.5f) {
+                    // Dynamic dot that is just moving in a random path
+                    Dots.Add(new Dot(stimulusAnchor, DotWorldRadius, ArcWorldRadius, "random", x, y, false));
+                } else {
+                    Dots.Add(new Dot(stimulusAnchor, DotWorldRadius, ArcWorldRadius, "reference", x, y, false));
+                }
             }
         }
+        // for (int i = 0; i < 30; i++)
+        // {
+        //     for (int j = 0; j < 30; j++)
+        //     {
+        //         // Calculate distributed position
+        //         float dotX = (ArcWorldRadius * 2 * j / 30) - ArcWorldRadius;
+        //         float dotY = (ArcWorldRadius * 2 * i / 30) - ArcWorldRadius;
+        //         string dotBehavior = UnityEngine.Random.value > 0.5f ? "reference" : "random";
+
+        //         // Create and add dot
+        //         Dots.Add(new Dot(stimulusAnchor, DotWorldRadius, ArcWorldRadius, dotBehavior, dotX, dotY, false));
+        //     }
+        // }
     }
 
     void Update()
