@@ -197,8 +197,10 @@ public class StimulusManager : MonoBehaviour
                 float dotY = (ArcWorldRadius * 2 * i / 30) - ArcWorldRadius;
                 bool initialVisibility = Mathf.Sqrt(Mathf.Pow(dotX, 2.0f) + Mathf.Pow(dotY, 2.0f)) <= ArcWorldRadius;
 
+                string dotBehavior = UnityEngine.Random.value > 0.5f ? "reference" : "random";
+
                 // Create and add dot
-                Dots.Add(new Dot(stimulusAnchor, DotWorldRadius, ArcWorldRadius, "reference", dotX, dotY, initialVisibility));
+                Dots.Add(new Dot(stimulusAnchor, DotWorldRadius, ArcWorldRadius, dotBehavior, dotX, dotY, initialVisibility));
             }
         }
     }
