@@ -60,6 +60,11 @@ public class Dot
     DotObject.SetActive(DotActive);
   }
 
+  public void SetDirection(float direction)
+  {
+    DotDirection = direction;
+  }
+
   public void Update()
   {
     if (DotActive == true)
@@ -73,22 +78,35 @@ public class Dot
       bool visibility = Mathf.Sqrt(Mathf.Pow(updatedX, 2.0f) + Mathf.Pow(updatedY, 2.0f)) <= ApertureRadius;
       DotObject.GetComponent<SpriteRenderer>().enabled = visibility;
 
-      if (DotBehavior == "reference")
-      {
-        if (Mathf.Abs(updatedX) > ApertureRadius)
-        {
-          updatedX -= 2.0f * ApertureRadius * Mathf.Cos(DotDirection);
-          updatedY -= 2.0f * ApertureRadius * Mathf.Sin(DotDirection);
+      // Random direction adjustment every 12 frames
+      if (DotBehavior == "random" & Time.frameCount % 12 == 0) {
+        // Adjust the direction
+        float delta = UnityEngine.Random.value;
+        if (UnityEngine.Random.value > 0.5f) {
+          DotDirection -= Mathf.PI / 4 * delta;
+        } else {
+          DotDirection += Mathf.PI / 4 * delta;
         }
       }
-      else if (DotBehavior == "random" & visibility)
+
+      // Behaviour around aperture radius
+      if (DotBehavior == "reference" & Mathf.Abs(updatedX) > ApertureRadius)
       {
+        // Reset position
+        updatedX -= 2.0f * ApertureRadius * Mathf.Cos(DotDirection);
+        updatedY -= 2.0f * ApertureRadius * Mathf.Sin(DotDirection);
+      }
+      else if (DotBehavior == "random" & !visibility)
+      {
+        // Oppose current position, "bounce" effect
         DotDirection -= Mathf.PI;
       }
 
+      // Update overall position
       updatedX += 0.01f * Mathf.Cos(DotDirection);
       updatedY += 0.01f * Mathf.Sin(DotDirection);
 
+      // Apply transform
       DotObject.transform.localPosition = new Vector3(updatedX, updatedY, originalPosition.z);
     }
   }
