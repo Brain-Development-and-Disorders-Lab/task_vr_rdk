@@ -15,6 +15,7 @@ public class ExperimentManager : MonoBehaviour
     readonly int MainBlock = 2; // Expected index of the "Main"-type block
 
     StimulusManager stimulusManager;
+    CameraManager cameraManager;
 
     // Input parameters
     bool WaitingForInput = false;
@@ -29,8 +30,9 @@ public class ExperimentManager : MonoBehaviour
         session.CreateBlock(CalibrationTrials);
         session.CreateBlock(MainTrials);
 
-        // Store reference to `StimulusManager` class
+        // Store reference to other classes
         stimulusManager = GetComponent<StimulusManager>();
+        cameraManager = GetComponent<CameraManager>();
     }
 
     /// <summary>
@@ -80,6 +82,9 @@ public class ExperimentManager : MonoBehaviour
 
     public void EndTrial()
     {
+        // Reset visual field
+        cameraManager.SetActiveField(CameraManager.VisualField.Both);
+
         Session.instance.EndCurrentTrial();
         Session.instance.BeginNextTrial();
     }
