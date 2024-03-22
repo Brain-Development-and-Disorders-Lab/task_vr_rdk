@@ -16,14 +16,17 @@ public class StimulusManager : MonoBehaviour
     private float StimulusDistance;
     private readonly float ArcDiameter = 8.0f; // Specified in supplementary materials
     private float ArcWorldRadius;
+
+    // Dot parameters
     private readonly float DotDiameter = 0.12f; // Specified in supplementary materials
     private float DotWorldRadius;
+    private List<Dot> Dots = new();
+    private float DotCoherence = 0.5f;
 
     // Stimuli groups, assembled from individual components
     private readonly List<string> AllStimuli = new() { "fixation", "decision", "motion" };
     private Dictionary<string, List<GameObject>> Stimuli = new();
     private Dictionary<string, bool> StimuliVisibility = new();
-    private List<Dot> Dots = new();
 
     // Initialize StimulusManager
     void Start()
@@ -83,6 +86,16 @@ public class StimulusManager : MonoBehaviour
 
     public void SetVisible(string stimulus, bool visibility)
     {
+        // Apply visibility to Dots separately, if this is a stimulus that uses Dots
+        if (stimulus == "motion")
+        {
+            foreach (Dot dot in Dots)
+            {
+                dot.SetVisible(visibility);
+            }
+        }
+
+        // Apply visibility to general stimuli components
         List<GameObject> StimuliGroup;
         Stimuli.TryGetValue(stimulus, out StimuliGroup);
 
@@ -191,11 +204,6 @@ public class StimulusManager : MonoBehaviour
         return fixationObjectParent;
     }
 
-    public Dot CreateDot(float radius, float x = 0.0f, float y = 0.0f, bool visible = false)
-    {
-        return new Dot(stimulusAnchor, radius, ArcWorldRadius, "reference", x, y, visible);
-    }
-
     public void CreateDots()
     {
         const int RowCount = 30;
@@ -203,28 +211,20 @@ public class StimulusManager : MonoBehaviour
             for (int j = -RowCount / 2; j < RowCount / 2; j++) {
                 float x = (i * ArcWorldRadius * 2) / RowCount + (UnityEngine.Random.value * ArcWorldRadius * 2) / RowCount;
                 float y = (j * ArcWorldRadius * 2) / RowCount + (UnityEngine.Random.value * ArcWorldRadius * 2) / RowCount;
-
-                if (UnityEngine.Random.value > 0.5f) {
-                    // Dynamic dot that is just moving in a random path
-                    Dots.Add(new Dot(stimulusAnchor, DotWorldRadius, ArcWorldRadius, "random", x, y, false));
-                } else {
-                    Dots.Add(new Dot(stimulusAnchor, DotWorldRadius, ArcWorldRadius, "reference", x, y, false));
-                }
+                string dotBehavior = UnityEngine.Random.value > DotCoherence ? "random" : "reference";
+                Dots.Add(new Dot(stimulusAnchor, DotWorldRadius, ArcWorldRadius, dotBehavior, x, y, false));
             }
         }
-        // for (int i = 0; i < 30; i++)
-        // {
-        //     for (int j = 0; j < 30; j++)
-        //     {
-        //         // Calculate distributed position
-        //         float dotX = (ArcWorldRadius * 2 * j / 30) - ArcWorldRadius;
-        //         float dotY = (ArcWorldRadius * 2 * i / 30) - ArcWorldRadius;
-        //         string dotBehavior = UnityEngine.Random.value > 0.5f ? "reference" : "random";
+    }
 
-        //         // Create and add dot
-        //         Dots.Add(new Dot(stimulusAnchor, DotWorldRadius, ArcWorldRadius, dotBehavior, dotX, dotY, false));
-        //     }
-        // }
+    public float GetCoherence()
+    {
+        return DotCoherence;
+    }
+
+    public void SetCoherence(float coherence)
+    {
+        if (coherence >= 0.0f && coherence <= 1.0f) DotCoherence = coherence;
     }
 
     void Update()

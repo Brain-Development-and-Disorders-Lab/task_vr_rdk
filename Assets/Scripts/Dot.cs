@@ -11,6 +11,7 @@ public class Dot
   private float DotY;
   private float DotDirection;
   private GameObject DotObject;
+  private SpriteRenderer DotRenderer;
 
   // Visibility and activity state
   private bool DotVisible;
@@ -40,11 +41,11 @@ public class Dot
     DotObject.transform.localPosition = new Vector3(DotX, DotY, 0.0f);
 
     // Create SpriteRenderer
-    SpriteRenderer dotRenderer = DotObject.GetComponent<SpriteRenderer>();
-    dotRenderer.drawMode = SpriteDrawMode.Sliced;
-    dotRenderer.sprite = Resources.Load<Sprite>("Sprites/Circle");
-    dotRenderer.size = new Vector2(DotRadius * 2.0f, DotRadius * 2.0f);
-    dotRenderer.enabled = DotVisible;
+    DotRenderer = DotObject.GetComponent<SpriteRenderer>();
+    DotRenderer.drawMode = SpriteDrawMode.Sliced;
+    DotRenderer.sprite = Resources.Load<Sprite>("Sprites/Circle");
+    DotRenderer.size = new Vector2(DotRadius * 2.0f, DotRadius * 2.0f);
+    DotRenderer.enabled = DotVisible;
 
     return DotObject;
   }
@@ -58,6 +59,12 @@ public class Dot
   {
     DotActive = state;
     DotObject.SetActive(DotActive);
+  }
+
+  public void SetVisible(bool state)
+  {
+    DotVisible = state;
+    DotRenderer.enabled = DotVisible;
   }
 
   public void SetDirection(float direction)
