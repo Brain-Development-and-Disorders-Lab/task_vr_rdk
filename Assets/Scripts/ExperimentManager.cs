@@ -15,6 +15,7 @@ public class ExperimentManager : MonoBehaviour
     readonly int MainBlock = 2; // Expected index of the "Main"-type block
 
     StimulusManager stimulusManager;
+    UIManager uiManager;
     CameraManager cameraManager;
 
     // Input parameters
@@ -32,7 +33,11 @@ public class ExperimentManager : MonoBehaviour
 
         // Store reference to other classes
         stimulusManager = GetComponent<StimulusManager>();
+        uiManager = GetComponent<UIManager>();
         cameraManager = GetComponent<CameraManager>();
+
+        // Update the CameraManager value for the aperture offset to be the stimulus radius
+        cameraManager.SetStimulusRadius(stimulusManager.GetStimulusRadius());
     }
 
     /// <summary>
