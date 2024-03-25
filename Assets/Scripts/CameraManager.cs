@@ -5,26 +5,27 @@ public class CameraManager : MonoBehaviour
 {
     // Left and Right eye cameras
     [SerializeField]
-    private Camera leftCamera;
+    private Camera LeftCamera;
     [SerializeField]
-    private Camera rightCamera;
+    private Camera RightCamera;
     [SerializeField]
-    private OVRCameraRig cameraRig;
+    private OVRCameraRig CameraRig;
 
     // Anchor for stimulus, this is critical for true dichoptic presentation
     [SerializeField]
-    private GameObject stimulusAnchor;
+    private GameObject StimulusAnchor;
     [SerializeField]
-    private bool followHeadMovement;
+    private bool FollowHeadMovement;
 
     // Store the original anchor position
-    private Vector3 initialAnchorPosition;
+    private Vector3 InitialAnchorPosition;
     private float anchorDistance;
 
     // Visual offset angle to place stimulus in single hemifield
     [SerializeField]
-    private float offsetAngle = 3.0f; // degrees
-    private float totalOffset = 0.0f;
+    private float OffsetAngle = 3.0f; // Degrees
+    private float StimulusRadius = 0.0f; // Additional world-units to offset the stimulus
+    private float TotalOffset = 0.0f;
 
     // Camera presentation modes
     public enum VisualField
@@ -42,35 +43,39 @@ public class CameraManager : MonoBehaviour
 
     private void Start()
     {
-        initialAnchorPosition = new Vector3(stimulusAnchor.transform.position.x, stimulusAnchor.transform.position.y, stimulusAnchor.transform.position.z);
+        InitialAnchorPosition = new Vector3(StimulusAnchor.transform.position.x, StimulusAnchor.transform.position.y, StimulusAnchor.transform.position.z);
+        CalculateOffset();
 
+        // Check if OVRCameraRig has been specified, required for head tracking
+        if (CameraRig == null)
+        {
+            Debug.LogWarning("OVRCameraRig instance not specified, disabling head tracking");
+            FollowHeadMovement = false;
+        }
+
+        // Logger
+        logger = FindAnyObjectByType<LoggerManager>();
+    }
+
+    private void CalculateOffset()
+    {
         // Calculate required visual offsets for dichoptic presentation
         // Step 1: Calculate IPD
-        float ipd = Mathf.Abs(leftCamera.transform.position.x - rightCamera.transform.position.x);
+        float ipd = Mathf.Abs(LeftCamera.transform.position.x - RightCamera.transform.position.x);
 
-        anchorDistance = Mathf.Abs(leftCamera.transform.position.z - stimulusAnchor.transform.position.z);
+        anchorDistance = Mathf.Abs(LeftCamera.transform.position.z - StimulusAnchor.transform.position.z);
 
         // Step 2: Calculate lambda (angle between gaze vector and static eye position vector, using IPD)
         float lambda = Mathf.Atan((ipd / 2) / anchorDistance);
 
         // Step 3: Calculate omega (angle between static eye position vector and future offset vector)
-        float omega = (offsetAngle * Mathf.PI / 180) - lambda;
+        float omega = (OffsetAngle * Mathf.PI / 180) - lambda;
 
         // Step 4: Calculate baseline offset distance from static eye position to offset position
         float offsetDistance = anchorDistance * Mathf.Tan(omega);
 
         // Step 5: Calculate total offset value
-        totalOffset = offsetDistance + (ipd / 2);
-
-        // Check if OVRCameraRig has been specified, required for head tracking
-        if (cameraRig == null)
-        {
-            Debug.LogWarning("OVRCameraRig instance not specified, disabling head tracking");
-            followHeadMovement = false;
-        }
-
-        // Logger
-        logger = FindAnyObjectByType<LoggerManager>();
+        TotalOffset = offsetDistance + StimulusRadius + (ipd / 2);
     }
 
     /// <summary>
@@ -91,6 +96,17 @@ public class CameraManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Set the offset value for the aperture. This should be in world units, and typically represents the radius
+    /// of the aperture.
+    /// </summary>
+    /// <param name="offsetValue">Offset value, measured in world units</param>
+    public void SetStimulusRadius(float offsetValue)
+    {
+        StimulusRadius = offsetValue;
+        CalculateOffset(); // We need to re-calculate the offset values if this has been updated
+    }
+
+    /// <summary>
     /// Get the current active visual field
     /// </summary>
     /// <returns>Active visual field, member of `VisualField` enum</returns>
@@ -103,44 +119,44 @@ public class CameraManager : MonoBehaviour
     void Update()
     {
         // If tracking head movement, update StimulusAnchor position
-        if (followHeadMovement)
+        if (FollowHeadMovement)
         {
             // Get the head position
-            Vector3 headProjection = cameraRig.centerEyeAnchor.transform.TransformDirection(Vector3.forward) * anchorDistance;
-            Vector3 headRotation = cameraRig.centerEyeAnchor.transform.eulerAngles;
+            Vector3 headProjection = CameraRig.centerEyeAnchor.transform.TransformDirection(Vector3.forward) * anchorDistance;
+            Vector3 headRotation = CameraRig.centerEyeAnchor.transform.eulerAngles;
 
             // Update position and rotation
-            stimulusAnchor.transform.position = new Vector3(headProjection.x, headProjection.y, headProjection.z);
-            stimulusAnchor.transform.eulerAngles = headRotation;
+            StimulusAnchor.transform.position = new Vector3(headProjection.x, headProjection.y, headProjection.z);
+            StimulusAnchor.transform.eulerAngles = headRotation;
         }
 
         // Get the current position
-        Vector3 currentPosition = stimulusAnchor.transform.position;
+        Vector3 currentPosition = StimulusAnchor.transform.position;
 
         // Apply masking depending on the active visual field
         if (activeField == VisualField.Left)
         {
             // Left only
-            leftCamera.cullingMask = ~(1 << 6);
-            rightCamera.cullingMask = 1 << 6;
+            LeftCamera.cullingMask = ~(1 << 6);
+            RightCamera.cullingMask = 1 << 6;
 
             // Set position
-            stimulusAnchor.transform.position.Set(currentPosition.x - totalOffset, currentPosition.y, currentPosition.z);
+            StimulusAnchor.transform.position.Set(currentPosition.x - TotalOffset, currentPosition.y, currentPosition.z);
         }
         else if (activeField == VisualField.Right)
         {
             // Right only
-            leftCamera.cullingMask = 1 << 6;
-            rightCamera.cullingMask = ~(1 << 6);
+            LeftCamera.cullingMask = 1 << 6;
+            RightCamera.cullingMask = ~(1 << 6);
 
             // Set position
-            stimulusAnchor.transform.position = new Vector3(currentPosition.x + totalOffset, currentPosition.y, currentPosition.z);
+            StimulusAnchor.transform.position = new Vector3(currentPosition.x + TotalOffset, currentPosition.y, currentPosition.z);
         }
         else
         {
             // Both
-            leftCamera.cullingMask = ~(1 << 6);
-            rightCamera.cullingMask = ~(1 << 6);
+            LeftCamera.cullingMask = ~(1 << 6);
+            RightCamera.cullingMask = ~(1 << 6);
         }
     }
 }
