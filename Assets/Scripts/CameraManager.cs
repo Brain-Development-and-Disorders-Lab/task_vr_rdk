@@ -18,12 +18,13 @@ public class CameraManager : MonoBehaviour
     private bool FollowHeadMovement;
 
     // Store the original anchor position
-    private Vector3 initialAnchorPosition;
+    private Vector3 InitialAnchorPosition;
     private float anchorDistance;
 
     // Visual offset angle to place stimulus in single hemifield
     [SerializeField]
-    private float OffsetAngle = 3.0f; // degrees
+    private float OffsetAngle = 3.0f; // Degrees
+    private float StimulusRadius = 0.0f; // Additional world-units to offset the stimulus
     private float TotalOffset = 0.0f;
 
     // Camera presentation modes
@@ -42,8 +43,22 @@ public class CameraManager : MonoBehaviour
 
     private void Start()
     {
-        initialAnchorPosition = new Vector3(StimulusAnchor.transform.position.x, StimulusAnchor.transform.position.y, StimulusAnchor.transform.position.z);
+        InitialAnchorPosition = new Vector3(StimulusAnchor.transform.position.x, StimulusAnchor.transform.position.y, StimulusAnchor.transform.position.z);
+        CalculateOffset();
 
+        // Check if OVRCameraRig has been specified, required for head tracking
+        if (CameraRig == null)
+        {
+            Debug.LogWarning("OVRCameraRig instance not specified, disabling head tracking");
+            FollowHeadMovement = false;
+        }
+
+        // Logger
+        logger = FindAnyObjectByType<LoggerManager>();
+    }
+
+    private void CalculateOffset()
+    {
         // Calculate required visual offsets for dichoptic presentation
         // Step 1: Calculate IPD
         float ipd = Mathf.Abs(LeftCamera.transform.position.x - RightCamera.transform.position.x);
@@ -60,19 +75,7 @@ public class CameraManager : MonoBehaviour
         float offsetDistance = anchorDistance * Mathf.Tan(omega);
 
         // Step 5: Calculate total offset value
-        TotalOffset = offsetDistance + (ipd / 2);
-
-        // To-Do: We need to add in the width of the aperture on top of this.
-
-        // Check if OVRCameraRig has been specified, required for head tracking
-        if (CameraRig == null)
-        {
-            Debug.LogWarning("OVRCameraRig instance not specified, disabling head tracking");
-            FollowHeadMovement = false;
-        }
-
-        // Logger
-        logger = FindAnyObjectByType<LoggerManager>();
+        TotalOffset = offsetDistance + StimulusRadius + (ipd / 2);
     }
 
     /// <summary>
@@ -90,6 +93,17 @@ public class CameraManager : MonoBehaviour
         {
             Debug.LogWarning("Active visual field unchanged");
         }
+    }
+
+    /// <summary>
+    /// Set the offset value for the aperture. This should be in world units, and typically represents the radius
+    /// of the aperture.
+    /// </summary>
+    /// <param name="offsetValue">Offset value, measured in world units</param>
+    public void SetStimulusRadius(float offsetValue)
+    {
+        StimulusRadius = offsetValue;
+        CalculateOffset(); // We need to re-calculate the offset values if this has been updated
     }
 
     /// <summary>

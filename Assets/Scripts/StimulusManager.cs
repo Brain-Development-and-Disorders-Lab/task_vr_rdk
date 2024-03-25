@@ -234,6 +234,16 @@ public class StimulusManager : MonoBehaviour
         if (coherence >= 0.0f && coherence <= 1.0f) DotCoherence = coherence;
     }
 
+    /// <summary>
+    /// Get the radius of the stimuli. Used for correct offset calculations for dioptic / dichoptic stimulus
+    /// presentation.
+    /// </summary>
+    /// <returns>Stimulus radius, measured in world units</returns>
+    public float GetStimulusRadius()
+    {
+        return ArcWorldRadius;
+    }
+
     void Update()
     {
         if (StimuliVisibility["motion"] == true)
