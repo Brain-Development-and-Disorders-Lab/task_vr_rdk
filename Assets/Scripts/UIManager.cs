@@ -32,6 +32,7 @@ public class UIManager : MonoBehaviour
   {
     StimulusDistance = Mathf.Abs(transform.position.z - TextCanvas.transform.position.z);
     SetupUI();
+    SetVisible(false);
   }
 
   public void SetupUI()
