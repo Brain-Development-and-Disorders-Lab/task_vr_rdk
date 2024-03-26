@@ -9,7 +9,7 @@ using UnityEngine.UI;
 public class UIManager : MonoBehaviour
 {
   [SerializeField]
-  private Canvas TextCanvas;
+  private Canvas UICanvas;
   [SerializeField]
   private float ScalingFactor = 0.1f; // Adjust scaling of stimulus to be viewable
 
@@ -30,7 +30,8 @@ public class UIManager : MonoBehaviour
 
   void Start()
   {
-    StimulusDistance = Mathf.Abs(transform.position.z - TextCanvas.transform.position.z);
+    // Run setup functions to create and position UI components
+    StimulusDistance = Mathf.Abs(transform.position.z - UICanvas.transform.position.z);
     SetupUI();
     SetVisible(false);
   }
@@ -41,7 +42,7 @@ public class UIManager : MonoBehaviour
     HeaderContainer = new GameObject();
     HeaderContainer.name = "rdk_text_header_container";
     HeaderContainer.AddComponent<TextMeshProUGUI>();
-    HeaderContainer.transform.SetParent(TextCanvas.transform, false);
+    HeaderContainer.transform.SetParent(UICanvas.transform, false);
     HeaderContainer.SetActive(true);
     HeaderContainer.transform.localScale = new Vector3(ScalingFactor, ScalingFactor, ScalingFactor);
 
@@ -60,7 +61,7 @@ public class UIManager : MonoBehaviour
     BodyContainer = new GameObject();
     BodyContainer.name = "rdk_text_body_object";
     BodyContainer.AddComponent<TextMeshProUGUI>();
-    BodyContainer.transform.SetParent(TextCanvas.transform, false);
+    BodyContainer.transform.SetParent(UICanvas.transform, false);
     BodyContainer.SetActive(true);
     BodyContainer.transform.localScale = new Vector3(ScalingFactor, ScalingFactor, ScalingFactor);
 
@@ -77,7 +78,7 @@ public class UIManager : MonoBehaviour
     // Button components
     GameObject buttonBodyObject = new GameObject();
     buttonBodyObject.name = "rdk_button_body_object";
-    buttonBodyObject.transform.SetParent(TextCanvas.transform, false);
+    buttonBodyObject.transform.SetParent(UICanvas.transform, false);
     buttonBodyObject.transform.localPosition = new Vector3(0.0f, -30.0f, 0.0f);
 
     TMP_DefaultControls.Resources ButtonResources = new TMP_DefaultControls.Resources();
