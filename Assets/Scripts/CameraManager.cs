@@ -15,11 +15,14 @@ public class CameraManager : MonoBehaviour
     [SerializeField]
     private GameObject StimulusAnchor;
     [SerializeField]
+    private GameObject UIAnchor;
+    [SerializeField]
     private bool FollowHeadMovement;
 
     // Store the original anchor position
     private Vector3 InitialAnchorPosition;
-    private float anchorDistance;
+    private float StimulusAnchorDistance;
+    private float UIAnchorDistance;
 
     // Visual offset angle to place stimulus in single hemifield
     [SerializeField]
@@ -45,6 +48,7 @@ public class CameraManager : MonoBehaviour
     {
         InitialAnchorPosition = new Vector3(StimulusAnchor.transform.position.x, StimulusAnchor.transform.position.y, StimulusAnchor.transform.position.z);
         CalculateOffset();
+        UIAnchorDistance = Mathf.Abs(LeftCamera.transform.position.z - UIAnchor.transform.position.z);
 
         // Check if OVRCameraRig has been specified, required for head tracking
         if (CameraRig == null)
@@ -63,16 +67,16 @@ public class CameraManager : MonoBehaviour
         // Step 1: Calculate IPD
         float ipd = Mathf.Abs(LeftCamera.transform.position.x - RightCamera.transform.position.x);
 
-        anchorDistance = Mathf.Abs(LeftCamera.transform.position.z - StimulusAnchor.transform.position.z);
+        StimulusAnchorDistance = Mathf.Abs(LeftCamera.transform.position.z - StimulusAnchor.transform.position.z);
 
         // Step 2: Calculate lambda (angle between gaze vector and static eye position vector, using IPD)
-        float lambda = Mathf.Atan((ipd / 2) / anchorDistance);
+        float lambda = Mathf.Atan((ipd / 2) / StimulusAnchorDistance);
 
         // Step 3: Calculate omega (angle between static eye position vector and future offset vector)
         float omega = (OffsetAngle * Mathf.PI / 180) - lambda;
 
         // Step 4: Calculate baseline offset distance from static eye position to offset position
-        float offsetDistance = anchorDistance * Mathf.Tan(omega);
+        float offsetDistance = StimulusAnchorDistance * Mathf.Tan(omega);
 
         // Step 5: Calculate total offset value
         TotalOffset = offsetDistance + StimulusRadius + (ipd / 2);
@@ -122,12 +126,18 @@ public class CameraManager : MonoBehaviour
         if (FollowHeadMovement)
         {
             // Get the head position
-            Vector3 headProjection = CameraRig.centerEyeAnchor.transform.TransformDirection(Vector3.forward) * anchorDistance;
+            Vector3 headProjection = CameraRig.centerEyeAnchor.transform.TransformDirection(Vector3.forward);
             Vector3 headRotation = CameraRig.centerEyeAnchor.transform.eulerAngles;
 
+            // Projections for stimulus and UI anchors
+            Vector3 StimulusProjection = headProjection * StimulusAnchorDistance;
+            Vector3 UIProjection = headProjection * UIAnchorDistance;
+
             // Update position and rotation
-            StimulusAnchor.transform.position = new Vector3(headProjection.x, headProjection.y, headProjection.z);
+            StimulusAnchor.transform.position = new Vector3(StimulusProjection.x, StimulusProjection.y, StimulusProjection.z);
             StimulusAnchor.transform.eulerAngles = headRotation;
+            UIAnchor.transform.position = new Vector3(UIProjection.x, UIProjection.y, UIProjection.z);
+            UIAnchor.transform.eulerAngles = headRotation;
         }
 
         // Get the current position
