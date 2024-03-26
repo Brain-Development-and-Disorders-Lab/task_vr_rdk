@@ -38,6 +38,13 @@ public class UIManager : MonoBehaviour
 
   public void SetupUI()
   {
+    if (UICanvas == null)
+    {
+      Debug.LogError("No UICanvas specified. UI will not appear!");
+      SetVisible(false);
+      return;
+    }
+
     // Create GameObject for header
     HeaderContainer = new GameObject();
     HeaderContainer.name = "rdk_text_header_container";
@@ -46,16 +53,16 @@ public class UIManager : MonoBehaviour
     HeaderContainer.SetActive(true);
     HeaderContainer.transform.localScale = new Vector3(ScalingFactor, ScalingFactor, ScalingFactor);
 
-    // Header component (20%, top)
+    // Header component (10%, top)
     HeaderTextComponent = HeaderContainer.GetComponent<TextMeshProUGUI>();
     HeaderTextComponent.text = HeaderText;
     HeaderTextComponent.fontStyle = FontStyles.Bold;
-    HeaderTextComponent.fontSize = 10;
+    HeaderTextComponent.fontSize = 7.5f;
     HeaderTextComponent.material.color = Color.white;
     HeaderTextComponent.alignment = TextAlignmentOptions.Center;
     HeaderTextComponent.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
     HeaderTextComponent.transform.localPosition = new Vector3(0.0f, 40.0f, 0.0f);
-    HeaderTextComponent.rectTransform.sizeDelta = new Vector2(140.0f, 20.0f);
+    HeaderTextComponent.rectTransform.sizeDelta = new Vector2(140.0f, 10.0f);
 
     // Create GameObject for body
     BodyContainer = new GameObject();
@@ -65,21 +72,21 @@ public class UIManager : MonoBehaviour
     BodyContainer.SetActive(true);
     BodyContainer.transform.localScale = new Vector3(ScalingFactor, ScalingFactor, ScalingFactor);
 
-    // Body component (60%, below header)
+    // Body component (80%, below header)
     BodyTextComponent = BodyContainer.GetComponent<TextMeshProUGUI>();
     BodyTextComponent.text = BodyText;
-    BodyTextComponent.fontSize = 7.5f;
+    BodyTextComponent.fontSize = 4.5f;
     BodyTextComponent.material.color = Color.white;
     BodyTextComponent.alignment = TextAlignmentOptions.TopJustified;
     BodyTextComponent.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
     BodyTextComponent.transform.localPosition = new Vector3(0.0f, -5.0f, 0.0f);
-    BodyTextComponent.rectTransform.sizeDelta = new Vector2(120.0f, 60.0f);
+    BodyTextComponent.rectTransform.sizeDelta = new Vector2(120.0f, 80.0f);
 
-    // Button components
+    // Button components (10%, below body)
     GameObject buttonBodyObject = new GameObject();
     buttonBodyObject.name = "rdk_button_body_object";
     buttonBodyObject.transform.SetParent(UICanvas.transform, false);
-    buttonBodyObject.transform.localPosition = new Vector3(0.0f, -30.0f, 0.0f);
+    buttonBodyObject.transform.localPosition = new Vector3(0.0f, -50.0f, 0.0f);
 
     TMP_DefaultControls.Resources ButtonResources = new TMP_DefaultControls.Resources();
 
@@ -87,20 +94,20 @@ public class UIManager : MonoBehaviour
     LButton = TMP_DefaultControls.CreateButton(ButtonResources);
     LButton.transform.SetParent(buttonBodyObject.transform, false);
     LButton.transform.localPosition = new Vector3(-42.5f, 0.0f, 0.0f);
-    LButton.GetComponent<RectTransform>().sizeDelta = new Vector2(25.0f, 10.0f);
+    LButton.GetComponent<RectTransform>().sizeDelta = new Vector2(16.0f, 8.0f);
     TextMeshProUGUI LButtonText = LButton.GetComponentInChildren<TextMeshProUGUI>();
     LButtonText.fontStyle = FontStyles.Bold;
-    LButtonText.fontSize = 5.0f;
+    LButtonText.fontSize = 4.0f;
     LButtonText.text = "Back";
 
     // Right button, typically "next" action
     RButton = TMP_DefaultControls.CreateButton(ButtonResources);
     RButton.transform.SetParent(buttonBodyObject.transform, false);
     RButton.transform.localPosition = new Vector3(40.0f, 0.0f, 0.0f);
-    RButton.GetComponent<RectTransform>().sizeDelta = new Vector2(25.0f, 10.0f);
+    RButton.GetComponent<RectTransform>().sizeDelta = new Vector2(16.0f, 8.0f);
     TextMeshProUGUI RButtonText = RButton.GetComponentInChildren<TextMeshProUGUI>();
     RButtonText.fontStyle = FontStyles.Bold;
-    RButtonText.fontSize = 5.0f;
+    RButtonText.fontSize = 4.0f;
     RButtonText.text = "Next";
   }
 
