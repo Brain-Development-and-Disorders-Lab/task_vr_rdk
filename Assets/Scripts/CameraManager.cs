@@ -15,6 +15,8 @@ public class CameraManager : MonoBehaviour
     [SerializeField]
     private GameObject StimulusAnchor;
     [SerializeField]
+    private GameObject UIAnchor;
+    [SerializeField]
     private bool FollowHeadMovement;
 
     // Store the original anchor position
@@ -128,6 +130,8 @@ public class CameraManager : MonoBehaviour
             // Update position and rotation
             StimulusAnchor.transform.position = new Vector3(headProjection.x, headProjection.y, headProjection.z);
             StimulusAnchor.transform.eulerAngles = headRotation;
+            UIAnchor.transform.position = new Vector3(headProjection.x, headProjection.y, headProjection.z);
+            UIAnchor.transform.eulerAngles = headRotation;
         }
 
         // Get the current position

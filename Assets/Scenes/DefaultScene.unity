@@ -377,7 +377,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2834388984357925155, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 13325
+      value: 14625
       objectReference: {fileID: 0}
     - target: {fileID: 2896031059644693069, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_IsActive
@@ -413,7 +413,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4267567203292169432, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 25440
+      value: 27840
       objectReference: {fileID: 0}
     - target: {fileID: 4612929069887686480, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_AnchorMax.y
@@ -719,6 +719,7 @@ MonoBehaviour:
   RightCamera: {fileID: 440981524}
   CameraRig: {fileID: 440981525}
   StimulusAnchor: {fileID: 1762882801}
+  UIAnchor: {fileID: 1149117689}
   FollowHeadMovement: 1
   OffsetAngle: 3
 --- !u!114 &215276332
@@ -762,7 +763,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 43f4f5ffa028f4705beadc45cfca7a75, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  TextCanvas: {fileID: 1149117692}
+  UICanvas: {fileID: 1149117692}
   ScalingFactor: 0.1
 --- !u!1 &241204850
 GameObject:
