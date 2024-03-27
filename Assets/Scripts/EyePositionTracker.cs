@@ -87,12 +87,15 @@ namespace UXF
                 indicator.transform.position = indicatorEstimate;
             }
 
-            // Testing collection of blink weights
-            float lblinkweight;
-            float rblinkweight;
-            faceComponent.TryGetFaceExpressionWeight(OVRFaceExpressions.FaceExpression.EyesClosedL, out lblinkweight);
-            faceComponent.TryGetFaceExpressionWeight(OVRFaceExpressions.FaceExpression.EyesClosedR, out rblinkweight);
-            Debug.Log("Blink weights: " + lblinkweight.ToString() + ", " + rblinkweight.ToString());
+            if (faceComponent != null)
+            {
+                // Testing collection of blink weights
+                float LBlinkWeight;
+                float RBlinkWeight;
+                faceComponent.TryGetFaceExpressionWeight(OVRFaceExpressions.FaceExpression.EyesClosedL, out LBlinkWeight);
+                faceComponent.TryGetFaceExpressionWeight(OVRFaceExpressions.FaceExpression.EyesClosedR, out RBlinkWeight);
+                Debug.Log("Blink weights: " + LBlinkWeight.ToString() + ", " + RBlinkWeight.ToString());
+            }
 
             // Return position, rotation (x, y, z) as an array
             var values = new UXFDataRow()
