@@ -23,6 +23,7 @@ namespace UXF
 
         // OVR classes
         private OVREyeGaze eyeGazeComponent;
+        private OVRFaceExpressions faceComponent;
 
         public override string MeasurementDescriptor => "gaze";
         public override IEnumerable<string> CustomHeader => new string[] { "pos_x", "pos_y", "pos_z", "rot_x", "rot_y", "rot_z" };
@@ -36,7 +37,7 @@ namespace UXF
                 indicator.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
 
                 // Assign the colour based on left or right eye
-                eyeGazeComponent = GetComponentInParent<OVREyeGaze>(); 
+                eyeGazeComponent = GetComponentInParent<OVREyeGaze>();
                 if (eyeGazeComponent != null)
                 {
                     var indicatorRenderer = indicator.GetComponent<Renderer>();
@@ -55,6 +56,16 @@ namespace UXF
                 else
                 {
                     Debug.LogError("Missing OVREyeGaze component. Eye tracking will not work.");
+                }
+
+                faceComponent = GetComponentInParent<OVRFaceExpressions>();
+                if (faceComponent != null)
+                {
+                    Debug.Log("Eye tracking setup to detect blinks.");
+                }
+                else
+                {
+                    Debug.LogError("Missing OVRFaceExpressions component. Eye tracking will not detect blinks.");
                 }
             }
         }
@@ -75,6 +86,13 @@ namespace UXF
                 Vector3 indicatorEstimate = p + transform.forward * gazeDistance;
                 indicator.transform.position = indicatorEstimate;
             }
+
+            // Testing collection of blink weights
+            float lblinkweight;
+            float rblinkweight;
+            faceComponent.TryGetFaceExpressionWeight(OVRFaceExpressions.FaceExpression.EyesClosedL, out lblinkweight);
+            faceComponent.TryGetFaceExpressionWeight(OVRFaceExpressions.FaceExpression.EyesClosedR, out rblinkweight);
+            Debug.Log("Blink weights: " + lblinkweight.ToString() + ", " + rblinkweight.ToString());
 
             // Return position, rotation (x, y, z) as an array
             var values = new UXFDataRow()
