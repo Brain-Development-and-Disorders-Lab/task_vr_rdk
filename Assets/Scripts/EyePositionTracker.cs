@@ -25,47 +25,61 @@ namespace UXF
         private OVREyeGaze eyeGazeComponent;
         private OVRFaceExpressions faceComponent;
 
+        // Data variables
         public override string MeasurementDescriptor => "gaze";
-        public override IEnumerable<string> CustomHeader => new string[] { "pos_x", "pos_y", "pos_z", "rot_x", "rot_y", "rot_z" };
+        public override IEnumerable<string> CustomHeader => new string[] { "eye", "pos_x", "pos_y", "pos_z", "rot_x", "rot_y", "rot_z", "blink" };
+        private string TrackedEye = "left"; // Specify if the left or right eye
+
+        // Other references
+        private LoggerManager Logger;
 
         public void Start()
         {
-            if (showIndicator == true)
+            Logger = FindObjectOfType<LoggerManager>();
+
+            // Get OVR components
+            eyeGazeComponent = GetComponentInParent<OVREyeGaze>();
+            faceComponent = FindObjectOfType<OVRFaceExpressions>();
+
+            // Eye gaze setup
+            if (eyeGazeComponent)
+            {
+                TrackedEye = eyeGazeComponent.name.StartsWith("Left") ? "left" : "right";
+            }
+            else
+            {
+                Debug.LogWarning("Missing OVREyeGaze component. Eye tracking indicators will not be shown.");
+            }
+
+            // Blink tracking setup
+            if (faceComponent)
+            {
+                Debug.Log("Eye tracking setup to detect blinks.");
+            }
+            else
+            {
+                Debug.LogWarning("Missing OVRFaceExpressions component. Eye tracking will not detect blinks.");
+            }
+
+            // Show gaze indicator if enabled
+            if (showIndicator == true && eyeGazeComponent)
             {
                 // Create a new indicator object
                 indicator = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 indicator.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
 
                 // Assign the colour based on left or right eye
-                eyeGazeComponent = GetComponentInParent<OVREyeGaze>();
-                if (eyeGazeComponent != null)
+                var indicatorRenderer = indicator.GetComponent<Renderer>();
+                indicatorRenderer.material = new Material(Shader.Find("Sprites/Default"));
+                if (TrackedEye == "left")
                 {
-                    var indicatorRenderer = indicator.GetComponent<Renderer>();
-                    indicatorRenderer.material = new Material(Shader.Find("Sprites/Default"));
-                    if (eyeGazeComponent.name.StartsWith("Left"))
-                    {
-                        // Left eye is red
-                        indicatorRenderer.material.SetColor("_Color", Color.red);
-                    }
-                    else
-                    {
-                        // Right eye is blue
-                        indicatorRenderer.material.SetColor("_Color", Color.blue);
-                    }
+                    // Left eye is red
+                    indicatorRenderer.material.SetColor("_Color", Color.red);
                 }
                 else
                 {
-                    Debug.LogError("Missing OVREyeGaze component. Eye tracking will not work.");
-                }
-
-                faceComponent = GetComponentInParent<OVRFaceExpressions>();
-                if (faceComponent != null)
-                {
-                    Debug.Log("Eye tracking setup to detect blinks.");
-                }
-                else
-                {
-                    Debug.LogError("Missing OVRFaceExpressions component. Eye tracking will not detect blinks.");
+                    // Right eye is blue
+                    indicatorRenderer.material.SetColor("_Color", Color.blue);
                 }
             }
         }
@@ -87,26 +101,28 @@ namespace UXF
                 indicator.transform.position = indicatorEstimate;
             }
 
-            if (faceComponent != null)
+            float LBlinkWeight = -1.0f;
+            float RBlinkWeight = -1.0f;
+            if (faceComponent)
             {
                 // Testing collection of blink weights
-                float LBlinkWeight;
-                float RBlinkWeight;
                 faceComponent.TryGetFaceExpressionWeight(OVRFaceExpressions.FaceExpression.EyesClosedL, out LBlinkWeight);
                 faceComponent.TryGetFaceExpressionWeight(OVRFaceExpressions.FaceExpression.EyesClosedR, out RBlinkWeight);
-                Debug.Log("Blink weights: " + LBlinkWeight.ToString() + ", " + RBlinkWeight.ToString());
             }
 
-            // Return position, rotation (x, y, z) as an array
+            // Return eye, position, rotation (x, y, z), and blink estimate as an array
             var values = new UXFDataRow()
             {
+                ("eye", TrackedEye),
                 ("pos_x", p.x),
                 ("pos_y", p.y),
                 ("pos_z", p.z),
                 ("rot_x", r.x),
                 ("rot_y", r.y),
-                ("rot_z", r.z)
+                ("rot_z", r.z),
+                ("blink", TrackedEye == "left" ? LBlinkWeight : RBlinkWeight)
             };
+            Logger.Log("Blink: " + "(" + TrackedEye + ") " + (TrackedEye == "left" ? LBlinkWeight : RBlinkWeight));
 
             return values;
         }
