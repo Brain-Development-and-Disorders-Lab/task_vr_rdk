@@ -122,7 +122,6 @@ namespace UXF
                 ("rot_z", r.z),
                 ("blink", TrackedEye == "left" ? LBlinkWeight : RBlinkWeight)
             };
-            Logger.Log("Blink: " + "(" + TrackedEye + ") " + (TrackedEye == "left" ? LBlinkWeight : RBlinkWeight));
 
             return values;
         }
