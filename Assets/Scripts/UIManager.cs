@@ -28,6 +28,11 @@ public class UIManager : MonoBehaviour
   private GameObject LButton;
   private GameObject RButton;
 
+  // Page UI components
+  private bool UsePagination;
+  private List<string> PageContent;
+  private int ActivePage = 0;
+
   void Start()
   {
     // Run setup functions to create and position UI components
@@ -94,7 +99,7 @@ public class UIManager : MonoBehaviour
     LButton = TMP_DefaultControls.CreateButton(ButtonResources);
     LButton.transform.SetParent(buttonBodyObject.transform, false);
     LButton.transform.localPosition = new Vector3(-42.5f, 0.0f, 0.0f);
-    LButton.GetComponent<RectTransform>().sizeDelta = new Vector2(16.0f, 8.0f);
+    LButton.GetComponent<RectTransform>().sizeDelta = new Vector2(24.0f, 12.0f);
     TextMeshProUGUI LButtonText = LButton.GetComponentInChildren<TextMeshProUGUI>();
     LButtonText.fontStyle = FontStyles.Bold;
     LButtonText.fontSize = 4.0f;
@@ -104,7 +109,7 @@ public class UIManager : MonoBehaviour
     RButton = TMP_DefaultControls.CreateButton(ButtonResources);
     RButton.transform.SetParent(buttonBodyObject.transform, false);
     RButton.transform.localPosition = new Vector3(40.0f, 0.0f, 0.0f);
-    RButton.GetComponent<RectTransform>().sizeDelta = new Vector2(16.0f, 8.0f);
+    RButton.GetComponent<RectTransform>().sizeDelta = new Vector2(24.0f, 12.0f);
     TextMeshProUGUI RButtonText = RButton.GetComponentInChildren<TextMeshProUGUI>();
     RButtonText.fontStyle = FontStyles.Bold;
     RButtonText.fontSize = 4.0f;
@@ -123,14 +128,73 @@ public class UIManager : MonoBehaviour
     BodyTextComponent.text = BodyText;
   }
 
-  public void SetLeftButton(bool enabled, string text = "Back", bool visible = true)
+  public void EnablePagination(bool state)
+  {
+    UsePagination = state;
+  }
+
+  public int GetCurrentActivePage()
+  {
+    return ActivePage;
+  }
+
+  public void SetPages(List<string> pageContent)
+  {
+    PageContent = pageContent;
+    SetPage(ActivePage);
+  }
+
+  public void SetPage(int pageIndex)
+  {
+    if (UsePagination && pageIndex >= 0 && pageIndex < PageContent.Count)
+    {
+      ActivePage = pageIndex;
+      SetBody(PageContent[ActivePage]);
+
+      // Update the button state
+      LButton.GetComponent<Button>().interactable = HasPreviousPage();
+      RButton.GetComponent<Button>().interactable = HasNextPage();
+    }
+    else
+    {
+      Debug.LogWarning("Pagination not enabled or invalid page index specified");
+    }
+  }
+
+  public bool HasNextPage()
+  {
+    return UsePagination && ActivePage + 1 < PageContent.Count;
+  }
+
+  public void NextPage()
+  {
+    if (HasNextPage())
+    {
+      SetPage(ActivePage + 1);
+    }
+  }
+
+  public bool HasPreviousPage()
+  {
+    return UsePagination && ActivePage - 1 >= 0;
+  }
+
+  public void PreviousPage()
+  {
+    if (HasPreviousPage())
+    {
+      SetPage(ActivePage - 1);
+    }
+  }
+
+  public void SetLeftButton(bool enabled, bool visible = true, string text = "Back")
   {
     LButton.GetComponentInChildren<TextMeshProUGUI>().text = text;
     LButton.GetComponent<Button>().interactable = enabled;
     LButton.SetActive(visible);
   }
 
-  public void SetRightButton(bool enabled, string text = "Next", bool visible = true)
+  public void SetRightButton(bool enabled, bool visible = true, string text = "Next")
   {
     RButton.GetComponentInChildren<TextMeshProUGUI>().text = text;
     RButton.GetComponent<Button>().interactable = enabled;
