@@ -28,6 +28,11 @@ public class UIManager : MonoBehaviour
   private GameObject LButton;
   private GameObject RButton;
 
+  // Page UI components
+  private bool UsePagination;
+  private List<string> PageContent;
+  private int ActivePage = 0;
+
   void Start()
   {
     // Run setup functions to create and position UI components
@@ -121,6 +126,65 @@ public class UIManager : MonoBehaviour
   {
     BodyText = bodyText;
     BodyTextComponent.text = BodyText;
+  }
+
+  public void EnablePagination(bool state)
+  {
+    UsePagination = state;
+  }
+
+  public int GetCurrentActivePage()
+  {
+    return ActivePage;
+  }
+
+  public void SetPages(List<string> pageContent)
+  {
+    PageContent = pageContent;
+    SetPage(ActivePage);
+  }
+
+  public void SetPage(int pageIndex)
+  {
+    if (UsePagination && pageIndex >= 0 && pageIndex < PageContent.Count)
+    {
+      ActivePage = pageIndex;
+      SetBody(PageContent[ActivePage]);
+
+      // Update the button state
+      LButton.GetComponent<Button>().interactable = HasPreviousPage();
+      RButton.GetComponent<Button>().interactable = HasNextPage();
+    }
+    else
+    {
+      Debug.LogWarning("Pagination not enabled or invalid page index specified");
+    }
+  }
+
+  public bool HasNextPage()
+  {
+    return UsePagination && ActivePage + 1 < PageContent.Count;
+  }
+
+  public void NextPage()
+  {
+    if (HasNextPage())
+    {
+      SetPage(ActivePage + 1);
+    }
+  }
+
+  public bool HasPreviousPage()
+  {
+    return UsePagination && ActivePage - 1 >= 0;
+  }
+
+  public void PreviousPage()
+  {
+    if (HasPreviousPage())
+    {
+      SetPage(ActivePage - 1);
+    }
   }
 
   public void SetLeftButton(bool enabled, string text = "Back", bool visible = true)
