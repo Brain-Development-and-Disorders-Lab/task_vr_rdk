@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
 
 public class StimulusManager : MonoBehaviour
 {
@@ -64,10 +65,12 @@ public class StimulusManager : MonoBehaviour
         else if (stimulus == "decision")
         {
             // Generate aperture
-            StaticComponents.Add(CreateArc(ArcWorldRadius, 0.0f, 182.0f, 100, Color.cyan));
-            StaticComponents.Add(CreateArc(ArcWorldRadius, 180.0f, 362.0f, 100, Color.red));
+            StaticComponents.Add(CreateArc(ArcWorldRadius, 180.0f, 362.0f, 100, new Color32(0xd7, 0x80, 0x00, 0xff))); // Left
+            StaticComponents.Add(CreateArc(ArcWorldRadius, 0.0f, 182.0f, 100, new Color32(0x3e, 0xa3, 0xa3, 0xff))); // Right
             // Add fixation cross
             StaticComponents.Add(CreateFixationCross());
+            // Add selection buttons
+            StaticComponents.Add(CreateDecisionButtons());
         }
         else if (stimulus == "motion")
         {
@@ -222,6 +225,38 @@ public class StimulusManager : MonoBehaviour
                 Dots.Add(new Dot(stimulusAnchor, DotWorldRadius, ArcWorldRadius, dotBehavior, x, y, false));
             }
         }
+    }
+
+    public GameObject CreateDecisionButtons()
+    {
+        GameObject buttonBodyObject = new GameObject();
+        buttonBodyObject.name = "rdk_button_decision_object";
+        buttonBodyObject.transform.SetParent(stimulusAnchor.transform, false);
+        buttonBodyObject.transform.localPosition = new Vector3(0.0f, 0.0f, 200.0f);
+
+        TMP_DefaultControls.Resources ButtonResources = new TMP_DefaultControls.Resources();
+
+        // Left button, typically "back" action
+        GameObject LButton = TMP_DefaultControls.CreateButton(ButtonResources);
+        LButton.transform.SetParent(buttonBodyObject.transform, false);
+        LButton.transform.localPosition = new Vector3(-42.5f, 0.0f, 0.0f);
+        LButton.GetComponent<RectTransform>().sizeDelta = new Vector2(24.0f, 12.0f);
+        TextMeshProUGUI LButtonText = LButton.GetComponentInChildren<TextMeshProUGUI>();
+        LButtonText.fontStyle = FontStyles.Bold;
+        LButtonText.fontSize = 4.0f;
+        LButtonText.text = "Left";
+
+        // Right button, typically "next" action
+        GameObject RButton = TMP_DefaultControls.CreateButton(ButtonResources);
+        RButton.transform.SetParent(buttonBodyObject.transform, false);
+        RButton.transform.localPosition = new Vector3(40.0f, 0.0f, 0.0f);
+        RButton.GetComponent<RectTransform>().sizeDelta = new Vector2(24.0f, 12.0f);
+        TextMeshProUGUI RButtonText = RButton.GetComponentInChildren<TextMeshProUGUI>();
+        RButtonText.fontStyle = FontStyles.Bold;
+        RButtonText.fontSize = 4.0f;
+        RButtonText.text = "Right";
+
+        return buttonBodyObject;
     }
 
     public float GetCoherence()

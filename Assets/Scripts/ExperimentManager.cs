@@ -101,19 +101,30 @@ public class ExperimentManager : MonoBehaviour
 
             yield return StartCoroutine(WaitSeconds(0.5f, true));
         }
-        else
+        else if (ActiveBlock == CalibrationBlock)
         {
+            // Fixation (1 second)
             stimulusManager.SetVisible("fixation", true);
-            yield return StartCoroutine(WaitSeconds(0.25f, true));
+            yield return StartCoroutine(WaitSeconds(1.0f, true));
             stimulusManager.SetVisible("fixation", false);
 
+            // Motion (1.5 seconds)
             stimulusManager.SetVisible("motion", true);
             yield return StartCoroutine(WaitSeconds(2.0f, true));
             stimulusManager.SetVisible("motion", false);
 
-            yield return StartCoroutine(WaitSeconds(1.0f, true));
-            EndTrial();
+            // Decision (wait)
+            stimulusManager.SetVisible("decision", true);
+            EnableInput(true);
         }
+    }
+
+    /// <summary>
+    /// Wrapper function to handle input responses
+    /// </summary>
+    private void HandleExperimentInput(string selection)
+    {
+        Debug.Log("Selected: " + selection);
     }
 
     public void EndTrial()
@@ -151,6 +162,33 @@ public class ExperimentManager : MonoBehaviour
     {
         if (InputEnabled)
         {
+            // Left-side controls
+            if (OVRInput.Get(OVRInput.Button.Two) || Input.GetKeyDown(KeyCode.Alpha2))
+            {
+                if (ActiveBlock == InstructionBlock)
+                {
+                    if (uiManager.HasPreviousPage())
+                    {
+                        // If pagination has next page, advance
+                        uiManager.PreviousPage();
+                        EnableInput(true);
+
+                        // Update the "Next" button if the last page
+                        if (uiManager.HasNextPage())
+                        {
+                            uiManager.SetRightButton(true, true, "Next");
+                        }
+                    }
+                }
+                else if (ActiveBlock == CalibrationBlock)
+                {
+                    // "Left" direction selected
+                    HandleExperimentInput("left");
+                    EndTrial();
+                }
+            }
+
+            // Right-side controls
             if (OVRInput.Get(OVRInput.Button.One) || Input.GetKeyDown(KeyCode.Alpha7))
             {
                 if (ActiveBlock == InstructionBlock)
@@ -172,20 +210,11 @@ public class ExperimentManager : MonoBehaviour
                         EndTrial();
                     }
                 }
-            }
-            if (OVRInput.Get(OVRInput.Button.Two) || Input.GetKeyDown(KeyCode.Alpha2))
-            {
-                if (uiManager.HasPreviousPage())
+                else if (ActiveBlock == CalibrationBlock)
                 {
-                    // If pagination has next page, advance
-                    uiManager.PreviousPage();
-                    EnableInput(true);
-
-                    // Update the "Next" button if the last page
-                    if (uiManager.HasNextPage())
-                    {
-                        uiManager.SetRightButton(true, true, "Next");
-                    }
+                    // "Right" direction selected
+                    HandleExperimentInput("right");
+                    EndTrial();
                 }
             }
         }
