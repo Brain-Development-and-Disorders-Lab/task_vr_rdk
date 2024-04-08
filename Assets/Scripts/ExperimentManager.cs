@@ -17,6 +17,8 @@ public class ExperimentManager : MonoBehaviour
     readonly int MainTrials = 20;
     readonly int MainBlock = 3; // Expected index of the "Main"-type block
 
+    private int ActiveBlock = 1;
+
     StimulusManager stimulusManager;
     UIManager uiManager;
     CameraManager cameraManager;
@@ -71,25 +73,26 @@ public class ExperimentManager : MonoBehaviour
 
     public void RunTrial(Trial trial)
     {
+        ActiveBlock = trial.block.number;
         stimulusManager.SetVisibleAll(false);
-        if (trial.block.number == InstructionBlock)
+        if (ActiveBlock == InstructionBlock)
         {
             Debug.Log("This is an \"Instruction\"-type trial.");
         }
-        else if (trial.block.number == CalibrationBlock)
+        else if (ActiveBlock == CalibrationBlock)
         {
             Debug.Log("This is a \"Calibration\"-type trial.");
         }
-        else if (trial.block.number == MainBlock)
+        else if (ActiveBlock == MainBlock)
         {
             Debug.Log("This is a \"Main\"-type trial.");
         }
-        StartCoroutine(DisplayStimuli(trial.block.number));
+        StartCoroutine(DisplayStimuli());
     }
 
-    private IEnumerator DisplayStimuli(int BlockType)
+    private IEnumerator DisplayStimuli()
     {
-        if (BlockType == InstructionBlock)
+        if (ActiveBlock == InstructionBlock)
         {
             uiManager.SetVisible(true);
             uiManager.SetHeader("Instructions");
@@ -101,20 +104,26 @@ public class ExperimentManager : MonoBehaviour
         else
         {
             stimulusManager.SetVisible("fixation", true);
-            yield return StartCoroutine(WaitSeconds(0.25f));
+            yield return StartCoroutine(WaitSeconds(0.25f, true));
             stimulusManager.SetVisible("fixation", false);
 
             stimulusManager.SetVisible("motion", true);
-            yield return StartCoroutine(WaitSeconds(2.0f));
+            yield return StartCoroutine(WaitSeconds(2.0f, true));
             stimulusManager.SetVisible("motion", false);
 
-            yield return StartCoroutine(WaitSeconds(1.0f));
+            yield return StartCoroutine(WaitSeconds(1.0f, true));
             EndTrial();
         }
     }
 
     public void EndTrial()
     {
+        // Tidy up after specific blocks
+        if (ActiveBlock == InstructionBlock)
+        {
+            uiManager.SetVisible(false);
+        }
+
         // Reset visual field
         cameraManager.SetActiveField(CameraManager.VisualField.Both);
 
@@ -144,21 +153,40 @@ public class ExperimentManager : MonoBehaviour
         {
             if (OVRInput.Get(OVRInput.Button.One) || Input.GetKeyDown(KeyCode.Alpha7))
             {
-                if (uiManager.HasNextPage())
+                if (ActiveBlock == InstructionBlock)
                 {
-                    // If pagination has next page, advance
-                    uiManager.NextPage();
-                    EnableInput(true);
-                }
-                else
-                {
-                    EndTrial();
+                    if (uiManager.HasNextPage())
+                    {
+                        // If pagination has next page, advance
+                        uiManager.NextPage();
+                        EnableInput(true);
+
+                        // Update the "Next" button if the last page
+                        if (!uiManager.HasNextPage())
+                        {
+                            uiManager.SetRightButton(true, "Continue");
+                        }
+                    }
+                    else
+                    {
+                        EndTrial();
+                    }
                 }
             }
             if (OVRInput.Get(OVRInput.Button.Two) || Input.GetKeyDown(KeyCode.Alpha2))
             {
-                uiManager.PreviousPage();
-                EnableInput(true);
+                if (uiManager.HasPreviousPage())
+                {
+                    // If pagination has next page, advance
+                    uiManager.PreviousPage();
+                    EnableInput(true);
+
+                    // Update the "Next" button if the last page
+                    if (uiManager.HasNextPage())
+                    {
+                        uiManager.SetRightButton(true, "Next");
+                    }
+                }
             }
         }
     }

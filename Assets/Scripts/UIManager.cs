@@ -99,7 +99,7 @@ public class UIManager : MonoBehaviour
     LButton = TMP_DefaultControls.CreateButton(ButtonResources);
     LButton.transform.SetParent(buttonBodyObject.transform, false);
     LButton.transform.localPosition = new Vector3(-42.5f, 0.0f, 0.0f);
-    LButton.GetComponent<RectTransform>().sizeDelta = new Vector2(16.0f, 8.0f);
+    LButton.GetComponent<RectTransform>().sizeDelta = new Vector2(24.0f, 12.0f);
     TextMeshProUGUI LButtonText = LButton.GetComponentInChildren<TextMeshProUGUI>();
     LButtonText.fontStyle = FontStyles.Bold;
     LButtonText.fontSize = 4.0f;
@@ -109,7 +109,7 @@ public class UIManager : MonoBehaviour
     RButton = TMP_DefaultControls.CreateButton(ButtonResources);
     RButton.transform.SetParent(buttonBodyObject.transform, false);
     RButton.transform.localPosition = new Vector3(40.0f, 0.0f, 0.0f);
-    RButton.GetComponent<RectTransform>().sizeDelta = new Vector2(16.0f, 8.0f);
+    RButton.GetComponent<RectTransform>().sizeDelta = new Vector2(24.0f, 12.0f);
     TextMeshProUGUI RButtonText = RButton.GetComponentInChildren<TextMeshProUGUI>();
     RButtonText.fontStyle = FontStyles.Bold;
     RButtonText.fontSize = 4.0f;
