@@ -187,14 +187,14 @@ public class UIManager : MonoBehaviour
     }
   }
 
-  public void SetLeftButton(bool enabled, string text = "Back", bool visible = true)
+  public void SetLeftButton(bool enabled, bool visible = true, string text = "Back")
   {
     LButton.GetComponentInChildren<TextMeshProUGUI>().text = text;
     LButton.GetComponent<Button>().interactable = enabled;
     LButton.SetActive(visible);
   }
 
-  public void SetRightButton(bool enabled, string text = "Next", bool visible = true)
+  public void SetRightButton(bool enabled, bool visible = true, string text = "Next")
   {
     RButton.GetComponentInChildren<TextMeshProUGUI>().text = text;
     RButton.GetComponent<Button>().interactable = enabled;

@@ -96,8 +96,8 @@ public class ExperimentManager : MonoBehaviour
         {
             uiManager.SetVisible(true);
             uiManager.SetHeader("Instructions");
-            uiManager.SetLeftButton(false, "Back");
-            uiManager.SetRightButton(true, "Next");
+            uiManager.SetLeftButton(false, true, "Back");
+            uiManager.SetRightButton(true, true, "Next");
 
             yield return StartCoroutine(WaitSeconds(0.5f, true));
         }
@@ -164,7 +164,7 @@ public class ExperimentManager : MonoBehaviour
                         // Update the "Next" button if the last page
                         if (!uiManager.HasNextPage())
                         {
-                            uiManager.SetRightButton(true, "Continue");
+                            uiManager.SetRightButton(true, true, "Continue");
                         }
                     }
                     else
@@ -184,7 +184,7 @@ public class ExperimentManager : MonoBehaviour
                     // Update the "Next" button if the last page
                     if (uiManager.HasNextPage())
                     {
-                        uiManager.SetRightButton(true, "Next");
+                        uiManager.SetRightButton(true, true, "Next");
                     }
                 }
             }
