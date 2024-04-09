@@ -26,7 +26,13 @@ public class StimulusManager : MonoBehaviour
     private float DotCoherence = 0.5f;
 
     // Stimuli groups, assembled from individual components
-    private readonly List<string> AllStimuli = new() { "fixation", "decision", "motion" };
+    private readonly List<string> AllStimuli = new() {
+        "fixation",
+        "decision",
+        "motion",
+        "feedback_correct",
+        "feedback_incorrect"
+    };
     private Dictionary<string, List<GameObject>> Stimuli = new();
     private Dictionary<string, bool> StimuliVisibility = new();
 
@@ -82,6 +88,22 @@ public class StimulusManager : MonoBehaviour
             CreateDots();
             // Add fixation cross
             StaticComponents.Add(CreateFixationCross());
+        }
+        else if (stimulus == "feedback_correct")
+        {
+            // Generate aperture
+            StaticComponents.Add(CreateArc(ArcWorldRadius, 0.0f, 182.0f, 100, Color.white));
+            StaticComponents.Add(CreateArc(ArcWorldRadius, 180.0f, 362.0f, 100, Color.white));
+            // Add green fixation cross
+            StaticComponents.Add(CreateFixationCross("green"));
+        }
+        else if (stimulus == "feedback_incorrect")
+        {
+            // Generate aperture
+            StaticComponents.Add(CreateArc(ArcWorldRadius, 0.0f, 182.0f, 100, Color.white));
+            StaticComponents.Add(CreateArc(ArcWorldRadius, 180.0f, 362.0f, 100, Color.white));
+            // Add red fixation cross
+            StaticComponents.Add(CreateFixationCross("red"));
         }
         else
         {
@@ -166,14 +188,24 @@ public class StimulusManager : MonoBehaviour
         line.SetPositions(arcPoints);
         line.material = new Material(Shader.Find("Sprites/Default"));
         line.material.SetColor("_Color", color);
-        line.startWidth = 0.04f;
-        line.endWidth = 0.04f;
+        line.startWidth = 0.06f;
+        line.endWidth = 0.06f;
 
         return arcObject;
     }
 
-    public GameObject CreateFixationCross()
+    public GameObject CreateFixationCross(string color = "white")
     {
+        Color CrossColor = Color.white;
+        if (color == "red")
+        {
+            CrossColor = Color.red;
+        }
+        else if (color == "green")
+        {
+            CrossColor = Color.green;
+        }
+
         // Create base GameObject
         GameObject fixationObjectParent = new GameObject();
         fixationObjectParent.name = "rdk_fixation_object";
@@ -193,7 +225,7 @@ public class StimulusManager : MonoBehaviour
         horizontalLine.SetPosition(0, new Vector3(-0.05f, 0.0f, 0.0f));
         horizontalLine.SetPosition(1, new Vector3(0.05f, 0.0f, 0.0f));
         horizontalLine.material = new Material(Shader.Find("Sprites/Default"));
-        horizontalLine.material.SetColor("_Color", Color.white);
+        horizontalLine.material.SetColor("_Color", CrossColor);
         horizontalLine.startWidth = 0.03f;
         horizontalLine.endWidth = 0.03f;
 
@@ -210,7 +242,7 @@ public class StimulusManager : MonoBehaviour
         verticalLine.SetPosition(0, new Vector3(0.0f, -0.05f, 0.0f));
         verticalLine.SetPosition(1, new Vector3(0.0f, 0.05f, 0.0f));
         verticalLine.material = new Material(Shader.Find("Sprites/Default"));
-        verticalLine.material.SetColor("_Color", Color.white);
+        verticalLine.material.SetColor("_Color", CrossColor);
         verticalLine.startWidth = 0.03f;
         verticalLine.endWidth = 0.03f;
 
@@ -277,7 +309,15 @@ public class StimulusManager : MonoBehaviour
 
     public void SetCoherence(float coherence)
     {
+        // Update the stored coherence value
         if (coherence >= 0.0f && coherence <= 1.0f) DotCoherence = coherence;
+
+        // Apply the coherence across all dots
+        foreach (Dot dot in Dots)
+        {
+            string dotBehavior = UnityEngine.Random.value > DotCoherence ? "random" : "reference";
+            dot.SetBehavior(dotBehavior);
+        }
     }
 
     /// <summary>

@@ -103,7 +103,7 @@ public class UIManager : MonoBehaviour
     LButton.GetComponent<Image>().sprite = Resources.Load<Sprite>("Sprites/Button");
     TextMeshProUGUI LButtonText = LButton.GetComponentInChildren<TextMeshProUGUI>();
     LButtonText.fontStyle = FontStyles.Bold;
-    LButtonText.fontSize = 4.0f;
+    LButtonText.fontSize = 5.0f;
     LButtonText.text = "Back";
 
     // Right button, typically "next" action
@@ -114,7 +114,7 @@ public class UIManager : MonoBehaviour
     RButton.GetComponent<Image>().sprite = Resources.Load<Sprite>("Sprites/Button");
     TextMeshProUGUI RButtonText = RButton.GetComponentInChildren<TextMeshProUGUI>();
     RButtonText.fontStyle = FontStyles.Bold;
-    RButtonText.fontSize = 4.0f;
+    RButtonText.fontSize = 5.0f;
     RButtonText.text = "Next";
   }
 

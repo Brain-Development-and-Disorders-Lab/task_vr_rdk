@@ -125,6 +125,8 @@ public class ExperimentManager : MonoBehaviour
     /// </summary>
     private void HandleExperimentInput(string selection)
     {
+        // Store the selection value
+        Session.instance.CurrentTrial.result["referenceSelection"] = selection;
         Debug.Log("Selected: " + selection);
     }
 
