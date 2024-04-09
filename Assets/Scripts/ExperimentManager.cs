@@ -25,6 +25,7 @@ public class ExperimentManager : MonoBehaviour
 
     // Input parameters
     bool InputEnabled = false;
+    private bool InputReset = true;
 
     /// <summary>
     /// Generate the experiment flow
@@ -160,10 +161,10 @@ public class ExperimentManager : MonoBehaviour
 
     void Update()
     {
-        if (InputEnabled)
+        if (InputEnabled && InputReset)
         {
             // Left-side controls
-            if (OVRInput.Get(OVRInput.Button.Two) || Input.GetKeyDown(KeyCode.Alpha2))
+            if (OVRInput.Get(OVRInput.Axis1D.PrimaryIndexTrigger) > 0.8f || Input.GetKeyDown(KeyCode.Alpha2))
             {
                 if (ActiveBlock == InstructionBlock)
                 {
@@ -186,10 +187,11 @@ public class ExperimentManager : MonoBehaviour
                     HandleExperimentInput("left");
                     EndTrial();
                 }
+                InputReset = false;
             }
 
             // Right-side controls
-            if (OVRInput.Get(OVRInput.Button.One) || Input.GetKeyDown(KeyCode.Alpha7))
+            if (OVRInput.Get(OVRInput.Axis1D.SecondaryIndexTrigger) > 0.8f || Input.GetKeyDown(KeyCode.Alpha7))
             {
                 if (ActiveBlock == InstructionBlock)
                 {
@@ -216,6 +218,19 @@ public class ExperimentManager : MonoBehaviour
                     HandleExperimentInput("right");
                     EndTrial();
                 }
+                InputReset = false;
+            }
+        }
+
+        if (InputEnabled && InputReset == false)
+        {
+            // Reset input state to prevent holding buttons to repeatedly select options
+            if (OVRInput.Get(OVRInput.Axis1D.PrimaryIndexTrigger) == 0.0f &&
+                OVRInput.Get(OVRInput.Axis1D.SecondaryIndexTrigger) == 0.0f &&
+                Input.GetKeyDown(KeyCode.Alpha2) == false &&
+                Input.GetKeyDown(KeyCode.Alpha7) == false)
+            {
+                InputReset = true;
             }
         }
     }

@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
+using UnityEngine.UI;
 
 public class StimulusManager : MonoBehaviour
 {
@@ -79,6 +80,8 @@ public class StimulusManager : MonoBehaviour
             StaticComponents.Add(CreateArc(ArcWorldRadius, 180.0f, 362.0f, 100, Color.white));
             // Add dots
             CreateDots();
+            // Add fixation cross
+            StaticComponents.Add(CreateFixationCross());
         }
         else
         {
@@ -229,18 +232,24 @@ public class StimulusManager : MonoBehaviour
 
     public GameObject CreateDecisionButtons()
     {
-        GameObject buttonBodyObject = new GameObject();
-        buttonBodyObject.name = "rdk_button_decision_object";
-        buttonBodyObject.transform.SetParent(stimulusAnchor.transform, false);
-        buttonBodyObject.transform.localPosition = new Vector3(0.0f, 0.0f, 200.0f);
+        GameObject buttonDecisionObject = new GameObject();
+        buttonDecisionObject.name = "rdk_button_decision_object";
+        buttonDecisionObject.transform.SetParent(stimulusAnchor.transform, false);
+        buttonDecisionObject.transform.localPosition = new Vector3(0.0f, 0.0f, 0.0f);
+        buttonDecisionObject.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
+        buttonDecisionObject.AddComponent<Canvas>();
+        buttonDecisionObject.AddComponent<GraphicRaycaster>();
+        buttonDecisionObject.SetActive(false);
 
         TMP_DefaultControls.Resources ButtonResources = new TMP_DefaultControls.Resources();
 
         // Left button, typically "back" action
         GameObject LButton = TMP_DefaultControls.CreateButton(ButtonResources);
-        LButton.transform.SetParent(buttonBodyObject.transform, false);
+        LButton.transform.SetParent(buttonDecisionObject.transform, false);
         LButton.transform.localPosition = new Vector3(-42.5f, 0.0f, 0.0f);
-        LButton.GetComponent<RectTransform>().sizeDelta = new Vector2(24.0f, 12.0f);
+        LButton.GetComponent<RectTransform>().sizeDelta = new Vector2(20.0f, 10.0f);
+        LButton.GetComponent<Image>().sprite = Resources.Load<Sprite>("Sprites/Button");
+        LButton.GetComponent<Image>().color = new Color32(0xd7, 0x80, 0x00, 0xff);
         TextMeshProUGUI LButtonText = LButton.GetComponentInChildren<TextMeshProUGUI>();
         LButtonText.fontStyle = FontStyles.Bold;
         LButtonText.fontSize = 4.0f;
@@ -248,15 +257,17 @@ public class StimulusManager : MonoBehaviour
 
         // Right button, typically "next" action
         GameObject RButton = TMP_DefaultControls.CreateButton(ButtonResources);
-        RButton.transform.SetParent(buttonBodyObject.transform, false);
-        RButton.transform.localPosition = new Vector3(40.0f, 0.0f, 0.0f);
-        RButton.GetComponent<RectTransform>().sizeDelta = new Vector2(24.0f, 12.0f);
+        RButton.transform.SetParent(buttonDecisionObject.transform, false);
+        RButton.transform.localPosition = new Vector3(42.5f, 0.0f, 0.0f);
+        RButton.GetComponent<RectTransform>().sizeDelta = new Vector2(20.0f, 10.0f);
+        RButton.GetComponent<Image>().sprite = Resources.Load<Sprite>("Sprites/Button");
+        RButton.GetComponent<Image>().color = new Color32(0x3e, 0xa3, 0xa3, 0xff);
         TextMeshProUGUI RButtonText = RButton.GetComponentInChildren<TextMeshProUGUI>();
         RButtonText.fontStyle = FontStyles.Bold;
         RButtonText.fontSize = 4.0f;
         RButtonText.text = "Right";
 
-        return buttonBodyObject;
+        return buttonDecisionObject;
     }
 
     public float GetCoherence()
