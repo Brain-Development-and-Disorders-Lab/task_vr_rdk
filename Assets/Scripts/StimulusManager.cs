@@ -3,6 +3,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
+using UnityEngine.UI;
 
 public class StimulusManager : MonoBehaviour
 {
@@ -24,7 +26,13 @@ public class StimulusManager : MonoBehaviour
     private float DotCoherence = 0.5f;
 
     // Stimuli groups, assembled from individual components
-    private readonly List<string> AllStimuli = new() { "fixation", "decision", "motion" };
+    private readonly List<string> AllStimuli = new() {
+        "fixation",
+        "decision",
+        "motion",
+        "feedback_correct",
+        "feedback_incorrect"
+    };
     private Dictionary<string, List<GameObject>> Stimuli = new();
     private Dictionary<string, bool> StimuliVisibility = new();
 
@@ -64,10 +72,12 @@ public class StimulusManager : MonoBehaviour
         else if (stimulus == "decision")
         {
             // Generate aperture
-            StaticComponents.Add(CreateArc(ArcWorldRadius, 0.0f, 182.0f, 100, Color.cyan));
-            StaticComponents.Add(CreateArc(ArcWorldRadius, 180.0f, 362.0f, 100, Color.red));
+            StaticComponents.Add(CreateArc(ArcWorldRadius, 180.0f, 362.0f, 100, new Color32(0xd7, 0x80, 0x00, 0xff))); // Left
+            StaticComponents.Add(CreateArc(ArcWorldRadius, 0.0f, 182.0f, 100, new Color32(0x3e, 0xa3, 0xa3, 0xff))); // Right
             // Add fixation cross
             StaticComponents.Add(CreateFixationCross());
+            // Add selection buttons
+            StaticComponents.Add(CreateDecisionButtons());
         }
         else if (stimulus == "motion")
         {
@@ -76,6 +86,24 @@ public class StimulusManager : MonoBehaviour
             StaticComponents.Add(CreateArc(ArcWorldRadius, 180.0f, 362.0f, 100, Color.white));
             // Add dots
             CreateDots();
+            // Add fixation cross
+            StaticComponents.Add(CreateFixationCross());
+        }
+        else if (stimulus == "feedback_correct")
+        {
+            // Generate aperture
+            StaticComponents.Add(CreateArc(ArcWorldRadius, 0.0f, 182.0f, 100, Color.white));
+            StaticComponents.Add(CreateArc(ArcWorldRadius, 180.0f, 362.0f, 100, Color.white));
+            // Add green fixation cross
+            StaticComponents.Add(CreateFixationCross("green"));
+        }
+        else if (stimulus == "feedback_incorrect")
+        {
+            // Generate aperture
+            StaticComponents.Add(CreateArc(ArcWorldRadius, 0.0f, 182.0f, 100, Color.white));
+            StaticComponents.Add(CreateArc(ArcWorldRadius, 180.0f, 362.0f, 100, Color.white));
+            // Add red fixation cross
+            StaticComponents.Add(CreateFixationCross("red"));
         }
         else
         {
@@ -160,14 +188,24 @@ public class StimulusManager : MonoBehaviour
         line.SetPositions(arcPoints);
         line.material = new Material(Shader.Find("Sprites/Default"));
         line.material.SetColor("_Color", color);
-        line.startWidth = 0.04f;
-        line.endWidth = 0.04f;
+        line.startWidth = 0.06f;
+        line.endWidth = 0.06f;
 
         return arcObject;
     }
 
-    public GameObject CreateFixationCross()
+    public GameObject CreateFixationCross(string color = "white")
     {
+        Color CrossColor = Color.white;
+        if (color == "red")
+        {
+            CrossColor = Color.red;
+        }
+        else if (color == "green")
+        {
+            CrossColor = Color.green;
+        }
+
         // Create base GameObject
         GameObject fixationObjectParent = new GameObject();
         fixationObjectParent.name = "rdk_fixation_object";
@@ -187,7 +225,7 @@ public class StimulusManager : MonoBehaviour
         horizontalLine.SetPosition(0, new Vector3(-0.05f, 0.0f, 0.0f));
         horizontalLine.SetPosition(1, new Vector3(0.05f, 0.0f, 0.0f));
         horizontalLine.material = new Material(Shader.Find("Sprites/Default"));
-        horizontalLine.material.SetColor("_Color", Color.white);
+        horizontalLine.material.SetColor("_Color", CrossColor);
         horizontalLine.startWidth = 0.03f;
         horizontalLine.endWidth = 0.03f;
 
@@ -204,7 +242,7 @@ public class StimulusManager : MonoBehaviour
         verticalLine.SetPosition(0, new Vector3(0.0f, -0.05f, 0.0f));
         verticalLine.SetPosition(1, new Vector3(0.0f, 0.05f, 0.0f));
         verticalLine.material = new Material(Shader.Find("Sprites/Default"));
-        verticalLine.material.SetColor("_Color", Color.white);
+        verticalLine.material.SetColor("_Color", CrossColor);
         verticalLine.startWidth = 0.03f;
         verticalLine.endWidth = 0.03f;
 
@@ -224,6 +262,46 @@ public class StimulusManager : MonoBehaviour
         }
     }
 
+    public GameObject CreateDecisionButtons()
+    {
+        GameObject buttonDecisionObject = new GameObject();
+        buttonDecisionObject.name = "rdk_button_decision_object";
+        buttonDecisionObject.transform.SetParent(stimulusAnchor.transform, false);
+        buttonDecisionObject.transform.localPosition = new Vector3(0.0f, 0.0f, 0.0f);
+        buttonDecisionObject.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
+        buttonDecisionObject.AddComponent<Canvas>();
+        buttonDecisionObject.AddComponent<GraphicRaycaster>();
+        buttonDecisionObject.SetActive(false);
+
+        TMP_DefaultControls.Resources ButtonResources = new TMP_DefaultControls.Resources();
+
+        // Left button, typically "back" action
+        GameObject LButton = TMP_DefaultControls.CreateButton(ButtonResources);
+        LButton.transform.SetParent(buttonDecisionObject.transform, false);
+        LButton.transform.localPosition = new Vector3(-42.5f, 0.0f, 0.0f);
+        LButton.GetComponent<RectTransform>().sizeDelta = new Vector2(20.0f, 10.0f);
+        LButton.GetComponent<Image>().sprite = Resources.Load<Sprite>("Sprites/Button");
+        LButton.GetComponent<Image>().color = new Color32(0xd7, 0x80, 0x00, 0xff);
+        TextMeshProUGUI LButtonText = LButton.GetComponentInChildren<TextMeshProUGUI>();
+        LButtonText.fontStyle = FontStyles.Bold;
+        LButtonText.fontSize = 4.0f;
+        LButtonText.text = "Left";
+
+        // Right button, typically "next" action
+        GameObject RButton = TMP_DefaultControls.CreateButton(ButtonResources);
+        RButton.transform.SetParent(buttonDecisionObject.transform, false);
+        RButton.transform.localPosition = new Vector3(42.5f, 0.0f, 0.0f);
+        RButton.GetComponent<RectTransform>().sizeDelta = new Vector2(20.0f, 10.0f);
+        RButton.GetComponent<Image>().sprite = Resources.Load<Sprite>("Sprites/Button");
+        RButton.GetComponent<Image>().color = new Color32(0x3e, 0xa3, 0xa3, 0xff);
+        TextMeshProUGUI RButtonText = RButton.GetComponentInChildren<TextMeshProUGUI>();
+        RButtonText.fontStyle = FontStyles.Bold;
+        RButtonText.fontSize = 4.0f;
+        RButtonText.text = "Right";
+
+        return buttonDecisionObject;
+    }
+
     public float GetCoherence()
     {
         return DotCoherence;
@@ -231,7 +309,15 @@ public class StimulusManager : MonoBehaviour
 
     public void SetCoherence(float coherence)
     {
+        // Update the stored coherence value
         if (coherence >= 0.0f && coherence <= 1.0f) DotCoherence = coherence;
+
+        // Apply the coherence across all dots
+        foreach (Dot dot in Dots)
+        {
+            string dotBehavior = UnityEngine.Random.value > DotCoherence ? "random" : "reference";
+            dot.SetBehavior(dotBehavior);
+        }
     }
 
     /// <summary>

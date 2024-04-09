@@ -83,6 +83,23 @@ public class Dot
     DotY = position.y;
   }
 
+  public string GetBehavior()
+  {
+    return DotBehavior;
+  }
+
+  public void SetBehavior(string behavior)
+  {
+    if (behavior == "random" || behavior == "reference")
+    {
+      DotBehavior = behavior;
+    }
+    else
+    {
+      Debug.LogWarning("Invalid dot behavior: " + behavior);
+    }
+  }
+
   public void Update()
   {
     if (DotActive == true)

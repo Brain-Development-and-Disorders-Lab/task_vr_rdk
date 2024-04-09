@@ -62,7 +62,7 @@ public class UIManager : MonoBehaviour
     HeaderTextComponent = HeaderContainer.GetComponent<TextMeshProUGUI>();
     HeaderTextComponent.text = HeaderText;
     HeaderTextComponent.fontStyle = FontStyles.Bold;
-    HeaderTextComponent.fontSize = 7.5f;
+    HeaderTextComponent.fontSize = 8.0f;
     HeaderTextComponent.material.color = Color.white;
     HeaderTextComponent.alignment = TextAlignmentOptions.Center;
     HeaderTextComponent.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
@@ -80,9 +80,9 @@ public class UIManager : MonoBehaviour
     // Body component (80%, below header)
     BodyTextComponent = BodyContainer.GetComponent<TextMeshProUGUI>();
     BodyTextComponent.text = BodyText;
-    BodyTextComponent.fontSize = 4.5f;
+    BodyTextComponent.fontSize = 6.0f;
     BodyTextComponent.material.color = Color.white;
-    BodyTextComponent.alignment = TextAlignmentOptions.TopJustified;
+    BodyTextComponent.alignment = TextAlignmentOptions.MidlineLeft;
     BodyTextComponent.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
     BodyTextComponent.transform.localPosition = new Vector3(0.0f, -5.0f, 0.0f);
     BodyTextComponent.rectTransform.sizeDelta = new Vector2(120.0f, 80.0f);
@@ -99,20 +99,22 @@ public class UIManager : MonoBehaviour
     LButton = TMP_DefaultControls.CreateButton(ButtonResources);
     LButton.transform.SetParent(buttonBodyObject.transform, false);
     LButton.transform.localPosition = new Vector3(-42.5f, 0.0f, 0.0f);
-    LButton.GetComponent<RectTransform>().sizeDelta = new Vector2(24.0f, 12.0f);
+    LButton.GetComponent<RectTransform>().sizeDelta = new Vector2(28.0f, 14.0f);
+    LButton.GetComponent<Image>().sprite = Resources.Load<Sprite>("Sprites/Button");
     TextMeshProUGUI LButtonText = LButton.GetComponentInChildren<TextMeshProUGUI>();
     LButtonText.fontStyle = FontStyles.Bold;
-    LButtonText.fontSize = 4.0f;
+    LButtonText.fontSize = 5.0f;
     LButtonText.text = "Back";
 
     // Right button, typically "next" action
     RButton = TMP_DefaultControls.CreateButton(ButtonResources);
     RButton.transform.SetParent(buttonBodyObject.transform, false);
-    RButton.transform.localPosition = new Vector3(40.0f, 0.0f, 0.0f);
-    RButton.GetComponent<RectTransform>().sizeDelta = new Vector2(24.0f, 12.0f);
+    RButton.transform.localPosition = new Vector3(42.5f, 0.0f, 0.0f);
+    RButton.GetComponent<RectTransform>().sizeDelta = new Vector2(28.0f, 14.0f);
+    RButton.GetComponent<Image>().sprite = Resources.Load<Sprite>("Sprites/Button");
     TextMeshProUGUI RButtonText = RButton.GetComponentInChildren<TextMeshProUGUI>();
     RButtonText.fontStyle = FontStyles.Bold;
-    RButtonText.fontSize = 4.0f;
+    RButtonText.fontSize = 5.0f;
     RButtonText.text = "Next";
   }
 
