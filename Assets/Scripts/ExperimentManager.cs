@@ -19,6 +19,13 @@ public class ExperimentManager : MonoBehaviour
 
     private int ActiveBlock = 1;
 
+    // Coherence data structure
+    private Dictionary<string, float[]> Coherences = new Dictionary<string, float[]> {
+        { "both", new float[]{0.2f, 0.2f} },
+        { "left", new float[]{0.2f, 0.2f} },
+        { "right", new float[]{0.2f, 0.2f} },
+    };
+
     StimulusManager stimulusManager;
     UIManager uiManager;
     CameraManager cameraManager;
