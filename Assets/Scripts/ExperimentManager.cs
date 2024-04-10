@@ -13,10 +13,10 @@ public class ExperimentManager : MonoBehaviour
     readonly int InstructionTrials = 1;
     readonly int InstructionBlockIndex = 1;
 
-    readonly int CalibrationTrials = 4;
+    readonly int CalibrationTrials = 120;
     readonly int CalibrationBlockIndex = 2; // Expected index of the "Calibration"-type block
 
-    readonly int MainTrials = 4;
+    readonly int MainTrials = 200;
     readonly int MainBlockIndex = 3; // Expected index of the "Main"-type block
 
     private int ActiveBlock = 1;
@@ -31,6 +31,7 @@ public class ExperimentManager : MonoBehaviour
     private float[] ActiveCoherences;
     private readonly int LOW_INDEX = 0;
     private readonly int HIGH_INDEX = 1;
+    private readonly int EYE_BLOCK_SIZE = 10; // Number of trials per eye
 
     StimulusManager stimulusManager;
     UIManager uiManager;
@@ -56,14 +57,6 @@ public class ExperimentManager : MonoBehaviour
         uiManager = GetComponent<UIManager>();
         cameraManager = GetComponent<CameraManager>();
 
-        // Setup the UI manager with instructions
-        uiManager.EnablePagination(true);
-        List<string> Instructions = new List<string>{
-            "You are about to start the task. Before you start, please let the facilitator know if the headset feels uncomfortable or you cannot read this text.\n\nWhen you are ready and comfortable, press the right controller trigger to select 'Next >' and continue.",
-            "These practice trials are similar to the actual trials, except the moving dots will be displayed a few seconds longer.\n\nPractice watching the dots and observing the appearance of the task.\n\nUse the triggers on the left and right controllers to interact with the task."
-        };
-        uiManager.SetPages(Instructions);
-
         // Update the CameraManager value for the aperture offset to be the stimulus radius
         cameraManager.SetStimulusRadius(stimulusManager.GetStimulusRadius());
     }
@@ -85,6 +78,19 @@ public class ExperimentManager : MonoBehaviour
         Application.Quit();
     }
 
+    private void SetupInstructions()
+    {
+        // Setup the UI manager with instructions
+        uiManager.EnablePagination(true);
+        List<string> Instructions = new List<string>{
+            "You are about to start the task. Before you start, please let the facilitator know if the headset feels uncomfortable or you cannot read this text.\n\nWhen you are ready and comfortable, press the right controller trigger to select 'Next >' and continue.",
+            "These practice trials are similar to the actual trials, except the moving dots will be displayed a few seconds longer.\n\nPractice watching the dots and observing the appearance of the task.\n\nUse the triggers on the left and right controllers to interact with the task."
+        };
+        uiManager.SetPages(Instructions);
+
+        cameraManager.SetActiveField(CameraManager.VisualField.Both);
+    }
+
     private void SetupMotion()
     {
         // Setup performed at the start of the first "main" type trial
@@ -98,7 +104,7 @@ public class ExperimentManager : MonoBehaviour
             List<float> BothCoherenceValues = new List<float>();
             List<float> LeftCoherenceValues = new List<float>();
             List<float> RightCoherenceValues = new List<float>();
-            foreach (Trial t in CalibrationTrials.Take(20))
+            foreach (Trial t in CalibrationTrials)
             {
                 BothCoherenceValues.Add(((float[]) t.result["combinedCoherences"])[LOW_INDEX]);
                 LeftCoherenceValues.Add(((float[]) t.result["leftCoherences"])[LOW_INDEX]);
@@ -106,17 +112,17 @@ public class ExperimentManager : MonoBehaviour
             }
 
             // Calculate coherence median values
-            float kMedBoth = BothCoherenceValues.Median();
+            float kMedBoth = BothCoherenceValues.Take(20).Median();
             float kMedBothLow = 0.5f * kMedBoth < 0.12 ? 0.12f : 0.5f * kMedBoth;
             float kMedBothHigh = 2.0f * kMedBoth > 0.5 ? 0.5f : 2.0f * kMedBoth;
             Coherences["both"] = new float[] { kMedBothLow, kMedBothHigh };
 
-            float kMedLeft = LeftCoherenceValues.Median();
+            float kMedLeft = LeftCoherenceValues.Take(20).Median();
             float kMedLeftLow = 0.5f * kMedLeft < 0.12 ? 0.12f : 0.5f * kMedLeft;
             float kMedLeftHigh = 2.0f * kMedLeft > 0.5 ? 0.5f : 2.0f * kMedLeft;
             Coherences["left"] = new float[] { kMedLeftLow, kMedLeftHigh };
 
-            float kMedRight = RightCoherenceValues.Median();
+            float kMedRight = RightCoherenceValues.Take(20).Median();
             float kMedRightLow = 0.5f * kMedRight < 0.12 ? 0.12f : 0.5f * kMedRight;
             float kMedRightHigh = 2.0f * kMedRight > 0.5 ? 0.5f : 2.0f * kMedRight;
             Coherences["right"] = new float[] { kMedRightLow, kMedRightHigh };
@@ -124,9 +130,29 @@ public class ExperimentManager : MonoBehaviour
             Debug.Log("Coherences: L " + Coherences["left"][0] + "," + Coherences["left"][1] + " | R " + Coherences["right"][0] + "," + Coherences["right"][1] + " | B " + Coherences["both"][0] + "," + Coherences["both"][1]);
         }
 
+        // Switch the active eye every fixed number of trials
+        if ((Session.instance.CurrentTrial.numberInBlock - 1) % EYE_BLOCK_SIZE == 0)
+        {
+            if (cameraManager.GetActiveField() == CameraManager.VisualField.Left)
+            {
+                // Switch from left to right
+                cameraManager.SetActiveField(CameraManager.VisualField.Right);
+            }
+            else if (cameraManager.GetActiveField() == CameraManager.VisualField.Right)
+            {
+                // Switch from right to left
+                cameraManager.SetActiveField(CameraManager.VisualField.Left);
+            }
+            else
+            {
+                // Randomly select a starting field
+                cameraManager.SetActiveField(UnityEngine.Random.value > 0.5f ? CameraManager.VisualField.Left : CameraManager.VisualField.Right);
+            }
+        }
+
         // Select the coherence value depending on active camera and difficulty
-        CameraManager.VisualField activeField = cameraManager.GetActiveField();
         ActiveCoherences = Coherences["both"];
+        CameraManager.VisualField activeField = cameraManager.GetActiveField();
         if (activeField == CameraManager.VisualField.Left)
         {
             ActiveCoherences = Coherences["left"];
@@ -155,6 +181,7 @@ public class ExperimentManager : MonoBehaviour
         ActiveBlock = trial.block.number;
         if (ActiveBlock == InstructionBlockIndex)
         {
+            SetupInstructions();
             StartCoroutine(DisplayStimuli("instructions"));
         }
         else if (ActiveBlock == CalibrationBlockIndex)
@@ -315,9 +342,6 @@ public class ExperimentManager : MonoBehaviour
         {
             uiManager.SetVisible(false);
         }
-
-        // Reset visual field
-        cameraManager.SetActiveField(CameraManager.VisualField.Both);
 
         Session.instance.EndCurrentTrial();
         Session.instance.BeginNextTrial();

@@ -28,7 +28,7 @@ public class StimulusManager : MonoBehaviour
 
     // Timer for preserving consistent update rates
     private float UpdateTimer = 0.0f;
-    private readonly int RefreshRate = 60; // hertz
+    private readonly int REFRESH_RATE = 90; // hertz
 
     // Stimuli groups, assembled from individual components
     private readonly List<string> AllStimuli = new() {
@@ -358,7 +358,7 @@ public class StimulusManager : MonoBehaviour
         UpdateTimer += Time.deltaTime;
 
         // Apply updates at the frequency of the desired refresh rate
-        if (UpdateTimer >= 1.0f / RefreshRate)
+        if (UpdateTimer >= 1.0f / REFRESH_RATE)
         {
             if (StimuliVisibility["motion"] == true)
             {
