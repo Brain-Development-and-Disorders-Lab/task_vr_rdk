@@ -87,7 +87,5 @@ public class LoggerManager : MonoBehaviour
             messages.RemoveAt(0);
             messages.TrimExcess();
         }
-
-        Debug.Log("Logger: " + message);
     }
 }

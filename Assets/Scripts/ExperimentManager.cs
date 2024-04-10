@@ -27,6 +27,8 @@ public class ExperimentManager : MonoBehaviour
         { "right", new float[]{0.2f, 0.2f} },
     };
     private float[] ActiveCoherences;
+    private readonly int LOW_INDEX = 0;
+    private readonly int HIGH_INDEX = 1;
 
     StimulusManager stimulusManager;
     UIManager uiManager;
@@ -107,18 +109,15 @@ public class ExperimentManager : MonoBehaviour
         ActiveBlock = trial.block.number;
         if (ActiveBlock == InstructionBlock)
         {
-            Debug.Log("This is an \"Instruction\"-type trial.");
             StartCoroutine(DisplayStimuli("instructions"));
         }
         else if (ActiveBlock == CalibrationBlock)
         {
-            Debug.Log("This is a \"Calibration\"-type trial.");
             SetupMotion();
             StartCoroutine(DisplayStimuli("calibration"));
         }
         else if (ActiveBlock == MainBlock)
         {
-            Debug.Log("This is a \"Main\"-type trial.");
             SetupMotion();
             StartCoroutine(DisplayStimuli("main"));
         }
@@ -194,10 +193,50 @@ public class ExperimentManager : MonoBehaviour
             // Show feedback
             if ((bool) Session.instance.CurrentTrial.result["selectedCorrectDirection"] == true)
             {
+                // Adjust coherence if two consecutive correct "calibration" trials
+                if (Session.instance.CurrentTrial.numberInBlock > 1)
+                {
+                    Trial PreviousTrial = Session.instance.CurrentBlock.GetRelativeTrial(Session.instance.CurrentTrial.numberInBlock - 1);
+                    if ((bool) Session.instance.CurrentTrial.result["selectedCorrectDirection"] == true &&
+                        (bool) PreviousTrial.result["selectedCorrectDirection"] == true)
+                    {
+                        // Modify "both", grouped coherence
+                        Coherences["both"][LOW_INDEX] -= 0.01f;
+                        Coherences["both"][HIGH_INDEX] -= 0.01f;
+
+                        // Modify individual coherences depending on active visual field
+                        if (cameraManager.GetActiveField() == CameraManager.VisualField.Left)
+                        {
+                            Coherences["left"][LOW_INDEX] -= 0.01f;
+                            Coherences["left"][HIGH_INDEX] -= 0.01f;
+                        }
+                        else if (cameraManager.GetActiveField() == CameraManager.VisualField.Right)
+                        {
+                            Coherences["right"][LOW_INDEX] -= 0.01f;
+                            Coherences["right"][HIGH_INDEX] -= 0.01f;
+                        }
+                    }
+                }
                 StartCoroutine(DisplayStimuli("feedback_correct"));
             }
             else
             {
+                // Adjust coherence
+                // Modify "both", grouped coherence
+                Coherences["both"][LOW_INDEX] += 0.01f;
+                Coherences["both"][HIGH_INDEX] += 0.01f;
+
+                // Modify individual coherences depending on active visual field
+                if (cameraManager.GetActiveField() == CameraManager.VisualField.Left)
+                {
+                    Coherences["left"][LOW_INDEX] += 0.01f;
+                    Coherences["left"][HIGH_INDEX] += 0.01f;
+                }
+                else if (cameraManager.GetActiveField() == CameraManager.VisualField.Right)
+                {
+                    Coherences["right"][LOW_INDEX] += 0.01f;
+                    Coherences["right"][HIGH_INDEX] += 0.01f;
+                }
                 StartCoroutine(DisplayStimuli("feedback_incorrect"));
             }
         }
@@ -225,7 +264,6 @@ public class ExperimentManager : MonoBehaviour
 
     private IEnumerator WaitSeconds(float seconds, bool disableInput = false, Action callback = null)
     {
-        Debug.Log("Waiting " + seconds + " seconds...");
         if (disableInput) EnableInput(false);
         yield return new WaitForSeconds(seconds);
         if (disableInput) EnableInput(true);

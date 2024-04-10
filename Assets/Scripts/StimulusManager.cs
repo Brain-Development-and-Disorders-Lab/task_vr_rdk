@@ -146,7 +146,6 @@ public class StimulusManager : MonoBehaviour
                 component.SetActive(visibility);
             }
             StimuliVisibility[stimulus] = visibility;
-            Debug.Log("Visibility of Stimulus \"" + stimulus + "\": " + visibility);
         }
         else
         {
