@@ -28,6 +28,12 @@ public class Dot
     DotDirection = Mathf.PI;
     DotVisible = visible;
 
+    // Update direction depending on initial behaviour
+    if (behavior == "random")
+    {
+      DotDirection = (float) (2.0f * Math.PI * UnityEngine.Random.value);
+    }
+
     CreateGameObject();
   }
 

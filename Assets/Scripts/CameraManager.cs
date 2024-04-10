@@ -93,10 +93,6 @@ public class CameraManager : MonoBehaviour
             activeField = field;
             Debug.Log("Changed visual field: " + field.ToString());
         }
-        else
-        {
-            Debug.LogWarning("Active visual field unchanged");
-        }
     }
 
     /// <summary>
