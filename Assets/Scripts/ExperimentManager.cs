@@ -155,13 +155,20 @@ public class ExperimentManager : MonoBehaviour
         CameraManager.VisualField activeField = cameraManager.GetActiveField();
         if (activeField == CameraManager.VisualField.Left)
         {
+            // Left eye presentation
             ActiveCoherences = Coherences["left"];
             Session.instance.CurrentTrial.result["cameraLayout"] = 0;
         }
         else if (activeField == CameraManager.VisualField.Right)
         {
+            // Right eye presentation
             ActiveCoherences = Coherences["right"];
             Session.instance.CurrentTrial.result["cameraLayout"] = 1;
+        }
+        else
+        {
+            // Both eye presentation
+            Session.instance.CurrentTrial.result["cameraLayout"] = 2;
         }
         int SelectedCoherence = UnityEngine.Random.value > 0.5f ? 0 : 1;
         stimulusManager.SetCoherence(ActiveCoherences[SelectedCoherence]);
