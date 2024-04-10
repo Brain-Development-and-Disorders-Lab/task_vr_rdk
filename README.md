@@ -4,7 +4,7 @@
 
 ## Getting Started
 
-This repository contains two versions of the task, one browser-based (WebXR) implementation and an implementation using Unity. The WebXR implementation is archived at version 1.0.3, and was implemented using the [Ouvrai](https://github.com/EvanCesanek/Ouvrai) software package. The primary advantage of migrating to Unity is the ability to use eye-tracking capabilities and operate natively on the Meta Quest Pro headsets. [Unity Experiment Framework](https://immersivecognition.com/unity-experiment-framework/) is used to create experiment structure and enable data collection.
+This repository contains two versions of the task, one browser-based (WebXR) implementation and an implementation using Unity. The WebXR implementation is archived at version 1.0.3, and was implemented using the [Ouvrai](https://github.com/EvanCesanek/Ouvrai) software package. The primary advantage of migrating to Unity is the ability to use eye-tracking capabilities and operate natively on the Meta Quest Pro headsets. [Unity Experiment Framework](https://immersivecognition.com/unity-experiment-framework/) is used to create experiment structure and enable data collection. The [NuGetForUnity](https://github.com/GlitchEnzo/NuGetForUnity) package is used to install the [Math.NET Numerics](https://numerics.mathdotnet.com/) package.
 
 ## License
 

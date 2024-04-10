@@ -5,16 +5,18 @@ using UnityEngine;
 using System.IO;
 
 using UXF;
+using System.Linq;
+using MathNet.Numerics.Statistics;
 
 public class ExperimentManager : MonoBehaviour
 {
     readonly int InstructionTrials = 1;
-    readonly int InstructionBlock = 1;
+    readonly int InstructionBlockIndex = 1;
 
-    readonly int CalibrationTrials = 20;
-    readonly int CalibrationBlock = 2; // Expected index of the "Calibration"-type block
+    readonly int CalibrationTrials = 4;
+    readonly int CalibrationBlockIndex = 2; // Expected index of the "Calibration"-type block
 
-    readonly int MainTrials = 20;
+    readonly int MainTrials = 4;
     readonly int MainBlock = 3; // Expected index of the "Main"-type block
 
     private int ActiveBlock = 1;
@@ -85,19 +87,64 @@ public class ExperimentManager : MonoBehaviour
 
     private void SetupMotion()
     {
+        // Setup performed at the start of the first "main" type trial
+        if (ActiveBlock == MainBlock && Session.instance.CurrentTrial.numberInBlock == 1)
+        {
+            // Calculate the coherences to be used in the actual trials, use median of last 20 calibration trials
+            List<Trial> CalibrationTrials = Session.instance.GetBlock(CalibrationBlockIndex).trials;
+            CalibrationTrials.Reverse();
+
+            // Calibration trials have the same coherence for low and high
+            List<float> BothCoherenceValues = new List<float>();
+            List<float> LeftCoherenceValues = new List<float>();
+            List<float> RightCoherenceValues = new List<float>();
+            foreach (Trial t in CalibrationTrials.Take(20))
+            {
+                Debug.Log(((float[]) t.result["combinedCoherences"])[LOW_INDEX]);
+                BothCoherenceValues.Add(((float[]) t.result["combinedCoherences"])[LOW_INDEX]);
+                LeftCoherenceValues.Add(((float[]) t.result["leftCoherences"])[LOW_INDEX]);
+                RightCoherenceValues.Add(((float[]) t.result["rightCoherences"])[LOW_INDEX]);
+            }
+
+            // Calculate coherence median values
+            float kMedBoth = BothCoherenceValues.Median();
+            float kMedBothLow = 0.5f * kMedBoth < 0.12 ? 0.12f : 0.5f * kMedBoth;
+            float kMedBothHigh = 2.0f * kMedBoth > 0.5 ? 0.5f : 2.0f * kMedBoth;
+            Coherences["both"] = new float[] { kMedBothLow, kMedBothHigh };
+
+            float kMedLeft = LeftCoherenceValues.Median();
+            float kMedLeftLow = 0.5f * kMedLeft < 0.12 ? 0.12f : 0.5f * kMedLeft;
+            float kMedLeftHigh = 2.0f * kMedLeft > 0.5 ? 0.5f : 2.0f * kMedLeft;
+            Coherences["left"] = new float[] { kMedLeftLow, kMedLeftHigh };
+
+            float kMedRight = RightCoherenceValues.Median();
+            float kMedRightLow = 0.5f * kMedRight < 0.12 ? 0.12f : 0.5f * kMedRight;
+            float kMedRightHigh = 2.0f * kMedRight > 0.5 ? 0.5f : 2.0f * kMedRight;
+            Coherences["right"] = new float[] { kMedRightLow, kMedRightHigh };
+
+            Debug.Log("Coherences: L " + Coherences["left"][0] + "," + Coherences["left"][1] + " | R " + Coherences["right"][0] + "," + Coherences["right"][1] + " | B " + Coherences["both"][0] + "," + Coherences["both"][1]);
+        }
+
         // Select the coherence value depending on active camera and difficulty
         CameraManager.VisualField activeField = cameraManager.GetActiveField();
         ActiveCoherences = Coherences["both"];
         if (activeField == CameraManager.VisualField.Left)
         {
             ActiveCoherences = Coherences["left"];
+            Session.instance.CurrentTrial.result["cameraLayout"] = 0;
         }
         else if (activeField == CameraManager.VisualField.Right)
         {
             ActiveCoherences = Coherences["right"];
+            Session.instance.CurrentTrial.result["cameraLayout"] = 1;
         }
         int SelectedCoherence = UnityEngine.Random.value > 0.5f ? 0 : 1;
         stimulusManager.SetCoherence(ActiveCoherences[SelectedCoherence]);
+
+        // Clone and store coherence values
+        Session.instance.CurrentTrial.result["combinedCoherences"] = Coherences["both"].Clone();
+        Session.instance.CurrentTrial.result["leftCoherences"] = Coherences["left"].Clone();
+        Session.instance.CurrentTrial.result["rightCoherences"] = Coherences["right"].Clone();
 
         // Set the reference direction randomly
         float dotDirection = UnityEngine.Random.value > 0.5f ? 0.0f : (float) Math.PI;
@@ -107,11 +154,11 @@ public class ExperimentManager : MonoBehaviour
     public void RunTrial(Trial trial)
     {
         ActiveBlock = trial.block.number;
-        if (ActiveBlock == InstructionBlock)
+        if (ActiveBlock == InstructionBlockIndex)
         {
             StartCoroutine(DisplayStimuli("instructions"));
         }
-        else if (ActiveBlock == CalibrationBlock)
+        else if (ActiveBlock == CalibrationBlockIndex)
         {
             SetupMotion();
             StartCoroutine(DisplayStimuli("calibration"));
@@ -146,7 +193,23 @@ public class ExperimentManager : MonoBehaviour
 
             // Motion (1.5 seconds)
             stimulusManager.SetVisible("motion", true);
-            yield return StartCoroutine(WaitSeconds(2.0f, true));
+            yield return StartCoroutine(WaitSeconds(1.5f, true));
+            stimulusManager.SetVisible("motion", false);
+
+            // Decision (wait)
+            stimulusManager.SetVisible("decision", true);
+            EnableInput(true);
+        }
+        else if (stimuli == "main")
+        {
+            // Fixation (1 second)
+            stimulusManager.SetVisible("fixation", true);
+            yield return StartCoroutine(WaitSeconds(1.0f, true));
+            stimulusManager.SetVisible("fixation", false);
+
+            // Motion (1.5 seconds)
+            stimulusManager.SetVisible("motion", true);
+            yield return StartCoroutine(WaitSeconds(1.5f, true));
             stimulusManager.SetVisible("motion", false);
 
             // Decision (wait)
@@ -188,7 +251,7 @@ public class ExperimentManager : MonoBehaviour
             Session.instance.CurrentTrial.result["selectedCorrectDirection"] = true;
         }
 
-        if (ActiveBlock == CalibrationBlock)
+        if (ActiveBlock == CalibrationBlockIndex)
         {
             // Show feedback
             if ((bool) Session.instance.CurrentTrial.result["selectedCorrectDirection"] == true)
@@ -245,7 +308,7 @@ public class ExperimentManager : MonoBehaviour
     public void EndTrial()
     {
         // Tidy up after specific blocks
-        if (ActiveBlock == InstructionBlock)
+        if (ActiveBlock == InstructionBlockIndex)
         {
             uiManager.SetVisible(false);
         }
@@ -279,7 +342,7 @@ public class ExperimentManager : MonoBehaviour
             // Left-side controls
             if (OVRInput.Get(OVRInput.Axis1D.PrimaryIndexTrigger) > 0.8f || Input.GetKeyDown(KeyCode.Alpha2))
             {
-                if (ActiveBlock == InstructionBlock)
+                if (ActiveBlock == InstructionBlockIndex)
                 {
                     if (uiManager.HasPreviousPage())
                     {
@@ -294,7 +357,7 @@ public class ExperimentManager : MonoBehaviour
                         }
                     }
                 }
-                else if (ActiveBlock == CalibrationBlock)
+                else if (ActiveBlock == CalibrationBlockIndex)
                 {
                     // "Left" direction selected
                     HandleExperimentInput("left");
@@ -305,7 +368,7 @@ public class ExperimentManager : MonoBehaviour
             // Right-side controls
             if (OVRInput.Get(OVRInput.Axis1D.SecondaryIndexTrigger) > 0.8f || Input.GetKeyDown(KeyCode.Alpha7))
             {
-                if (ActiveBlock == InstructionBlock)
+                if (ActiveBlock == InstructionBlockIndex)
                 {
                     if (uiManager.HasNextPage())
                     {
@@ -324,7 +387,7 @@ public class ExperimentManager : MonoBehaviour
                         EndTrial();
                     }
                 }
-                else if (ActiveBlock == CalibrationBlock)
+                else if (ActiveBlock == CalibrationBlockIndex)
                 {
                     // "Right" direction selected
                     HandleExperimentInput("right");
