@@ -20,7 +20,8 @@ public class ExperimentManager : MonoBehaviour
     private int ActiveBlock = 1;
 
     // Coherence data structure
-    private Dictionary<string, float[]> Coherences = new Dictionary<string, float[]> {
+    private Dictionary<string, float[]> Coherences = new()
+    {
         { "both", new float[]{0.2f, 0.2f} },
         { "left", new float[]{0.2f, 0.2f} },
         { "right", new float[]{0.2f, 0.2f} },
@@ -160,6 +161,13 @@ public class ExperimentManager : MonoBehaviour
             stimulusManager.SetVisible("feedback_correct", false);
             EndTrial();
         }
+        else if (stimuli == "feedback_incorrect")
+        {
+            stimulusManager.SetVisible("feedback_incorrect", true);
+            yield return StartCoroutine(WaitSeconds(1.0f, true));
+            stimulusManager.SetVisible("feedback_incorrect", false);
+            EndTrial();
+        }
     }
 
     /// <summary>
@@ -167,15 +175,32 @@ public class ExperimentManager : MonoBehaviour
     /// </summary>
     private void HandleExperimentInput(string selection)
     {
+        // Store the selection value
+        Session.instance.CurrentTrial.result["selectedDirection"] = selection;
+
+        // Determine if a correct response was made
+        Session.instance.CurrentTrial.result["selectedCorrectDirection"] = false;
+        if (selection == "left" && stimulusManager.GetDirection() == (float) Math.PI)
+        {
+            Session.instance.CurrentTrial.result["selectedCorrectDirection"] = true;
+        }
+        else if (selection == "right" && stimulusManager.GetDirection() == 0.0f)
+        {
+            Session.instance.CurrentTrial.result["selectedCorrectDirection"] = true;
+        }
+
         if (ActiveBlock == CalibrationBlock)
         {
             // Show feedback
-            StartCoroutine(DisplayStimuli("feedback_correct"));
+            if ((bool) Session.instance.CurrentTrial.result["selectedCorrectDirection"] == true)
+            {
+                StartCoroutine(DisplayStimuli("feedback_correct"));
+            }
+            else
+            {
+                StartCoroutine(DisplayStimuli("feedback_incorrect"));
+            }
         }
-
-        // Store the selection value
-        Session.instance.CurrentTrial.result["referenceSelection"] = selection;
-        Debug.Log("Selected: " + selection);
     }
 
     public void EndTrial()
