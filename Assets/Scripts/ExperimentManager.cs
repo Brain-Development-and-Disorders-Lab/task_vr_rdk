@@ -17,7 +17,7 @@ public class ExperimentManager : MonoBehaviour
     readonly int CalibrationBlockIndex = 2; // Expected index of the "Calibration"-type block
 
     readonly int MainTrials = 4;
-    readonly int MainBlock = 3; // Expected index of the "Main"-type block
+    readonly int MainBlockIndex = 3; // Expected index of the "Main"-type block
 
     private int ActiveBlock = 1;
 
@@ -88,7 +88,7 @@ public class ExperimentManager : MonoBehaviour
     private void SetupMotion()
     {
         // Setup performed at the start of the first "main" type trial
-        if (ActiveBlock == MainBlock && Session.instance.CurrentTrial.numberInBlock == 1)
+        if (ActiveBlock == MainBlockIndex && Session.instance.CurrentTrial.numberInBlock == 1)
         {
             // Calculate the coherences to be used in the actual trials, use median of last 20 calibration trials
             List<Trial> CalibrationTrials = Session.instance.GetBlock(CalibrationBlockIndex).trials;
@@ -100,7 +100,6 @@ public class ExperimentManager : MonoBehaviour
             List<float> RightCoherenceValues = new List<float>();
             foreach (Trial t in CalibrationTrials.Take(20))
             {
-                Debug.Log(((float[]) t.result["combinedCoherences"])[LOW_INDEX]);
                 BothCoherenceValues.Add(((float[]) t.result["combinedCoherences"])[LOW_INDEX]);
                 LeftCoherenceValues.Add(((float[]) t.result["leftCoherences"])[LOW_INDEX]);
                 RightCoherenceValues.Add(((float[]) t.result["rightCoherences"])[LOW_INDEX]);
@@ -163,7 +162,7 @@ public class ExperimentManager : MonoBehaviour
             SetupMotion();
             StartCoroutine(DisplayStimuli("calibration"));
         }
-        else if (ActiveBlock == MainBlock)
+        else if (ActiveBlock == MainBlockIndex)
         {
             SetupMotion();
             StartCoroutine(DisplayStimuli("main"));
@@ -303,6 +302,10 @@ public class ExperimentManager : MonoBehaviour
                 StartCoroutine(DisplayStimuli("feedback_incorrect"));
             }
         }
+        else if (ActiveBlock == MainBlockIndex)
+        {
+            EndTrial();
+        }
     }
 
     public void EndTrial()
@@ -357,7 +360,7 @@ public class ExperimentManager : MonoBehaviour
                         }
                     }
                 }
-                else if (ActiveBlock == CalibrationBlockIndex)
+                else if (ActiveBlock == CalibrationBlockIndex || ActiveBlock == MainBlockIndex)
                 {
                     // "Left" direction selected
                     HandleExperimentInput("left");
@@ -387,7 +390,7 @@ public class ExperimentManager : MonoBehaviour
                         EndTrial();
                     }
                 }
-                else if (ActiveBlock == CalibrationBlockIndex)
+                else if (ActiveBlock == CalibrationBlockIndex || ActiveBlock == MainBlockIndex)
                 {
                     // "Right" direction selected
                     HandleExperimentInput("right");
