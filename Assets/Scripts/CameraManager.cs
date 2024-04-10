@@ -30,6 +30,10 @@ public class CameraManager : MonoBehaviour
     private float StimulusRadius = 0.0f; // Additional world-units to offset the stimulus
     private float TotalOffset = 0.0f;
 
+    // Optional parameter to use a culling mask for full "eyepatch" effect (not recommended)
+    [SerializeField]
+    public bool UseCullingMask = false;
+
     // Camera presentation modes
     public enum VisualField
     {
@@ -142,17 +146,23 @@ public class CameraManager : MonoBehaviour
         if (activeField == VisualField.Left)
         {
             // Left only
-            LeftCamera.cullingMask = ~(1 << 6);
-            RightCamera.cullingMask = 1 << 6;
+            if (UseCullingMask)
+            {
+                LeftCamera.cullingMask = ~(1 << 6);
+                RightCamera.cullingMask = 1 << 6;
+            }
 
             // Set position
-            StimulusAnchor.transform.position.Set(currentPosition.x - TotalOffset, currentPosition.y, currentPosition.z);
+            StimulusAnchor.transform.position = new Vector3(currentPosition.x - TotalOffset, currentPosition.y, currentPosition.z);
         }
         else if (activeField == VisualField.Right)
         {
             // Right only
-            LeftCamera.cullingMask = 1 << 6;
-            RightCamera.cullingMask = ~(1 << 6);
+            if (UseCullingMask)
+            {
+                LeftCamera.cullingMask = 1 << 6;
+                RightCamera.cullingMask = ~(1 << 6);
+            }
 
             // Set position
             StimulusAnchor.transform.position = new Vector3(currentPosition.x + TotalOffset, currentPosition.y, currentPosition.z);
@@ -160,8 +170,11 @@ public class CameraManager : MonoBehaviour
         else
         {
             // Both
-            LeftCamera.cullingMask = ~(1 << 6);
-            RightCamera.cullingMask = ~(1 << 6);
+            if (UseCullingMask)
+            {
+                LeftCamera.cullingMask = ~(1 << 6);
+                RightCamera.cullingMask = ~(1 << 6);
+            }
         }
     }
 }
