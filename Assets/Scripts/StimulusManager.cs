@@ -24,6 +24,11 @@ public class StimulusManager : MonoBehaviour
     private float DotWorldRadius;
     private List<Dot> Dots = new();
     private float DotCoherence = 0.5f;
+    private float DotDirection = (float) Math.PI; // "reference" dot type direction
+
+    // Timer for preserving consistent update rates
+    private float UpdateTimer = 0.0f;
+    private readonly int RefreshRate = 60; // hertz
 
     // Stimuli groups, assembled from individual components
     private readonly List<string> AllStimuli = new() {
@@ -320,6 +325,25 @@ public class StimulusManager : MonoBehaviour
         }
     }
 
+    public float GetDirection()
+    {
+        return DotDirection;
+    }
+
+    public void SetDirection(float direction)
+    {
+        DotDirection = direction;
+
+        // Apply the direction across all "reference" type dots
+        foreach (Dot dot in Dots)
+        {
+            if (dot.GetBehavior() == "reference")
+            {
+                dot.SetDirection(DotDirection);
+            }
+        }
+    }
+
     /// <summary>
     /// Get the radius of the stimuli. Used for correct offset calculations for dioptic / dichoptic stimulus
     /// presentation.
@@ -332,12 +356,21 @@ public class StimulusManager : MonoBehaviour
 
     void Update()
     {
-        if (StimuliVisibility["motion"] == true)
+        UpdateTimer += Time.deltaTime;
+
+        // Apply updates at the frequency of the desired refresh rate
+        if (UpdateTimer >= 1.0f / RefreshRate)
         {
-            foreach (Dot dot in Dots)
+            if (StimuliVisibility["motion"] == true)
             {
-                dot.Update();
+                foreach (Dot dot in Dots)
+                {
+                    dot.Update();
+                }
             }
+
+            // Reset the update timer
+            UpdateTimer = 0.0f;
         }
     }
 }

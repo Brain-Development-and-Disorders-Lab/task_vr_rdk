@@ -25,6 +25,7 @@ public class ExperimentManager : MonoBehaviour
         { "left", new float[]{0.2f, 0.2f} },
         { "right", new float[]{0.2f, 0.2f} },
     };
+    private float[] ActiveCoherences;
 
     StimulusManager stimulusManager;
     UIManager uiManager;
@@ -79,28 +80,55 @@ public class ExperimentManager : MonoBehaviour
         Application.Quit();
     }
 
+    private void SetupMotion()
+    {
+        // Select the coherence value depending on active camera and difficulty
+        CameraManager.VisualField activeField = cameraManager.GetActiveField();
+        ActiveCoherences = Coherences["both"];
+        if (activeField == CameraManager.VisualField.Left)
+        {
+            ActiveCoherences = Coherences["left"];
+        }
+        else if (activeField == CameraManager.VisualField.Right)
+        {
+            ActiveCoherences = Coherences["right"];
+        }
+        int SelectedCoherence = UnityEngine.Random.value > 0.5f ? 0 : 1;
+        stimulusManager.SetCoherence(ActiveCoherences[SelectedCoherence]);
+
+        // Set the reference direction randomly
+        float dotDirection = UnityEngine.Random.value > 0.5f ? 0.0f : (float) Math.PI;
+        stimulusManager.SetDirection(dotDirection);
+    }
+
     public void RunTrial(Trial trial)
     {
         ActiveBlock = trial.block.number;
-        stimulusManager.SetVisibleAll(false);
         if (ActiveBlock == InstructionBlock)
         {
             Debug.Log("This is an \"Instruction\"-type trial.");
+            StartCoroutine(DisplayStimuli("instructions"));
         }
         else if (ActiveBlock == CalibrationBlock)
         {
             Debug.Log("This is a \"Calibration\"-type trial.");
+            SetupMotion();
+            StartCoroutine(DisplayStimuli("calibration"));
         }
         else if (ActiveBlock == MainBlock)
         {
             Debug.Log("This is a \"Main\"-type trial.");
+            SetupMotion();
+            StartCoroutine(DisplayStimuli("main"));
         }
-        StartCoroutine(DisplayStimuli());
     }
 
-    private IEnumerator DisplayStimuli()
+    private IEnumerator DisplayStimuli(string stimuli)
     {
-        if (ActiveBlock == InstructionBlock)
+        // Reset all displayed stimuli
+        stimulusManager.SetVisibleAll(false);
+
+        if (stimuli == "instructions")
         {
             uiManager.SetVisible(true);
             uiManager.SetHeader("Instructions");
@@ -109,7 +137,7 @@ public class ExperimentManager : MonoBehaviour
 
             yield return StartCoroutine(WaitSeconds(0.5f, true));
         }
-        else if (ActiveBlock == CalibrationBlock)
+        else if (stimuli == "calibration")
         {
             // Fixation (1 second)
             stimulusManager.SetVisible("fixation", true);
@@ -125,6 +153,13 @@ public class ExperimentManager : MonoBehaviour
             stimulusManager.SetVisible("decision", true);
             EnableInput(true);
         }
+        else if (stimuli == "feedback_correct")
+        {
+            stimulusManager.SetVisible("feedback_correct", true);
+            yield return StartCoroutine(WaitSeconds(1.0f, true));
+            stimulusManager.SetVisible("feedback_correct", false);
+            EndTrial();
+        }
     }
 
     /// <summary>
@@ -132,6 +167,12 @@ public class ExperimentManager : MonoBehaviour
     /// </summary>
     private void HandleExperimentInput(string selection)
     {
+        if (ActiveBlock == CalibrationBlock)
+        {
+            // Show feedback
+            StartCoroutine(DisplayStimuli("feedback_correct"));
+        }
+
         // Store the selection value
         Session.instance.CurrentTrial.result["referenceSelection"] = selection;
         Debug.Log("Selected: " + selection);
@@ -194,7 +235,6 @@ public class ExperimentManager : MonoBehaviour
                 {
                     // "Left" direction selected
                     HandleExperimentInput("left");
-                    EndTrial();
                 }
                 InputReset = false;
             }
@@ -225,7 +265,6 @@ public class ExperimentManager : MonoBehaviour
                 {
                     // "Right" direction selected
                     HandleExperimentInput("right");
-                    EndTrial();
                 }
                 InputReset = false;
             }
