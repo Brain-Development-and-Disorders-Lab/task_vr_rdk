@@ -25,7 +25,7 @@ public class LoggerManager : MonoBehaviour
     private void CreateLoggerRows()
     {
         // Iterate over the list of messages
-        for (int i = 0; i < DefaultMessageLimit + 1; i++)
+        for (int i = 0; i < DefaultMessageLimit; i++)
         {
             GameObject textContainer = new GameObject("logger_message_" + i.ToString());
             textContainer.transform.position = new Vector3(150.0f, 0.0f - 15.0f * i, 0.0f);
@@ -41,11 +41,6 @@ public class LoggerManager : MonoBehaviour
             textTransform.sizeDelta = new Vector2(300.0f, 15.0f);
             textTransform.anchorMin = new Vector2(0, 1);
             textTransform.anchorMax = new Vector2(0, 1);
-
-            if (i == 0)
-            {
-                text.text = "Logger Output:";
-            }
 
             messageContainers.Add(textContainer);
         }
