@@ -267,9 +267,9 @@ public class ExperimentManager : MonoBehaviour
             yield return StartCoroutine(WaitSeconds(1.0f, true));
             stimulusManager.SetVisible("fixation", false);
 
-            // Motion (1.5 seconds)
+            // Motion ([1.0, 5.0) seconds)
             stimulusManager.SetVisible("motion", true);
-            yield return StartCoroutine(WaitSeconds(1.5f, true));
+            yield return StartCoroutine(WaitSeconds(1.0f + UnityEngine.Random.value * 4.0f, true));
             stimulusManager.SetVisible("motion", false);
 
             // Decision (wait)
