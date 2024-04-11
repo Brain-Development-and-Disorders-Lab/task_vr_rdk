@@ -184,6 +184,9 @@ public class ExperimentManager : MonoBehaviour
         // Set the reference direction randomly
         float dotDirection = UnityEngine.Random.value > 0.5f ? 0.0f : (float) Math.PI;
         stimulusManager.SetDirection(dotDirection);
+
+        // Setup the UI
+        uiManager.EnablePagination(false);
     }
 
     public void RunTrial(Trial trial)
@@ -218,7 +221,8 @@ public class ExperimentManager : MonoBehaviour
             uiManager.SetLeftButton(false, true, "Back");
             uiManager.SetRightButton(true, true, "Next");
 
-            yield return StartCoroutine(WaitSeconds(0.5f, true));
+            // Input delay
+            yield return StartCoroutine(WaitSeconds(0.25f, true));
         }
         else if (stimuli == "calibration")
         {
@@ -234,6 +238,7 @@ public class ExperimentManager : MonoBehaviour
 
             // Decision (wait)
             stimulusManager.SetVisible("decision", true);
+            yield return StartCoroutine(WaitSeconds(0.25f, true));
             EnableInput(true);
         }
         else if (stimuli == "main")
@@ -250,13 +255,20 @@ public class ExperimentManager : MonoBehaviour
 
             // Decision (wait)
             stimulusManager.SetVisible("decision", true);
+            yield return StartCoroutine(WaitSeconds(0.25f, true));
             EnableInput(true);
         }
         else if (stimuli == "confidence")
         {
             // Confidence (1 second)
-            yield return StartCoroutine(WaitSeconds(1.0f, true));
+            uiManager.SetVisible(true);
+            uiManager.SetHeader("");
+            uiManager.SetBody("Between the previous trial and this trial, did you feel more confident about your response to:\n\n\tThe previous trial or this trial?");
+            uiManager.SetLeftButton(true, true, "Previous Trial");
+            uiManager.SetRightButton(true, true, "This Trial");
 
+            // Input delay
+            yield return StartCoroutine(WaitSeconds(0.25f, true));
             EnableInput(true);
         }
         else if (stimuli == "feedback_correct")
@@ -370,11 +382,8 @@ public class ExperimentManager : MonoBehaviour
 
     public void EndTrial()
     {
-        // Tidy up after specific blocks
-        if (ActiveBlock == InstructionBlockIndex)
-        {
-            uiManager.SetVisible(false);
-        }
+        // Hide any UI components
+        uiManager.SetVisible(false);
 
         Session.instance.EndCurrentTrial();
         Session.instance.BeginNextTrial();
