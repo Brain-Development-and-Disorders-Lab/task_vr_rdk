@@ -41,6 +41,9 @@ public class ExperimentManager : MonoBehaviour
     bool InputEnabled = false;
     private bool InputReset = true;
 
+    // Confidence parameters
+    private readonly int CONFIDENCE_BLOCK_SIZE = 2; // Number of trials to run before asking for confidence
+
     /// <summary>
     /// Generate the experiment flow
     /// </summary>
@@ -249,6 +252,13 @@ public class ExperimentManager : MonoBehaviour
             stimulusManager.SetVisible("decision", true);
             EnableInput(true);
         }
+        else if (stimuli == "confidence")
+        {
+            // Confidence (1 second)
+            yield return StartCoroutine(WaitSeconds(1.0f, true));
+
+            EnableInput(true);
+        }
         else if (stimuli == "feedback_correct")
         {
             stimulusManager.SetVisible("feedback_correct", true);
@@ -270,74 +280,90 @@ public class ExperimentManager : MonoBehaviour
     /// </summary>
     private void HandleExperimentInput(string selection)
     {
-        // Store the selection value
-        Session.instance.CurrentTrial.result["selectedDirection"] = selection;
+        // If `selectedDirection` is empty, this is reference direction input
+        if (!Session.instance.CurrentTrial.result.ContainsKey("selectedDirection"))
+        {
+            // Store the selection value
+            Session.instance.CurrentTrial.result["selectedDirection"] = selection;
 
-        // Determine if a correct response was made
-        Session.instance.CurrentTrial.result["selectedCorrectDirection"] = false;
-        if (selection == "left" && stimulusManager.GetDirection() == (float) Math.PI)
-        {
-            Session.instance.CurrentTrial.result["selectedCorrectDirection"] = true;
-        }
-        else if (selection == "right" && stimulusManager.GetDirection() == 0.0f)
-        {
-            Session.instance.CurrentTrial.result["selectedCorrectDirection"] = true;
-        }
-
-        if (ActiveBlock == CalibrationBlockIndex)
-        {
-            // Show feedback
-            if ((bool) Session.instance.CurrentTrial.result["selectedCorrectDirection"] == true)
+            // Determine if a correct response was made
+            Session.instance.CurrentTrial.result["selectedCorrectDirection"] = false;
+            if (selection == "left" && stimulusManager.GetDirection() == (float) Math.PI)
             {
-                // Adjust coherence if two consecutive correct "calibration" trials
-                if (Session.instance.CurrentTrial.numberInBlock > 1)
-                {
-                    Trial PreviousTrial = Session.instance.CurrentBlock.GetRelativeTrial(Session.instance.CurrentTrial.numberInBlock - 1);
-                    if ((bool) Session.instance.CurrentTrial.result["selectedCorrectDirection"] == true &&
-                        (bool) PreviousTrial.result["selectedCorrectDirection"] == true)
-                    {
-                        // Modify "both", grouped coherence
-                        Coherences["both"][LOW_INDEX] -= 0.01f;
-                        Coherences["both"][HIGH_INDEX] -= 0.01f;
+                Session.instance.CurrentTrial.result["selectedCorrectDirection"] = true;
+            }
+            else if (selection == "right" && stimulusManager.GetDirection() == 0.0f)
+            {
+                Session.instance.CurrentTrial.result["selectedCorrectDirection"] = true;
+            }
 
-                        // Modify individual coherences depending on active visual field
-                        if (cameraManager.GetActiveField() == CameraManager.VisualField.Left)
+            if (ActiveBlock == CalibrationBlockIndex)
+            {
+                // If in the calibration stage, adjust the coherence value
+                if ((bool) Session.instance.CurrentTrial.result["selectedCorrectDirection"] == true)
+                {
+                    // Adjust coherence if two consecutive correct "calibration" trials
+                    if (Session.instance.CurrentTrial.numberInBlock > 1)
+                    {
+                        Trial PreviousTrial = Session.instance.CurrentBlock.GetRelativeTrial(Session.instance.CurrentTrial.numberInBlock - 1);
+                        if ((bool) Session.instance.CurrentTrial.result["selectedCorrectDirection"] == true &&
+                            (bool) PreviousTrial.result["selectedCorrectDirection"] == true)
                         {
-                            Coherences["left"][LOW_INDEX] -= 0.01f;
-                            Coherences["left"][HIGH_INDEX] -= 0.01f;
-                        }
-                        else if (cameraManager.GetActiveField() == CameraManager.VisualField.Right)
-                        {
-                            Coherences["right"][LOW_INDEX] -= 0.01f;
-                            Coherences["right"][HIGH_INDEX] -= 0.01f;
+                            // Modify "both", grouped coherence
+                            Coherences["both"][LOW_INDEX] -= 0.01f;
+                            Coherences["both"][HIGH_INDEX] -= 0.01f;
+
+                            // Modify individual coherences depending on active visual field
+                            if (cameraManager.GetActiveField() == CameraManager.VisualField.Left)
+                            {
+                                Coherences["left"][LOW_INDEX] -= 0.01f;
+                                Coherences["left"][HIGH_INDEX] -= 0.01f;
+                            }
+                            else if (cameraManager.GetActiveField() == CameraManager.VisualField.Right)
+                            {
+                                Coherences["right"][LOW_INDEX] -= 0.01f;
+                                Coherences["right"][HIGH_INDEX] -= 0.01f;
+                            }
                         }
                     }
+                    // StartCoroutine(DisplayStimuli("feedback_correct"));
                 }
-                StartCoroutine(DisplayStimuli("feedback_correct"));
+                else
+                {
+                    // Adjust coherence
+                    // Modify "both", grouped coherence
+                    Coherences["both"][LOW_INDEX] += 0.01f;
+                    Coherences["both"][HIGH_INDEX] += 0.01f;
+
+                    // Modify individual coherences depending on active visual field
+                    if (cameraManager.GetActiveField() == CameraManager.VisualField.Left)
+                    {
+                        Coherences["left"][LOW_INDEX] += 0.01f;
+                        Coherences["left"][HIGH_INDEX] += 0.01f;
+                    }
+                    else if (cameraManager.GetActiveField() == CameraManager.VisualField.Right)
+                    {
+                        Coherences["right"][LOW_INDEX] += 0.01f;
+                        Coherences["right"][HIGH_INDEX] += 0.01f;
+                    }
+                    // StartCoroutine(DisplayStimuli("feedback_incorrect"));
+                }
+            }
+
+            // Display the confidence selection or end the trial
+            if ((ActiveBlock == CalibrationBlockIndex || ActiveBlock == MainBlockIndex) &&
+                Session.instance.CurrentTrial.numberInBlock % CONFIDENCE_BLOCK_SIZE == 0)
+            {
+                StartCoroutine(DisplayStimuli("confidence"));
             }
             else
             {
-                // Adjust coherence
-                // Modify "both", grouped coherence
-                Coherences["both"][LOW_INDEX] += 0.01f;
-                Coherences["both"][HIGH_INDEX] += 0.01f;
-
-                // Modify individual coherences depending on active visual field
-                if (cameraManager.GetActiveField() == CameraManager.VisualField.Left)
-                {
-                    Coherences["left"][LOW_INDEX] += 0.01f;
-                    Coherences["left"][HIGH_INDEX] += 0.01f;
-                }
-                else if (cameraManager.GetActiveField() == CameraManager.VisualField.Right)
-                {
-                    Coherences["right"][LOW_INDEX] += 0.01f;
-                    Coherences["right"][HIGH_INDEX] += 0.01f;
-                }
-                StartCoroutine(DisplayStimuli("feedback_incorrect"));
+                EndTrial();
             }
         }
-        else if (ActiveBlock == MainBlockIndex)
+        else if (!Session.instance.CurrentTrial.result.ContainsKey("confidenceSelection"))
         {
+            Debug.Log("Confidence value selection");
             EndTrial();
         }
     }
