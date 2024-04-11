@@ -198,6 +198,10 @@ public class ExperimentManager : MonoBehaviour
         // Set the reference direction randomly
         float dotDirection = UnityEngine.Random.value > 0.5f ? 0.0f : (float) Math.PI;
         stimulusManager.SetDirection(dotDirection);
+        Session.instance.CurrentTrial.result["referenceDirection"] = stimulusManager.GetDirection() == 0.0f ? "right" : "left";
+
+        // Store the standard motion duration value (1.5 seconds)
+        Session.instance.CurrentTrial.result["motionDuration"] = 1.5f;
 
         // Setup the UI
         uiManager.EnablePagination(false);
@@ -205,8 +209,13 @@ public class ExperimentManager : MonoBehaviour
 
     public void RunTrial(Trial trial)
     {
+        // Store local date and time data
+        Session.instance.CurrentTrial.result["localDate"] = DateTime.Now.ToShortDateString();
+        Session.instance.CurrentTrial.result["localTime"] = DateTime.Now.ToShortTimeString();
+        Session.instance.CurrentTrial.result["localTimezone"] = TimeZoneInfo.Local.DisplayName;
+        Session.instance.CurrentTrial.result["trialStart"] = Time.time;
+
         ActiveBlock = trial.block.number;
-        Debug.Log("Block number: " + ActiveBlock);
         if (ActiveBlock == WelcomeBlockIndex)
         {
             SetupWelcome();
@@ -269,10 +278,14 @@ public class ExperimentManager : MonoBehaviour
 
             // Motion ([1.0, 5.0) seconds)
             stimulusManager.SetVisible("motion", true);
-            yield return StartCoroutine(WaitSeconds(1.0f + UnityEngine.Random.value * 4.0f, true));
+            // Override the standard motion duration
+            float TutorialMotionDuration = 1.0f + UnityEngine.Random.value * 4.0f;
+            Session.instance.CurrentTrial.result["motionDuration"] = TutorialMotionDuration;
+            yield return StartCoroutine(WaitSeconds(TutorialMotionDuration, true));
             stimulusManager.SetVisible("motion", false);
 
             // Decision (wait)
+            Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
             stimulusManager.SetVisible("decision", true);
             yield return StartCoroutine(WaitSeconds(0.25f, true));
             EnableInput(true);
@@ -302,6 +315,7 @@ public class ExperimentManager : MonoBehaviour
             stimulusManager.SetVisible("motion", false);
 
             // Decision (wait)
+            Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
             stimulusManager.SetVisible("decision", true);
             yield return StartCoroutine(WaitSeconds(0.25f, true));
             EnableInput(true);
@@ -331,6 +345,7 @@ public class ExperimentManager : MonoBehaviour
             stimulusManager.SetVisible("motion", false);
 
             // Decision (wait)
+            Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
             stimulusManager.SetVisible("decision", true);
             yield return StartCoroutine(WaitSeconds(0.25f, true));
             EnableInput(true);
@@ -348,6 +363,7 @@ public class ExperimentManager : MonoBehaviour
             stimulusManager.SetVisible("motion", false);
 
             // Decision (wait)
+            Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
             stimulusManager.SetVisible("decision", true);
             yield return StartCoroutine(WaitSeconds(0.25f, true));
             EnableInput(true);
@@ -362,6 +378,7 @@ public class ExperimentManager : MonoBehaviour
             uiManager.SetRightButton(true, true, "This Trial");
 
             // Input delay
+            Session.instance.CurrentTrial.result["confidenceStart"] = Time.time;
             yield return StartCoroutine(WaitSeconds(0.25f, true));
             EnableInput(true);
         }
@@ -389,6 +406,10 @@ public class ExperimentManager : MonoBehaviour
         // If `selectedDirection` is empty, this is reference direction input
         if (!Session.instance.CurrentTrial.result.ContainsKey("selectedDirection"))
         {
+            // Store timing data
+            Session.instance.CurrentTrial.result["referenceEnd"] = Time.time;
+            Session.instance.CurrentTrial.result["referenceRT"] = (float) Session.instance.CurrentTrial.result["referenceEnd"] - (float) Session.instance.CurrentTrial.result["referenceStart"];
+
             // Store the selection value
             Session.instance.CurrentTrial.result["selectedDirection"] = selection;
 
@@ -467,7 +488,7 @@ public class ExperimentManager : MonoBehaviour
                     StartCoroutine(DisplayStimuli("feedback_incorrect"));
                 }
             }
-            else if ((ActiveBlock == CalibrationBlockIndex || ActiveBlock == MainBlockIndex) &&
+            else if ((ActiveBlock == TutorialBlockIndex || ActiveBlock == CalibrationBlockIndex || ActiveBlock == MainBlockIndex) &&
                 Session.instance.CurrentTrial.numberInBlock % CONFIDENCE_BLOCK_SIZE == 0)
             {
                 StartCoroutine(DisplayStimuli("confidence"));
@@ -479,6 +500,10 @@ public class ExperimentManager : MonoBehaviour
         }
         else if (!Session.instance.CurrentTrial.result.ContainsKey("confidenceSelection"))
         {
+            // Store timing data
+            Session.instance.CurrentTrial.result["confidenceEnd"] = Time.time;
+            Session.instance.CurrentTrial.result["confidenceRT"] = (float) Session.instance.CurrentTrial.result["confidenceEnd"] - (float) Session.instance.CurrentTrial.result["confidenceStart"];
+
             // Store the confidence selection
             Session.instance.CurrentTrial.result["confidenceSelection"] = selection;
             EndTrial();
@@ -487,7 +512,7 @@ public class ExperimentManager : MonoBehaviour
 
     public void EndTrial()
     {
-        Debug.Log("EndTrial");
+        Session.instance.CurrentTrial.result["trialEnd"] = Time.time;
         Session.instance.EndCurrentTrial();
         Session.instance.BeginNextTrial();
     }
