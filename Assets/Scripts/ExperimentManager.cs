@@ -10,16 +10,26 @@ using MathNet.Numerics.Statistics;
 
 public class ExperimentManager : MonoBehaviour
 {
-    readonly int InstructionTrials = 1;
-    readonly int InstructionBlockIndex = 1;
+    readonly int WelcomeTrials = 1; // Welcome instructions, includes tutorial instructions
+    readonly int WelcomeBlockIndex = 1;
+    readonly int TutorialTrials = 20; // Tutorial trials
+    readonly int TutorialBlockIndex = 2;
+
+    readonly int PrePracticeTrials = 1; // Practice instructions
+    readonly int PrePracticeBlockIndex = 3;
+    readonly int PracticeTrials = 20; // Practice trials
+    readonly int PracticeBlockIndex = 4;
+
+    readonly int PreMainTrials = 1; // Main instructions
+    readonly int PreMainBlockIndex = 5;
 
     readonly int CalibrationTrials = 120;
-    readonly int CalibrationBlockIndex = 2; // Expected index of the "Calibration"-type block
+    readonly int CalibrationBlockIndex = 6;
 
     readonly int MainTrials = 200;
-    readonly int MainBlockIndex = 3; // Expected index of the "Main"-type block
+    readonly int MainBlockIndex = 7;
 
-    private int ActiveBlock = 1;
+    private int ActiveBlock = 1; // Store the currently active Block
 
     // Coherence data structure
     private Dictionary<string, float[]> Coherences = new()
@@ -51,7 +61,11 @@ public class ExperimentManager : MonoBehaviour
     public void GenerateExperiment(Session session)
     {
         // Create trial blocks
-        session.CreateBlock(InstructionTrials);
+        session.CreateBlock(WelcomeTrials);
+        session.CreateBlock(TutorialTrials);
+        session.CreateBlock(PrePracticeTrials);
+        session.CreateBlock(PracticeTrials);
+        session.CreateBlock(PreMainTrials);
         session.CreateBlock(CalibrationTrials);
         session.CreateBlock(MainTrials);
 
@@ -81,12 +95,12 @@ public class ExperimentManager : MonoBehaviour
         Application.Quit();
     }
 
-    private void SetupInstructions()
+    private void SetupWelcome()
     {
         // Setup the UI manager with instructions
         uiManager.EnablePagination(true);
         List<string> Instructions = new List<string>{
-            "You are about to start the task. Before you start, please let the facilitator know if the headset feels uncomfortable or you cannot read this text.\n\nWhen you are ready and comfortable, press the right controller trigger to select 'Next >' and continue.",
+            "You are about to start the task. Before you start, please let the facilitator know if the headset feels uncomfortable or you cannot read this text.\n\nWhen you are ready and comfortable, press the right controller trigger to select 'Next' and continue.",
             "These practice trials are similar to the actual trials, except the moving dots will be displayed a few seconds longer.\n\nPractice watching the dots and observing the appearance of the task.\n\nUse the triggers on the left and right controllers to interact with the task."
         };
         uiManager.SetPages(Instructions);
@@ -192,10 +206,29 @@ public class ExperimentManager : MonoBehaviour
     public void RunTrial(Trial trial)
     {
         ActiveBlock = trial.block.number;
-        if (ActiveBlock == InstructionBlockIndex)
+        Debug.Log("Block number: " + ActiveBlock);
+        if (ActiveBlock == WelcomeBlockIndex)
         {
-            SetupInstructions();
-            StartCoroutine(DisplayStimuli("instructions"));
+            SetupWelcome();
+            StartCoroutine(DisplayStimuli("welcome"));
+        }
+        else if (ActiveBlock == TutorialBlockIndex)
+        {
+            SetupMotion();
+            StartCoroutine(DisplayStimuli("tutorial"));
+        }
+        else if (ActiveBlock == PrePracticeBlockIndex)
+        {
+            StartCoroutine(DisplayStimuli("prepractice"));
+        }
+        else if (ActiveBlock == PracticeBlockIndex)
+        {
+            SetupMotion();
+            StartCoroutine(DisplayStimuli("practice"));
+        }
+        else if (ActiveBlock == PreMainBlockIndex)
+        {
+            StartCoroutine(DisplayStimuli("premain"));
         }
         else if (ActiveBlock == CalibrationBlockIndex)
         {
@@ -211,18 +244,79 @@ public class ExperimentManager : MonoBehaviour
 
     private IEnumerator DisplayStimuli(string stimuli)
     {
-        // Reset all displayed stimuli
+        // Reset all displayed stimuli and UI
         stimulusManager.SetVisibleAll(false);
+        uiManager.SetVisible(false);
 
-        if (stimuli == "instructions")
+        Debug.Log("Displaying: " + stimuli);
+
+        if (stimuli == "welcome")
         {
             uiManager.SetVisible(true);
-            uiManager.SetHeader("Instructions");
+            uiManager.SetHeader("Welcome");
             uiManager.SetLeftButton(false, true, "Back");
             uiManager.SetRightButton(true, true, "Next");
 
             // Input delay
             yield return StartCoroutine(WaitSeconds(0.25f, true));
+        }
+        else if (stimuli == "tutorial")
+        {
+            // Fixation (1 second)
+            stimulusManager.SetVisible("fixation", true);
+            yield return StartCoroutine(WaitSeconds(1.0f, true));
+            stimulusManager.SetVisible("fixation", false);
+
+            // Motion ([1.0, 5.0) seconds)
+            stimulusManager.SetVisible("motion", true);
+            yield return StartCoroutine(WaitSeconds(1.0f + UnityEngine.Random.value * 4.0f, true));
+            stimulusManager.SetVisible("motion", false);
+
+            // Decision (wait)
+            stimulusManager.SetVisible("decision", true);
+            yield return StartCoroutine(WaitSeconds(0.25f, true));
+            EnableInput(true);
+        }
+        else if (stimuli == "prepractice")
+        {
+            uiManager.SetVisible(true);
+            uiManager.SetHeader("Practice Trials");
+            uiManager.SetBody("You will now complete another " + PracticeTrials + " practice trials. After selecting a direction, the cross in the center of the circlular area will briefly change color if your answer was correct or not. Green is a correct answer, red is an incorrect answer.\n\nWhen you are ready and comfortable, press the right controller trigger to select 'Next' and continue.");
+            uiManager.SetLeftButton(false, true, "Back");
+            uiManager.SetRightButton(true, true, "Next");
+
+            // Input delay
+            yield return StartCoroutine(WaitSeconds(0.25f, true));
+            EnableInput(true);
+        }
+        else if (stimuli == "practice")
+        {
+            // Fixation (1 second)
+            stimulusManager.SetVisible("fixation", true);
+            yield return StartCoroutine(WaitSeconds(1.0f, true));
+            stimulusManager.SetVisible("fixation", false);
+
+            // Motion (1.5 seconds)
+            stimulusManager.SetVisible("motion", true);
+            yield return StartCoroutine(WaitSeconds(1.5f, true));
+            stimulusManager.SetVisible("motion", false);
+
+            // Decision (wait)
+            stimulusManager.SetVisible("decision", true);
+            yield return StartCoroutine(WaitSeconds(0.25f, true));
+            EnableInput(true);
+        }
+        else if (stimuli == "premain")
+        {
+            uiManager.SetVisible(true);
+            uiManager.SetHeader("Main Trials");
+            uiManager.SetBody("That concludes the practice trials. You will now play " + (CalibrationTrials + MainTrials) +  " main trials.\n\nYou will not be shown if you answered correctly or not, but sometimes you will be asked whether you were more confident in that trial than in the previous trial.\n\nWhen you are ready and comfortable, press the right controller trigger to select 'Next' and continue.");
+            uiManager.SetLeftButton(false, true, "Back");
+            uiManager.SetRightButton(true, true, "Next");
+
+            // Input delay
+            yield return StartCoroutine(WaitSeconds(0.25f, true));
+            EnableInput(true);
         }
         else if (stimuli == "calibration")
         {
@@ -338,7 +432,6 @@ public class ExperimentManager : MonoBehaviour
                             }
                         }
                     }
-                    // StartCoroutine(DisplayStimuli("feedback_correct"));
                 }
                 else
                 {
@@ -358,12 +451,23 @@ public class ExperimentManager : MonoBehaviour
                         Coherences["right"][LOW_INDEX] += 0.01f;
                         Coherences["right"][HIGH_INDEX] += 0.01f;
                     }
-                    // StartCoroutine(DisplayStimuli("feedback_incorrect"));
                 }
             }
 
-            // Display the confidence selection or end the trial
-            if ((ActiveBlock == CalibrationBlockIndex || ActiveBlock == MainBlockIndex) &&
+            // Some trials display additional components, otherwise end the trial
+            if (ActiveBlock == PracticeBlockIndex)
+            {
+                // Display feedback during the practice trials
+                if ((bool) Session.instance.CurrentTrial.result["selectedCorrectDirection"] == true)
+                {
+                    StartCoroutine(DisplayStimuli("feedback_correct"));
+                }
+                else
+                {
+                    StartCoroutine(DisplayStimuli("feedback_incorrect"));
+                }
+            }
+            else if ((ActiveBlock == CalibrationBlockIndex || ActiveBlock == MainBlockIndex) &&
                 Session.instance.CurrentTrial.numberInBlock % CONFIDENCE_BLOCK_SIZE == 0)
             {
                 StartCoroutine(DisplayStimuli("confidence"));
@@ -383,9 +487,7 @@ public class ExperimentManager : MonoBehaviour
 
     public void EndTrial()
     {
-        // Hide any UI components
-        uiManager.SetVisible(false);
-
+        Debug.Log("EndTrial");
         Session.instance.EndCurrentTrial();
         Session.instance.BeginNextTrial();
     }
@@ -412,7 +514,7 @@ public class ExperimentManager : MonoBehaviour
             // Left-side controls
             if (OVRInput.Get(OVRInput.Axis1D.PrimaryIndexTrigger) > 0.8f || Input.GetKeyDown(KeyCode.Alpha2))
             {
-                if (ActiveBlock == InstructionBlockIndex)
+                if (ActiveBlock == WelcomeBlockIndex)
                 {
                     if (uiManager.HasPreviousPage())
                     {
@@ -427,7 +529,11 @@ public class ExperimentManager : MonoBehaviour
                         }
                     }
                 }
-                else if (ActiveBlock == CalibrationBlockIndex || ActiveBlock == MainBlockIndex)
+                else if (
+                    ActiveBlock == TutorialBlockIndex ||
+                    ActiveBlock == PracticeBlockIndex ||
+                    ActiveBlock == CalibrationBlockIndex ||
+                    ActiveBlock == MainBlockIndex)
                 {
                     // "Left" direction selected
                     HandleExperimentInput("left");
@@ -438,7 +544,9 @@ public class ExperimentManager : MonoBehaviour
             // Right-side controls
             if (OVRInput.Get(OVRInput.Axis1D.SecondaryIndexTrigger) > 0.8f || Input.GetKeyDown(KeyCode.Alpha7))
             {
-                if (ActiveBlock == InstructionBlockIndex)
+                if (ActiveBlock == WelcomeBlockIndex ||
+                    ActiveBlock == PrePracticeBlockIndex ||
+                    ActiveBlock == PreMainBlockIndex)
                 {
                     if (uiManager.HasNextPage())
                     {
@@ -457,7 +565,11 @@ public class ExperimentManager : MonoBehaviour
                         EndTrial();
                     }
                 }
-                else if (ActiveBlock == CalibrationBlockIndex || ActiveBlock == MainBlockIndex)
+                else if (
+                    ActiveBlock == TutorialBlockIndex ||
+                    ActiveBlock == PracticeBlockIndex ||
+                    ActiveBlock == CalibrationBlockIndex ||
+                    ActiveBlock == MainBlockIndex)
                 {
                     // "Right" direction selected
                     HandleExperimentInput("right");
