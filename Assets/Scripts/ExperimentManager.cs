@@ -273,6 +273,7 @@ public class ExperimentManager : MonoBehaviour
             stimulusManager.SetVisible("motion", false);
 
             // Decision (wait)
+            Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
             stimulusManager.SetVisible("decision", true);
             yield return StartCoroutine(WaitSeconds(0.25f, true));
             EnableInput(true);
@@ -302,6 +303,7 @@ public class ExperimentManager : MonoBehaviour
             stimulusManager.SetVisible("motion", false);
 
             // Decision (wait)
+            Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
             stimulusManager.SetVisible("decision", true);
             yield return StartCoroutine(WaitSeconds(0.25f, true));
             EnableInput(true);
@@ -331,6 +333,7 @@ public class ExperimentManager : MonoBehaviour
             stimulusManager.SetVisible("motion", false);
 
             // Decision (wait)
+            Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
             stimulusManager.SetVisible("decision", true);
             yield return StartCoroutine(WaitSeconds(0.25f, true));
             EnableInput(true);
@@ -348,6 +351,7 @@ public class ExperimentManager : MonoBehaviour
             stimulusManager.SetVisible("motion", false);
 
             // Decision (wait)
+            Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
             stimulusManager.SetVisible("decision", true);
             yield return StartCoroutine(WaitSeconds(0.25f, true));
             EnableInput(true);
@@ -362,6 +366,7 @@ public class ExperimentManager : MonoBehaviour
             uiManager.SetRightButton(true, true, "This Trial");
 
             // Input delay
+            Session.instance.CurrentTrial.result["confidenceStart"] = Time.time;
             yield return StartCoroutine(WaitSeconds(0.25f, true));
             EnableInput(true);
         }
@@ -389,6 +394,10 @@ public class ExperimentManager : MonoBehaviour
         // If `selectedDirection` is empty, this is reference direction input
         if (!Session.instance.CurrentTrial.result.ContainsKey("selectedDirection"))
         {
+            // Store timing data
+            Session.instance.CurrentTrial.result["referenceEnd"] = Time.time;
+            Session.instance.CurrentTrial.result["referenceRT"] = (float) Session.instance.CurrentTrial.result["referenceEnd"] - (float) Session.instance.CurrentTrial.result["referenceStart"];
+
             // Store the selection value
             Session.instance.CurrentTrial.result["selectedDirection"] = selection;
 
@@ -479,6 +488,10 @@ public class ExperimentManager : MonoBehaviour
         }
         else if (!Session.instance.CurrentTrial.result.ContainsKey("confidenceSelection"))
         {
+            // Store timing data
+            Session.instance.CurrentTrial.result["confidenceEnd"] = Time.time;
+            Session.instance.CurrentTrial.result["confidenceRT"] = (float) Session.instance.CurrentTrial.result["confidenceEnd"] - (float) Session.instance.CurrentTrial.result["confidenceStart"];
+
             // Store the confidence selection
             Session.instance.CurrentTrial.result["confidenceSelection"] = selection;
             EndTrial();
@@ -487,7 +500,6 @@ public class ExperimentManager : MonoBehaviour
 
     public void EndTrial()
     {
-        Debug.Log("EndTrial");
         Session.instance.EndCurrentTrial();
         Session.instance.BeginNextTrial();
     }
