@@ -198,6 +198,10 @@ public class ExperimentManager : MonoBehaviour
         // Set the reference direction randomly
         float dotDirection = UnityEngine.Random.value > 0.5f ? 0.0f : (float) Math.PI;
         stimulusManager.SetDirection(dotDirection);
+        Session.instance.CurrentTrial.result["referenceDirection"] = stimulusManager.GetDirection() == 0.0f ? "right" : "left";
+
+        // Store the standard motion duration value (1.5 seconds)
+        Session.instance.CurrentTrial.result["motionDuration"] = 1.5f;
 
         // Setup the UI
         uiManager.EnablePagination(false);
@@ -205,8 +209,13 @@ public class ExperimentManager : MonoBehaviour
 
     public void RunTrial(Trial trial)
     {
+        // Store local date and time data
+        Session.instance.CurrentTrial.result["localDate"] = DateTime.Now.ToShortDateString();
+        Session.instance.CurrentTrial.result["localTime"] = DateTime.Now.ToShortTimeString();
+        Session.instance.CurrentTrial.result["localTimezone"] = TimeZoneInfo.Local.DisplayName;
+        Session.instance.CurrentTrial.result["trialStart"] = Time.time;
+
         ActiveBlock = trial.block.number;
-        Debug.Log("Block number: " + ActiveBlock);
         if (ActiveBlock == WelcomeBlockIndex)
         {
             SetupWelcome();
@@ -269,7 +278,10 @@ public class ExperimentManager : MonoBehaviour
 
             // Motion ([1.0, 5.0) seconds)
             stimulusManager.SetVisible("motion", true);
-            yield return StartCoroutine(WaitSeconds(1.0f + UnityEngine.Random.value * 4.0f, true));
+            // Override the standard motion duration
+            float TutorialMotionDuration = 1.0f + UnityEngine.Random.value * 4.0f;
+            Session.instance.CurrentTrial.result["motionDuration"] = TutorialMotionDuration;
+            yield return StartCoroutine(WaitSeconds(TutorialMotionDuration, true));
             stimulusManager.SetVisible("motion", false);
 
             // Decision (wait)
@@ -500,6 +512,7 @@ public class ExperimentManager : MonoBehaviour
 
     public void EndTrial()
     {
+        Session.instance.CurrentTrial.result["trialEnd"] = Time.time;
         Session.instance.EndCurrentTrial();
         Session.instance.BeginNextTrial();
     }
