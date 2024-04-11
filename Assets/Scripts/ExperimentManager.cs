@@ -375,7 +375,8 @@ public class ExperimentManager : MonoBehaviour
         }
         else if (!Session.instance.CurrentTrial.result.ContainsKey("confidenceSelection"))
         {
-            Debug.Log("Confidence value selection");
+            // Store the confidence selection
+            Session.instance.CurrentTrial.result["confidenceSelection"] = selection;
             EndTrial();
         }
     }
