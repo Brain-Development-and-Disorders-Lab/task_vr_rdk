@@ -476,7 +476,7 @@ public class ExperimentManager : MonoBehaviour
                     StartCoroutine(DisplayStimuli("feedback_incorrect"));
                 }
             }
-            else if ((ActiveBlock == CalibrationBlockIndex || ActiveBlock == MainBlockIndex) &&
+            else if ((ActiveBlock == TutorialBlockIndex || ActiveBlock == CalibrationBlockIndex || ActiveBlock == MainBlockIndex) &&
                 Session.instance.CurrentTrial.numberInBlock % CONFIDENCE_BLOCK_SIZE == 0)
             {
                 StartCoroutine(DisplayStimuli("confidence"));
