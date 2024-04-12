@@ -50,7 +50,7 @@ public class LoggerManager : MonoBehaviour
     {
         for (int i = 0; i < messages.Count; i++)
         {
-            GameObject textContainer = messageContainers[i + 1];
+            GameObject textContainer = messageContainers[i];
             Text messageText = textContainer.GetComponent<Text>();
             messageText.text = DateTime.Now.ToString("T") + ": " + messages[i];
 
