@@ -29,6 +29,7 @@ namespace UXF
         public override string MeasurementDescriptor => "gaze";
         public override IEnumerable<string> CustomHeader => new string[] { "eye", "pos_x", "pos_y", "pos_z", "rot_x", "rot_y", "rot_z", "blink" };
         private string TrackedEye = "left"; // Specify if the left or right eye
+        private Vector3 GazeEstimate;
 
         // Other references
         private LoggerManager Logger;
@@ -84,6 +85,11 @@ namespace UXF
             }
         }
 
+        public Vector3 GetGazeEstimate()
+        {
+            return GazeEstimate;
+        }
+
         /// <summary>
         /// Returns current position and rotation values of the eye
         /// </summary>
@@ -93,12 +99,12 @@ namespace UXF
             // Eye position and rotation
             Vector3 p = transform.position;
             Vector3 r = transform.eulerAngles;
+            GazeEstimate = p + transform.forward * gazeDistance;
 
             // If using indicators, update the position
             if (showIndicator == true && indicator != null)
             {
-                Vector3 indicatorEstimate = p + transform.forward * gazeDistance;
-                indicator.transform.position = indicatorEstimate;
+                indicator.transform.position = GetGazeEstimate();
             }
 
             float LBlinkWeight = -1.0f;
