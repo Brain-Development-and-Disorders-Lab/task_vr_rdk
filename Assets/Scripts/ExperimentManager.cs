@@ -123,9 +123,10 @@ public class ExperimentManager : MonoBehaviour
             List<float> RightCoherenceValues = new List<float>();
             foreach (Trial t in CalibrationTrials)
             {
-                BothCoherenceValues.Add(((float[]) t.result["combinedCoherences"])[LOW_INDEX]);
-                LeftCoherenceValues.Add(((float[]) t.result["leftCoherences"])[LOW_INDEX]);
-                RightCoherenceValues.Add(((float[]) t.result["rightCoherences"])[LOW_INDEX]);
+                // Get each coherence value, split by "," token and cast back to float
+                BothCoherenceValues.Add(float.Parse(((string) t.result["combinedCoherences"]).Split(",")[LOW_INDEX]));
+                LeftCoherenceValues.Add(float.Parse(((string) t.result["leftCoherences"]).Split(",")[LOW_INDEX]));
+                RightCoherenceValues.Add(float.Parse(((string) t.result["rightCoherences"]).Split(",")[LOW_INDEX]));
             }
 
             // Calculate coherence median values
@@ -143,8 +144,6 @@ public class ExperimentManager : MonoBehaviour
             float kMedRightLow = 0.5f * kMedRight < 0.12 ? 0.12f : 0.5f * kMedRight;
             float kMedRightHigh = 2.0f * kMedRight > 0.5 ? 0.5f : 2.0f * kMedRight;
             Coherences["right"] = new float[] { kMedRightLow, kMedRightHigh };
-
-            Debug.Log("Coherences: L " + Coherences["left"][0] + "," + Coherences["left"][1] + " | R " + Coherences["right"][0] + "," + Coherences["right"][1] + " | B " + Coherences["both"][0] + "," + Coherences["both"][1]);
         }
 
         // Switch the active eye every fixed number of trials
@@ -190,10 +189,10 @@ public class ExperimentManager : MonoBehaviour
         int SelectedCoherence = UnityEngine.Random.value > 0.5f ? 0 : 1;
         stimulusManager.SetCoherence(ActiveCoherences[SelectedCoherence]);
 
-        // Clone and store coherence values
-        Session.instance.CurrentTrial.result["combinedCoherences"] = Coherences["both"].Clone();
-        Session.instance.CurrentTrial.result["leftCoherences"] = Coherences["left"].Clone();
-        Session.instance.CurrentTrial.result["rightCoherences"] = Coherences["right"].Clone();
+        // Clone and store coherence values as a string, separated by "," token
+        Session.instance.CurrentTrial.result["combinedCoherences"] = Coherences["both"][0] + "," + Coherences["both"][1];
+        Session.instance.CurrentTrial.result["leftCoherences"] = Coherences["left"][0] + "," + Coherences["left"][1];
+        Session.instance.CurrentTrial.result["rightCoherences"] = Coherences["right"][0] + "," + Coherences["right"][1];
 
         // Set the reference direction randomly
         float dotDirection = UnityEngine.Random.value > 0.5f ? 0.0f : (float) Math.PI;
@@ -257,10 +256,11 @@ public class ExperimentManager : MonoBehaviour
         stimulusManager.SetVisibleAll(false);
         uiManager.SetVisible(false);
 
-        Debug.Log("Displaying: " + stimuli);
-
         if (stimuli == "welcome")
         {
+            // Store the displayed stimuli type
+            Session.instance.CurrentTrial.result["name"] = stimuli;
+
             uiManager.SetVisible(true);
             uiManager.SetHeader("Welcome");
             uiManager.SetLeftButton(false, true, "Back");
@@ -271,6 +271,9 @@ public class ExperimentManager : MonoBehaviour
         }
         else if (stimuli == "tutorial")
         {
+            // Store the displayed stimuli type
+            Session.instance.CurrentTrial.result["name"] = stimuli;
+
             // Fixation (1 second)
             stimulusManager.SetVisible("fixation", true);
             yield return StartCoroutine(WaitSeconds(1.0f, true));
@@ -292,6 +295,9 @@ public class ExperimentManager : MonoBehaviour
         }
         else if (stimuli == "prepractice")
         {
+            // Store the displayed stimuli type
+            Session.instance.CurrentTrial.result["name"] = stimuli;
+
             uiManager.SetVisible(true);
             uiManager.SetHeader("Practice Trials");
             uiManager.SetBody("You will now complete another " + PracticeTrials + " practice trials. After selecting a direction, the cross in the center of the circlular area will briefly change color if your answer was correct or not. Green is a correct answer, red is an incorrect answer.\n\nWhen you are ready and comfortable, press the right controller trigger to select 'Next' and continue.");
@@ -304,6 +310,9 @@ public class ExperimentManager : MonoBehaviour
         }
         else if (stimuli == "practice")
         {
+            // Store the displayed stimuli type
+            Session.instance.CurrentTrial.result["name"] = stimuli;
+
             // Fixation (1 second)
             stimulusManager.SetVisible("fixation", true);
             yield return StartCoroutine(WaitSeconds(1.0f, true));
@@ -322,6 +331,9 @@ public class ExperimentManager : MonoBehaviour
         }
         else if (stimuli == "premain")
         {
+            // Store the displayed stimuli type
+            Session.instance.CurrentTrial.result["name"] = stimuli;
+
             uiManager.SetVisible(true);
             uiManager.SetHeader("Main Trials");
             uiManager.SetBody("That concludes the practice trials. You will now play " + (CalibrationTrials + MainTrials) +  " main trials.\n\nYou will not be shown if you answered correctly or not, but sometimes you will be asked whether you were more confident in that trial than in the previous trial.\n\nWhen you are ready and comfortable, press the right controller trigger to select 'Next' and continue.");
@@ -334,6 +346,9 @@ public class ExperimentManager : MonoBehaviour
         }
         else if (stimuli == "calibration")
         {
+            // Store the displayed stimuli type
+            Session.instance.CurrentTrial.result["name"] = stimuli;
+
             // Fixation (1 second)
             stimulusManager.SetVisible("fixation", true);
             yield return StartCoroutine(WaitSeconds(1.0f, true));
@@ -352,6 +367,9 @@ public class ExperimentManager : MonoBehaviour
         }
         else if (stimuli == "main")
         {
+            // Store the displayed stimuli type
+            Session.instance.CurrentTrial.result["name"] = stimuli;
+
             // Fixation (1 second)
             stimulusManager.SetVisible("fixation", true);
             yield return StartCoroutine(WaitSeconds(1.0f, true));
@@ -514,7 +532,17 @@ public class ExperimentManager : MonoBehaviour
     {
         Session.instance.CurrentTrial.result["trialEnd"] = Time.time;
         Session.instance.EndCurrentTrial();
-        Session.instance.BeginNextTrial();
+
+        try
+        {
+            // Proceed to the next trial
+            Session.instance.BeginNextTrial();
+        }
+        catch (NoSuchTrialException)
+        {
+            // End the experiment session
+            Session.instance.End();
+        }
     }
 
     private void EnableInput(bool state)
