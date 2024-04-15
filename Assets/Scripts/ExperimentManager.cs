@@ -391,7 +391,7 @@ public class ExperimentManager : MonoBehaviour
             // Confidence (1 second)
             uiManager.SetVisible(true);
             uiManager.SetHeader("");
-            uiManager.SetBody("Between the previous trial and this trial, did you feel more confident about your response to:\n\n\tThe previous trial or this trial?");
+            uiManager.SetBody("Did you feel more confident about your response to:\n\n\tThe <b>previous<b> trial or <b>this<b> trial?");
             uiManager.SetLeftButton(true, true, "Previous Trial");
             uiManager.SetRightButton(true, true, "This Trial");
 
