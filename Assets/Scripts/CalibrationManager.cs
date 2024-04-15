@@ -67,6 +67,7 @@ public class CalibrationManager : MonoBehaviour
     FixationObject.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f);
     FixationObject.GetComponent<MeshRenderer>().material = new Material(Shader.Find("Sprites/Default"));
     FixationObject.GetComponent<MeshRenderer>().material.SetColor("_Color", Color.red);
+    FixationObject.SetActive(false);
 
     // Set initial position
     FixationObject.transform.localPosition = new Vector3(PointLocale.x * UnitDistance, PointLocale.y * UnitDistance, 0.0f);
@@ -76,17 +77,19 @@ public class CalibrationManager : MonoBehaviour
   {
     Logger = FindAnyObjectByType<LoggerManager>();
     SetupCalibration();
-    RunCalibration();
+    // RunCalibration();
   }
 
   public void RunCalibration()
   {
     IsCalibrating = true;
+    FixationObject.SetActive(IsCalibrating);
   }
 
   private void EndCalibration()
   {
     IsCalibrating = false;
+    FixationObject.SetActive(IsCalibrating);
   }
 
   void Update()

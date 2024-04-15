@@ -18,6 +18,10 @@ public class StimulusManager : MonoBehaviour
     private float StimulusDistance;
     private readonly float ArcDiameter = 8.0f; // Specified in supplementary materials
     private float ArcWorldRadius;
+    private readonly float ArcWidth = 0.08f; // Specified in supplementary materials
+    private float ArcWorldWidth;
+    private readonly float FixationDiameter = 0.2f; // Specified in supplementary materials
+    private float FixationWorldRadius;
 
     // Dot parameters
     private readonly float DotDiameter = 0.12f; // Specified in supplementary materials
@@ -59,6 +63,8 @@ public class StimulusManager : MonoBehaviour
     {
         StimulusDistance = Mathf.Abs(transform.position.z - stimulusAnchor.transform.position.z);
         ArcWorldRadius = StimulusDistance * Mathf.Tan(ScalingFactor * ArcDiameter / 2 * (Mathf.PI / 180.0f));
+        ArcWorldWidth = ArcWidth;
+        FixationWorldRadius = 0.05f;
         DotWorldRadius = StimulusDistance * Mathf.Tan(ScalingFactor * DotDiameter / 2 * (Mathf.PI / 180.0f));
     }
 
@@ -192,8 +198,8 @@ public class StimulusManager : MonoBehaviour
         line.SetPositions(arcPoints);
         line.material = new Material(Shader.Find("Sprites/Default"));
         line.material.SetColor("_Color", color);
-        line.startWidth = 0.06f;
-        line.endWidth = 0.06f;
+        line.startWidth = ArcWorldWidth;
+        line.endWidth = ArcWorldWidth;
 
         return arcObject;
     }
@@ -226,12 +232,12 @@ public class StimulusManager : MonoBehaviour
         LineRenderer horizontalLine = fixationObjectHorizontal.GetComponent<LineRenderer>();
         horizontalLine.useWorldSpace = false;
         horizontalLine.positionCount = 2;
-        horizontalLine.SetPosition(0, new Vector3(-0.05f, 0.0f, 0.0f));
-        horizontalLine.SetPosition(1, new Vector3(0.05f, 0.0f, 0.0f));
+        horizontalLine.SetPosition(0, new Vector3(-FixationWorldRadius, 0.0f, 0.0f));
+        horizontalLine.SetPosition(1, new Vector3(FixationWorldRadius, 0.0f, 0.0f));
         horizontalLine.material = new Material(Shader.Find("Sprites/Default"));
         horizontalLine.material.SetColor("_Color", CrossColor);
-        horizontalLine.startWidth = 0.03f;
-        horizontalLine.endWidth = 0.03f;
+        horizontalLine.startWidth = ArcWorldWidth;
+        horizontalLine.endWidth = ArcWorldWidth;
 
         // Create vertical component
         GameObject fixationObjectVertical = new GameObject();
@@ -243,12 +249,12 @@ public class StimulusManager : MonoBehaviour
         LineRenderer verticalLine = fixationObjectVertical.GetComponent<LineRenderer>();
         verticalLine.useWorldSpace = false;
         verticalLine.positionCount = 2;
-        verticalLine.SetPosition(0, new Vector3(0.0f, -0.05f, 0.0f));
-        verticalLine.SetPosition(1, new Vector3(0.0f, 0.05f, 0.0f));
+        verticalLine.SetPosition(0, new Vector3(0.0f, -FixationWorldRadius, 0.0f));
+        verticalLine.SetPosition(1, new Vector3(0.0f, FixationWorldRadius, 0.0f));
         verticalLine.material = new Material(Shader.Find("Sprites/Default"));
         verticalLine.material.SetColor("_Color", CrossColor);
-        verticalLine.startWidth = 0.03f;
-        verticalLine.endWidth = 0.03f;
+        verticalLine.startWidth = ArcWorldWidth;
+        verticalLine.endWidth = ArcWorldWidth;
 
         return fixationObjectParent;
     }
