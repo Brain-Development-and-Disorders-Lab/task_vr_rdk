@@ -56,6 +56,8 @@ public class CalibrationManager : MonoBehaviour
   private float UpdateTimer = 0.0f;
   private readonly float UpdateInterval = 2.0f;
 
+  private Action CalibrationCallback;
+
   private void SetupCalibration()
   {
     PointLocale = AllPointLocales[AllPointLocales.Keys.ToList()[PointLocaleIndex]];
@@ -77,13 +79,15 @@ public class CalibrationManager : MonoBehaviour
   {
     Logger = FindAnyObjectByType<LoggerManager>();
     SetupCalibration();
-    RunCalibration();
   }
 
-  public void RunCalibration()
+  public void RunCalibration(Action callback = null)
   {
     IsCalibrating = true;
     FixationObject.SetActive(IsCalibrating);
+
+    // Optional callback function
+    CalibrationCallback = callback;
   }
 
   private void EndCalibration()
@@ -93,6 +97,9 @@ public class CalibrationManager : MonoBehaviour
 
     // Run calculation
     CalculateCalibrationValues();
+
+    // Run callback function if specified
+    CalibrationCallback?.Invoke();
   }
 
   private void CalculateCalibrationValues()
@@ -123,7 +130,8 @@ public class CalibrationManager : MonoBehaviour
 
       Vector2 L_Offset = new Vector2(L_xAvg, L_yAvg);
       Vector2 R_Offset = new Vector2(R_xAvg, R_yAvg);
-      Debug.Log(PointLocation + ": " + L_Offset.ToString() + " | " + R_Offset.ToString());
+
+      Logger.Log(PointLocation + ": " + L_Offset.ToString() + " | " + R_Offset.ToString());
     }
   }
 
@@ -161,9 +169,6 @@ public class CalibrationManager : MonoBehaviour
         Vector2 l_p_2 = new Vector2(l_p.x, l_p.y);
         Vector2 r_p_2 = new Vector2(r_p.x, r_p.y);
         Vector2 actual = new Vector2(FixationObject.transform.position.x, FixationObject.transform.position.y);
-
-        Logger.Log("Distance (L): " + Vector2.Distance(l_p_2, actual));
-        Logger.Log("Distance (R): " + Vector2.Distance(r_p_2, actual));
       }
     }
   }

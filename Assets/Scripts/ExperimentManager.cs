@@ -10,24 +10,26 @@ using MathNet.Numerics.Statistics;
 
 public class ExperimentManager : MonoBehaviour
 {
+    readonly int EyetrackingSetupTrials = 1;
+    readonly int EyetrackingSetupIndex = 1;
     readonly int WelcomeTrials = 1; // Welcome instructions, includes tutorial instructions
-    readonly int WelcomeBlockIndex = 1;
+    readonly int WelcomeBlockIndex = 2;
     readonly int TutorialTrials = 20; // Tutorial trials
-    readonly int TutorialBlockIndex = 2;
+    readonly int TutorialBlockIndex = 3;
 
     readonly int PrePracticeTrials = 1; // Practice instructions
-    readonly int PrePracticeBlockIndex = 3;
+    readonly int PrePracticeBlockIndex = 4;
     readonly int PracticeTrials = 20; // Practice trials
-    readonly int PracticeBlockIndex = 4;
+    readonly int PracticeBlockIndex = 5;
 
     readonly int PreMainTrials = 1; // Main instructions
-    readonly int PreMainBlockIndex = 5;
+    readonly int PreMainBlockIndex = 6;
 
     readonly int CalibrationTrials = 120;
-    readonly int CalibrationBlockIndex = 6;
+    readonly int CalibrationBlockIndex = 7;
 
     readonly int MainTrials = 200;
-    readonly int MainBlockIndex = 7;
+    readonly int MainBlockIndex = 8;
 
     private int ActiveBlock = 1; // Store the currently active Block
 
@@ -46,6 +48,7 @@ public class ExperimentManager : MonoBehaviour
     StimulusManager stimulusManager;
     UIManager uiManager;
     CameraManager cameraManager;
+    CalibrationManager calibrationManager;
 
     // Input parameters
     bool InputEnabled = false;
@@ -62,6 +65,7 @@ public class ExperimentManager : MonoBehaviour
     {
         // Create trial blocks
         session.CreateBlock(WelcomeTrials);
+        session.CreateBlock(EyetrackingSetupTrials);
         session.CreateBlock(TutorialTrials);
         session.CreateBlock(PrePracticeTrials);
         session.CreateBlock(PracticeTrials);
@@ -73,6 +77,7 @@ public class ExperimentManager : MonoBehaviour
         stimulusManager = GetComponent<StimulusManager>();
         uiManager = GetComponent<UIManager>();
         cameraManager = GetComponent<CameraManager>();
+        calibrationManager = GetComponent<CalibrationManager>();
 
         // Update the CameraManager value for the aperture offset to be the stimulus radius
         cameraManager.SetStimulusRadius(stimulusManager.GetStimulusRadius());
@@ -220,6 +225,10 @@ public class ExperimentManager : MonoBehaviour
             SetupWelcome();
             StartCoroutine(DisplayStimuli("welcome"));
         }
+        else if (ActiveBlock == EyetrackingSetupIndex)
+        {
+            StartCoroutine(DisplayStimuli("eyetracking"));
+        }
         else if (ActiveBlock == TutorialBlockIndex)
         {
             SetupMotion();
@@ -268,6 +277,21 @@ public class ExperimentManager : MonoBehaviour
 
             // Input delay
             yield return StartCoroutine(WaitSeconds(0.25f, true));
+        }
+        else if (stimuli == "eyetracking")
+        {
+            // Store the displayed stimuli type
+            Session.instance.CurrentTrial.result["name"] = stimuli;
+
+            uiManager.SetVisible(true);
+            uiManager.SetHeader("Eye-tracking Calibration");
+            uiManager.SetBody("Follow the red dot. Press start to continue.");
+            uiManager.SetLeftButton(false, false, "");
+            uiManager.SetRightButton(true, true, "Start");
+
+            // Input delay
+            yield return StartCoroutine(WaitSeconds(0.25f, true));
+            EnableInput(true);
         }
         else if (stimuli == "tutorial")
         {
@@ -617,6 +641,16 @@ public class ExperimentManager : MonoBehaviour
                     {
                         EndTrial();
                     }
+                }
+                else if (ActiveBlock == EyetrackingSetupIndex)
+                {
+                    // Hide the UI
+                    uiManager.SetVisible(false);
+
+                    // Trigger eye-tracking calibration the end the trial
+                    calibrationManager.RunCalibration(() => {
+                        EndTrial();
+                    });
                 }
                 else if (
                     ActiveBlock == TutorialBlockIndex ||
