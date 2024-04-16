@@ -20,10 +20,14 @@ namespace UXF
         [SerializeField]
         private bool showIndicator = false;
         private GameObject indicator;
+        private GameObject indicatorCorrected;
 
         // OVR classes
         private OVREyeGaze eyeGazeComponent;
         private OVRFaceExpressions faceComponent;
+
+        // Calibration class
+        private CalibrationManager calibrationManager;
 
         // Data variables
         public override string MeasurementDescriptor => "gaze";
@@ -37,6 +41,9 @@ namespace UXF
         public void Start()
         {
             Logger = FindObjectOfType<LoggerManager>();
+
+            // Get calibration component
+            calibrationManager = FindObjectOfType<CalibrationManager>();
 
             // Get OVR components
             eyeGazeComponent = GetComponentInParent<OVREyeGaze>();
@@ -68,6 +75,13 @@ namespace UXF
                 // Create a new indicator object
                 indicator = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 indicator.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+
+                // Indicator to show the position of "corrected" gaze data
+                indicatorCorrected = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                indicatorCorrected.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+                indicatorCorrected.GetComponent<Renderer>().material = new Material(Shader.Find("Sprites/Default"));
+                indicatorCorrected.GetComponent<Renderer>().material.SetColor("_Color", Color.green);
+                indicatorCorrected.SetActive(false);
 
                 // Assign the colour based on left or right eye
                 var indicatorRenderer = indicator.GetComponent<Renderer>();
@@ -105,6 +119,14 @@ namespace UXF
             if (showIndicator == true && indicator != null)
             {
                 indicator.transform.position = GetGazeEstimate();
+
+                if (calibrationManager && calibrationManager.CalibratedStatus() == true)
+                {
+                    indicatorCorrected.SetActive(true);
+                    Vector3 BandAid = calibrationManager.GetOffsetAverage().Item1;
+                    Vector3 CorrectedGaze = GetGazeEstimate() - BandAid;
+                    indicatorCorrected.transform.position = CorrectedGaze;
+                }
             }
 
             float LBlinkWeight = -1.0f;

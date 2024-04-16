@@ -8,6 +8,7 @@ using UXF;
 public class CalibrationManager : MonoBehaviour
 {
   private bool IsCalibrating = false;
+  private bool IsCalibrated = false;
 
   // Set of points to be displayed for fixation
   private int UnitVectorIndex = 0;
@@ -56,6 +57,7 @@ public class CalibrationManager : MonoBehaviour
     {"S", null },
     {"SE", null },
   };
+  private Tuple<Vector2, Vector2> AverageOffset;
 
   private readonly float UnitDistance = 2.0f;
 
@@ -103,6 +105,7 @@ public class CalibrationManager : MonoBehaviour
   private void EndCalibration()
   {
     IsCalibrating = false;
+    IsCalibrated = true;
     FixationObject.SetActive(IsCalibrating);
 
     // Run calculation
@@ -112,25 +115,45 @@ public class CalibrationManager : MonoBehaviour
     CalibrationCallback?.Invoke();
   }
 
+  public bool CalibratedStatus()
+  {
+    return IsCalibrated;
+  }
+
   private void CalculateCalibrationValues()
   {
     // Function to examine each point and calculate average vector difference from each point
     foreach (string UnitVectorDirection in OffsetData.Keys)
     {
-      Vector3 VectorSum = Vector3.zero;
+      Vector2 VectorSum = Vector2.zero;
       foreach (Tuple<Vector3, Vector3> Pair in OffsetData[UnitVectorDirection])
       {
-        VectorSum += Pair.Item1 + Pair.Item2;
+        // Get the sum of the left gaze and the actual position of the dot
+        Vector2 Result = new Vector2(Pair.Item1.x, Pair.Item1.y) + (PointUnitVectors[UnitVectorDirection] * UnitDistance);
+        VectorSum += new Vector2(Pair.Item1.x, Pair.Item1.y) + (PointUnitVectors[UnitVectorDirection] * UnitDistance);
       }
-      VectorSum *= 1 / OffsetData[UnitVectorDirection].Count;
-
+      VectorSum /= OffsetData[UnitVectorDirection].Count;
+      OffsetVectors[UnitVectorDirection] = new Tuple<Vector2, Vector2>(VectorSum, VectorSum);
       Logger.Log(UnitVectorDirection + ": " + VectorSum.ToString());
     }
+
+    Vector2 AverageOffsetCorrection = Vector2.zero;
+    foreach (string UnitVectorDirection in OffsetData.Keys)
+    {
+      AverageOffsetCorrection += OffsetVectors[UnitVectorDirection].Item1;
+    }
+    AverageOffsetCorrection /=  OffsetData.Keys.Count;
+    AverageOffset = new (AverageOffsetCorrection, AverageOffsetCorrection);
   }
 
   public Dictionary<string, Tuple<Vector2, Vector2>> GetOffsetVectors()
   {
     return OffsetVectors;
+  }
+
+  public Tuple<Vector2, Vector2> GetOffsetAverage()
+  {
+    return AverageOffset;
   }
 
   void Update()
