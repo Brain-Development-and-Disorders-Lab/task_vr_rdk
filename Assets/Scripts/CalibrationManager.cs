@@ -77,7 +77,7 @@ public class CalibrationManager : MonoBehaviour
   {
     Logger = FindAnyObjectByType<LoggerManager>();
     SetupCalibration();
-    // RunCalibration();
+    RunCalibration();
   }
 
   public void RunCalibration()
@@ -90,6 +90,41 @@ public class CalibrationManager : MonoBehaviour
   {
     IsCalibrating = false;
     FixationObject.SetActive(IsCalibrating);
+
+    // Run calculation
+    CalculateCalibrationValues();
+  }
+
+  private void CalculateCalibrationValues()
+  {
+    // Function to examine each point and calculate average vector difference from each point
+    foreach (string PointLocation in PointLocaleData.Keys)
+    {
+      List<Tuple<Vector3, Vector3>> PointPairs = PointLocaleData[PointLocation];
+      float L_xSum = 0.0f;
+      float L_ySum = 0.0f;
+      float R_xSum = 0.0f;
+      float R_ySum = 0.0f;
+
+      // Extract all x and y coordinates, sum for average calculation
+      foreach (Tuple<Vector3, Vector3> Pair in PointPairs)
+      {
+        L_xSum += Pair.Item1.x;
+        L_ySum += Pair.Item1.y;
+        R_xSum += Pair.Item2.x;
+        R_ySum += Pair.Item2.y;
+      }
+
+      // Calculate average values and generate Vector2 representations
+      float L_xAvg = L_xSum / PointPairs.Count;
+      float L_yAvg = L_ySum / PointPairs.Count;
+      float R_xAvg = R_xSum / PointPairs.Count;
+      float R_yAvg = R_ySum / PointPairs.Count;
+
+      Vector2 L_Offset = new Vector2(L_xAvg, L_yAvg);
+      Vector2 R_Offset = new Vector2(R_xAvg, R_yAvg);
+      Debug.Log(PointLocation + ": " + L_Offset.ToString() + " | " + R_Offset.ToString());
+    }
   }
 
   void Update()
@@ -105,6 +140,7 @@ public class CalibrationManager : MonoBehaviour
         if (PointLocaleIndex + 1 > AllPointLocales.Count - 1)
         {
           PointLocaleIndex = 0;
+          EndCalibration();
         }
         else
         {
