@@ -117,32 +117,14 @@ public class CalibrationManager : MonoBehaviour
     // Function to examine each point and calculate average vector difference from each point
     foreach (string UnitVectorDirection in OffsetData.Keys)
     {
-      List<Tuple<Vector3, Vector3>> PointPairs = OffsetData[UnitVectorDirection];
-      float L_xSum = 0.0f;
-      float L_ySum = 0.0f;
-      float R_xSum = 0.0f;
-      float R_ySum = 0.0f;
-
-      // Extract all x and y coordinates, sum for average calculation
-      foreach (Tuple<Vector3, Vector3> Pair in PointPairs)
+      Vector3 VectorSum = Vector3.zero;
+      foreach (Tuple<Vector3, Vector3> Pair in OffsetData[UnitVectorDirection])
       {
-        L_xSum += Pair.Item1.x;
-        L_ySum += Pair.Item1.y;
-        R_xSum += Pair.Item2.x;
-        R_ySum += Pair.Item2.y;
+        VectorSum += Pair.Item1 + Pair.Item2;
       }
+      VectorSum *= 1 / OffsetData[UnitVectorDirection].Count;
 
-      // Calculate average values and generate Vector2 representations
-      float L_xAvg = L_xSum / PointPairs.Count;
-      float L_yAvg = L_ySum / PointPairs.Count;
-      float R_xAvg = R_xSum / PointPairs.Count;
-      float R_yAvg = R_ySum / PointPairs.Count;
-
-      Vector2 L_Offset = new Vector2(L_xAvg, L_yAvg);
-      Vector2 R_Offset = new Vector2(R_xAvg, R_yAvg);
-      OffsetVectors[UnitVectorDirection] = new Tuple<Vector2, Vector2> (L_Offset, R_Offset);
-
-      Logger.Log(UnitVectorDirection + ": " + L_Offset.ToString() + " | " + R_Offset.ToString());
+      Logger.Log(UnitVectorDirection + ": " + VectorSum.ToString());
     }
   }
 
