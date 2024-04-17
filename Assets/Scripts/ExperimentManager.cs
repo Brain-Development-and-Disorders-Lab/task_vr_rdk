@@ -8,6 +8,10 @@ using UXF;
 using System.Linq;
 using MathNet.Numerics.Statistics;
 
+// Custom namespaces
+using Calibration;
+using Stimuli;
+
 public class ExperimentManager : MonoBehaviour
 {
     readonly int EyetrackingSetupTrials = 1;

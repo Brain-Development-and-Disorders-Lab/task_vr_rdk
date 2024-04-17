@@ -5,6 +5,9 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 
+// Custom namespaces
+using Calibration;
+
 namespace UXF
 {
     /// <summary>
@@ -120,10 +123,10 @@ namespace UXF
             {
                 indicator.transform.position = GetGazeEstimate();
 
-                if (calibrationManager && calibrationManager.CalibratedStatus() == true)
+                if (calibrationManager && calibrationManager.CalibrationStatus() == true)
                 {
                     indicatorCorrected.SetActive(true);
-                    Vector3 BandAid = calibrationManager.GetOffsetAverage().Item1;
+                    Vector3 BandAid = calibrationManager.GetGlobalOffset().GetLeft();
                     Vector3 CorrectedGaze = GetGazeEstimate() - BandAid;
                     indicatorCorrected.transform.position = CorrectedGaze;
                 }
