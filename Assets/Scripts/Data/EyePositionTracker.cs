@@ -23,7 +23,7 @@ namespace UXF
         [SerializeField]
         private bool showIndicator = false;
         private GameObject indicator;
-        private GameObject indicatorCorrected;
+        private GameObject indicatorCalibrated;
 
         // OVR classes
         private OVREyeGaze eyeGazeComponent;
@@ -80,11 +80,11 @@ namespace UXF
                 indicator.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
 
                 // Indicator to show the position of "corrected" gaze data
-                indicatorCorrected = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                indicatorCorrected.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
-                indicatorCorrected.GetComponent<Renderer>().material = new Material(Shader.Find("Sprites/Default"));
-                indicatorCorrected.GetComponent<Renderer>().material.SetColor("_Color", Color.green);
-                indicatorCorrected.SetActive(false);
+                indicatorCalibrated = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                indicatorCalibrated.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+                indicatorCalibrated.GetComponent<Renderer>().material = new Material(Shader.Find("Sprites/Default"));
+                indicatorCalibrated.GetComponent<Renderer>().material.SetColor("_Color", Color.green);
+                indicatorCalibrated.SetActive(false);
 
                 // Assign the colour based on left or right eye
                 var indicatorRenderer = indicator.GetComponent<Renderer>();
@@ -108,6 +108,16 @@ namespace UXF
         }
 
         /// <summary>
+        /// Determine which visual quadrant the gaze is placed in, and dynamically apply the adjustment vector to the
+        /// raw gaze vector to correct for gaze calibration
+        /// </summary>
+        /// <param name="currentGaze"></param>
+        private void ApplyDynamicGazeCorrection(Vector3 currentGaze)
+        {
+            indicatorCalibrated.transform.position = currentGaze - (Vector3) calibrationManager.GetGlobalOffset().GetLeft();
+        }
+
+        /// <summary>
         /// Returns current position and rotation values of the eye
         /// </summary>
         /// <returns></returns>
@@ -121,14 +131,14 @@ namespace UXF
             // If using indicators, update the position
             if (showIndicator == true && indicator != null)
             {
+                // Apply the raw position to the primary indicator
                 indicator.transform.position = GetGazeEstimate();
 
                 if (calibrationManager && calibrationManager.CalibrationStatus() == true)
                 {
-                    indicatorCorrected.SetActive(true);
-                    Vector3 BandAid = calibrationManager.GetGlobalOffset().GetLeft();
-                    Vector3 CorrectedGaze = GetGazeEstimate() - BandAid;
-                    indicatorCorrected.transform.position = CorrectedGaze;
+                    // If a calibration procedure has taken place, show the adjusted gaze estimate
+                    indicatorCalibrated.SetActive(true);
+                    ApplyDynamicGazeCorrection(GetGazeEstimate());
                 }
             }
 
