@@ -12,20 +12,21 @@ namespace Calibration
         private bool CalibrationActive = false;
         private bool CalibrationComplete = false;
 
-        // Set of points to be displayed for fixation
+        // Set of points to be displayed for fixation and the "path" of the fixation object
         private int UnitVectorIndex = 0;
         private Vector2 UnitVector; // The active unit vector
-        private readonly Dictionary<string, Vector2> UnitVectors = new() {
-            {"C", new Vector2(0, 0)},
-            {"E", new Vector2(1, 0)},
-            {"NE", new Vector2(1, 1)},
-            {"N", new Vector2(0, 1)},
-            {"NW", new Vector2(-1, 1)},
-            {"W", new Vector2(-1, 0)},
-            {"SW", new Vector2(-1, -1)},
-            {"S", new Vector2(0, -1)},
-            {"SE", new Vector2(1, -1)},
+        private readonly float UnitDistance = 2.0f;
+        private readonly Dictionary<string, Vector2> UnitVectorsPath = new() {
+            {"c", new Vector2(0, 0)},
+            {"q_1", new Vector2(1, 1)},
+            {"q_2", new Vector2(-1, 1)},
+            {"q_3", new Vector2(-1, -1)},
+            {"q_4", new Vector2(1, -1)},
         };
+        private float UpdateTimer = 0.0f;
+        private readonly float PathInterval = 1.5f; // Duration of each point being displayed in the path
+        private GameObject FixationObject;
+        private Action CalibrationCallback;
 
         private LoggerManager Logger;
 
@@ -37,35 +38,23 @@ namespace Calibration
 
         // Data storage
         private Dictionary<string, List<GazeVector>> GazeData = new() {
-            {"E", new List<GazeVector>() },
-            {"C", new List<GazeVector>() },
-            {"NE", new List<GazeVector>() },
-            {"N", new List<GazeVector>() },
-            {"NW", new List<GazeVector>() },
-            {"W", new List<GazeVector>() },
-            {"SW", new List<GazeVector>() },
-            {"S", new List<GazeVector>() },
-            {"SE", new List<GazeVector>() },
+            {"c", new List<GazeVector>() },
+            {"q_1", new List<GazeVector>() },
+            {"q_2", new List<GazeVector>() },
+            {"q_3", new List<GazeVector>() },
+            {"q_4", new List<GazeVector>() },
         };
 
         // Calculated offset vectors
         private Dictionary<string, GazeVector> DirectionalOffsets = new();
         private GazeVector GlobalOffset;
 
-        private readonly float UnitDistance = 2.0f;
-
         [SerializeField]
         public GameObject StimulusAnchor;
-        private GameObject FixationObject;
-
-        private float UpdateTimer = 0.0f;
-        private readonly float UpdateInterval = 1.5f;
-
-        private Action CalibrationCallback;
 
         private void SetupCalibration()
         {
-            UnitVector = UnitVectors[UnitVectors.Keys.ToList()[UnitVectorIndex]];
+            UnitVector = UnitVectorsPath[UnitVectorsPath.Keys.ToList()[UnitVectorIndex]];
 
             // Create moving sphere object
             FixationObject = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -118,26 +107,37 @@ namespace Calibration
             // Function to examine each point and calculate average vector difference from each point
             foreach (string UnitVectorDirection in GazeData.Keys)
             {
-                Vector2 VectorSum = Vector2.zero;
+                Vector2 L_vectorSum = Vector2.zero;
+                Vector2 R_vectorSum = Vector2.zero;
+
                 foreach (GazeVector VectorPair in GazeData[UnitVectorDirection])
                 {
-                    // Get the sum of the left gaze and the actual position of the dot
-                    Vector2 Result = new Vector2(VectorPair.GetLeft().x, VectorPair.GetLeft().y) + (UnitVectors[UnitVectorDirection] * UnitDistance);
-                    VectorSum += new Vector2(VectorPair.GetLeft().x, VectorPair.GetLeft().y) + (UnitVectors[UnitVectorDirection] * UnitDistance);
+                    // Get the sum of the gaze vector and the actual position of the dot for each eye
+                    Vector2 L_result = new Vector2(VectorPair.GetLeft().x, VectorPair.GetLeft().y) + (UnitVectorsPath[UnitVectorDirection] * UnitDistance);
+                    L_vectorSum += new Vector2(VectorPair.GetLeft().x, VectorPair.GetLeft().y) + (UnitVectorsPath[UnitVectorDirection] * UnitDistance);
+
+                    Vector2 R_result = new Vector2(VectorPair.GetRight().x, VectorPair.GetRight().y) + (UnitVectorsPath[UnitVectorDirection] * UnitDistance);
+                    R_vectorSum += new Vector2(VectorPair.GetRight().x, VectorPair.GetRight().y) + (UnitVectorsPath[UnitVectorDirection] * UnitDistance);
                 }
-                VectorSum /= GazeData[UnitVectorDirection].Count;
-                DirectionalOffsets.Add(UnitVectorDirection, new GazeVector(VectorSum, VectorSum));
-                Logger.Log(UnitVectorDirection + ": " + VectorSum.ToString());
+
+                L_vectorSum /= GazeData[UnitVectorDirection].Count;
+                R_vectorSum /= GazeData[UnitVectorDirection].Count;
+                DirectionalOffsets.Add(UnitVectorDirection, new GazeVector(L_vectorSum, R_vectorSum));
             }
 
-            // Calculate a global offset correction vector
-            Vector2 AverageOffsetCorrection = Vector2.zero;
+            // Calculate a global offset correction vector for each eye
+            Vector2 L_averageOffsetCorrection = Vector2.zero;
+            Vector2 R_averageOffsetCorrection = Vector2.zero;
+
             foreach (string UnitVectorDirection in GazeData.Keys)
             {
-                AverageOffsetCorrection += DirectionalOffsets[UnitVectorDirection].GetLeft();
+                L_averageOffsetCorrection += DirectionalOffsets[UnitVectorDirection].GetLeft();
+                R_averageOffsetCorrection += DirectionalOffsets[UnitVectorDirection].GetRight();
             }
-            AverageOffsetCorrection /=  GazeData.Keys.Count;
-            GlobalOffset = new (AverageOffsetCorrection, AverageOffsetCorrection);
+
+            L_averageOffsetCorrection /=  GazeData.Keys.Count;
+            R_averageOffsetCorrection /=  GazeData.Keys.Count;
+            GlobalOffset = new (L_averageOffsetCorrection, R_averageOffsetCorrection);
         }
 
         public Dictionary<string, GazeVector> GetDirectionalOffsets()
@@ -150,27 +150,34 @@ namespace Calibration
             return GlobalOffset;
         }
 
+        public static Dictionary<string, Tuple<float, float>> GetQuadrants()
+        {
+            return new() {
+                {"q_1", new Tuple<float, float>(0, 89)},
+                {"q_2", new Tuple<float, float>(90, 179)},
+                {"q_3", new Tuple<float, float>(180, 269)},
+                {"q_4", new Tuple<float, float>(270, 360)},
+            };
+        }
+
         void Update()
         {
             if (CalibrationActive)
             {
                 UpdateTimer += Time.deltaTime;
-
-                if (UpdateTimer >= UpdateInterval)
+                if (UpdateTimer >= PathInterval)
                 {
                     // Shift to the next position if the timer has been reached
-                    FixationObject.transform.localPosition = new Vector3(UnitVector.x * UnitDistance, UnitVector.y * UnitDistance, 0.0f);
-                    if (UnitVectorIndex + 1 > UnitVectors.Count - 1)
+                    UnitVectorIndex += 1;
+                    if (UnitVectorIndex > UnitVectorsPath.Count - 1)
                     {
                         UnitVectorIndex = 0;
                         EndCalibration();
                     }
-                    else
-                    {
-                        UnitVectorIndex += 1;
-                    }
-                    UnitVector = UnitVectors[UnitVectors.Keys.ToList()[UnitVectorIndex]];
+                    UnitVector = UnitVectorsPath[UnitVectorsPath.Keys.ToList()[UnitVectorIndex]];
+                    FixationObject.transform.localPosition = new Vector3(UnitVector.x * UnitDistance, UnitVector.y * UnitDistance, 0.0f);
 
+                    // Reset the timer
                     UpdateTimer = 0.0f;
                 }
                 else
@@ -178,7 +185,7 @@ namespace Calibration
                     // Capture eye tracking data and store alongside location
                     Vector3 l_p = leftEyeTracker.GetGazeEstimate();
                     Vector3 r_p = rightEyeTracker.GetGazeEstimate();
-                    GazeData[UnitVectors.Keys.ToList()[UnitVectorIndex]].Add(new (l_p, r_p));
+                    GazeData[UnitVectorsPath.Keys.ToList()[UnitVectorIndex]].Add(new (l_p, r_p));
                 }
             }
         }

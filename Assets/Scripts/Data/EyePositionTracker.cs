@@ -1,8 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System;
 using System.Collections;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 // Custom namespaces
@@ -114,7 +115,32 @@ namespace UXF
         /// <param name="currentGaze"></param>
         private void ApplyDynamicGazeCorrection(Vector3 currentGaze)
         {
-            indicatorCalibrated.transform.position = currentGaze - (Vector3) calibrationManager.GetGlobalOffset().GetLeft();
+            // Calculate the vector angle between the gaze and an origin unit vector (in degrees)
+            float vectorAngle = Vector3.Angle(new Vector3(1.0f, 0.0f), currentGaze);
+
+            // Determine the quadrant the vector is located in
+            string quadrant = "c";
+            Dictionary<string, Tuple<float, float>> quadrants = CalibrationManager.GetQuadrants();
+            foreach (string q in quadrants.Keys)
+            {
+                if (vectorAngle >= quadrants[q].Item1 && vectorAngle < quadrants[q].Item2)
+                {
+                    quadrant = q;
+                    break;
+                }
+            }
+
+            // Get the offset vector for the specific eye
+            Vector3 offsetVector;
+            if (TrackedEye == "left")
+            {
+                offsetVector = (Vector3) calibrationManager.GetDirectionalOffsets()[quadrant].GetLeft();
+            }
+            else
+            {
+                offsetVector = (Vector3) calibrationManager.GetDirectionalOffsets()[quadrant].GetRight();
+            }
+            indicatorCalibrated.transform.position = currentGaze - offsetVector;
         }
 
         /// <summary>
@@ -134,9 +160,9 @@ namespace UXF
                 // Apply the raw position to the primary indicator
                 indicator.transform.position = GetGazeEstimate();
 
+                // If a calibration procedure has taken place, show the adjusted gaze estimate
                 if (calibrationManager && calibrationManager.CalibrationStatus() == true)
                 {
-                    // If a calibration procedure has taken place, show the adjusted gaze estimate
                     indicatorCalibrated.SetActive(true);
                     ApplyDynamicGazeCorrection(GetGazeEstimate());
                 }
