@@ -1,10 +1,6 @@
 using UnityEngine;
-using UnityEngine.UI;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 
 // Custom namespaces
 using Calibration;
@@ -14,6 +10,7 @@ namespace UXF
     /// <summary>
     /// Attach this component to a GameObject and assign it in the trackedObjects field in an ExperimentSession to automatically record position/rotation of the object at each frame.
     /// </summary>
+    [RequireComponent(typeof(OVREyeGaze))]
     public class EyePositionTracker : Tracker
     {
         // Default gaze distance (should be mapped to the "surface" of the furthest 2D stimulus)
@@ -103,6 +100,10 @@ namespace UXF
             }
         }
 
+        /// <summary>
+        /// Utility function to access the realtime gaze estimate from other classes
+        /// </summary>
+        /// <returns>Gaze estimate as Vector3</returns>
         public Vector3 GetGazeEstimate()
         {
             return GazeEstimate;
