@@ -1,18 +1,26 @@
 using UnityEngine;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UXF;
 
+// Custom namespaces
+using ExperimentUtilities;
+
 namespace Calibration
 {
+    /// <summary>
+    /// Manager for headset calibration operations. Currently handles setup, operation, and continual
+    /// adjustment for eye-tracking calibration.
+    /// </summary>
     public class CalibrationManager : MonoBehaviour
     {
-        private bool CalibrationActive = false;
-        private bool CalibrationComplete = false;
+        // Flags for state management
+        private bool CalibrationActive = false; // 'true' when running calibration operations
+        private bool CalibrationComplete = false; // 'true' once operations complete
 
-        // Set of points to be displayed for fixation and the "path" of the fixation object
+        // Set of points to be displayed for fixation and the "path" of the fixation object used
+        // for eye-tracking calibration
         private int UnitVectorIndex = 0;
         private Vector2 UnitVector; // The active unit vector
         private readonly float UnitDistance = 2.0f;
@@ -25,10 +33,8 @@ namespace Calibration
         };
         private float UpdateTimer = 0.0f;
         private readonly float PathInterval = 1.5f; // Duration of each point being displayed in the path
-        private GameObject FixationObject;
-        private Action CalibrationCallback;
-
-        private LoggerManager Logger;
+        private GameObject FixationObject; // Object moved around the screen
+        private Action CalibrationCallback; // Optional callback function executed after calibration complete
 
         // Left and right EyeGazeData objects
         [SerializeField]
@@ -52,11 +58,16 @@ namespace Calibration
         [SerializeField]
         public GameObject StimulusAnchor;
 
+        private LoggerManager Logger;
+
+        /// <summary>
+        /// Setup function to initialize the fixation object and movement path of object
+        /// </summary>
         private void SetupCalibration()
         {
             UnitVector = UnitVectorsPath[UnitVectorsPath.Keys.ToList()[UnitVectorIndex]];
 
-            // Create moving sphere object
+            // Create moving fixation object
             FixationObject = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             FixationObject.name = "calibration_fixation";
             FixationObject.transform.SetParent(StimulusAnchor.transform, false);
@@ -65,16 +76,24 @@ namespace Calibration
             FixationObject.GetComponent<MeshRenderer>().material.SetColor("_Color", Color.red);
             FixationObject.SetActive(false);
 
-            // Set initial position
+            // Set initial position of fixation object
             FixationObject.transform.localPosition = new Vector3(UnitVector.x * UnitDistance, UnitVector.y * UnitDistance, 0.0f);
         }
 
+        /// <summary>
+        /// Wrapper function to initialize class and prepare for calibration operations
+        /// </summary>
         void Start()
         {
+            // Grab the Logger object
             Logger = FindAnyObjectByType<LoggerManager>();
             SetupCalibration();
         }
 
+        /// <summary>
+        /// Public function to externally execute the calibration operations when required
+        /// </summary>
+        /// <param name="callback">Optional callback function to execute at calibration completion</param>
         public void RunCalibration(Action callback = null)
         {
             CalibrationActive = true;

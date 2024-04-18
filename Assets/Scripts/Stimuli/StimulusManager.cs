@@ -38,11 +38,11 @@ namespace Stimuli
 
         // Stimuli groups, assembled from individual components
         private readonly List<string> AllStimuli = new() {
-        "fixation",
-        "decision",
-        "motion",
-        "feedback_correct",
-        "feedback_incorrect"
+            "fixation",
+            "decision",
+            "motion",
+            "feedback_correct",
+            "feedback_incorrect"
         };
         private Dictionary<string, List<GameObject>> Stimuli = new();
         private Dictionary<string, bool> StimuliVisibility = new();
