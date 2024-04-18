@@ -132,9 +132,9 @@ public class ExperimentManager : MonoBehaviour
             foreach (Trial t in CalibrationTrials)
             {
                 // Get each coherence value, split by "," token and cast back to float
-                BothCoherenceValues.Add(float.Parse(((string) t.result["combinedCoherences"]).Split(",")[LOW_INDEX]));
-                LeftCoherenceValues.Add(float.Parse(((string) t.result["leftCoherences"]).Split(",")[LOW_INDEX]));
-                RightCoherenceValues.Add(float.Parse(((string) t.result["rightCoherences"]).Split(",")[LOW_INDEX]));
+                BothCoherenceValues.Add(float.Parse(((string)t.result["combinedCoherences"]).Split(",")[LOW_INDEX]));
+                LeftCoherenceValues.Add(float.Parse(((string)t.result["leftCoherences"]).Split(",")[LOW_INDEX]));
+                RightCoherenceValues.Add(float.Parse(((string)t.result["rightCoherences"]).Split(",")[LOW_INDEX]));
             }
 
             // Calculate coherence median values
@@ -203,7 +203,7 @@ public class ExperimentManager : MonoBehaviour
         Session.instance.CurrentTrial.result["rightCoherences"] = Coherences["right"][0] + "," + Coherences["right"][1];
 
         // Set the reference direction randomly
-        float dotDirection = UnityEngine.Random.value > 0.5f ? 0.0f : (float) Math.PI;
+        float dotDirection = UnityEngine.Random.value > 0.5f ? 0.0f : (float)Math.PI;
         stimulusManager.SetDirection(dotDirection);
         Session.instance.CurrentTrial.result["referenceDirection"] = stimulusManager.GetDirection() == 0.0f ? "right" : "left";
 
@@ -363,7 +363,7 @@ public class ExperimentManager : MonoBehaviour
 
             uiManager.SetVisible(true);
             uiManager.SetHeader("Main Trials");
-            uiManager.SetBody("That concludes the practice trials. You will now play " + (CalibrationTrials + MainTrials) +  " main trials.\n\nYou will not be shown if you answered correctly or not, but sometimes you will be asked whether you were more confident in that trial than in the previous trial.\n\nWhen you are ready and comfortable, press the right controller trigger to select <b>Next</b> and continue.");
+            uiManager.SetBody("That concludes the practice trials. You will now play " + (CalibrationTrials + MainTrials) + " main trials.\n\nYou will not be shown if you answered correctly or not, but sometimes you will be asked whether you were more confident in that trial than in the previous trial.\n\nWhen you are ready and comfortable, press the right controller trigger to select <b>Next</b> and continue.");
             uiManager.SetLeftButton(false, true, "Back");
             uiManager.SetRightButton(true, true, "Next");
 
@@ -453,14 +453,14 @@ public class ExperimentManager : MonoBehaviour
         {
             // Store timing data
             Session.instance.CurrentTrial.result["referenceEnd"] = Time.time;
-            Session.instance.CurrentTrial.result["referenceRT"] = (float) Session.instance.CurrentTrial.result["referenceEnd"] - (float) Session.instance.CurrentTrial.result["referenceStart"];
+            Session.instance.CurrentTrial.result["referenceRT"] = (float)Session.instance.CurrentTrial.result["referenceEnd"] - (float)Session.instance.CurrentTrial.result["referenceStart"];
 
             // Store the selection value
             Session.instance.CurrentTrial.result["selectedDirection"] = selection;
 
             // Determine if a correct response was made
             Session.instance.CurrentTrial.result["selectedCorrectDirection"] = false;
-            if (selection == "left" && stimulusManager.GetDirection() == (float) Math.PI)
+            if (selection == "left" && stimulusManager.GetDirection() == (float)Math.PI)
             {
                 Session.instance.CurrentTrial.result["selectedCorrectDirection"] = true;
             }
@@ -472,14 +472,14 @@ public class ExperimentManager : MonoBehaviour
             if (ActiveBlock == CalibrationBlockIndex)
             {
                 // If in the calibration stage, adjust the coherence value
-                if ((bool) Session.instance.CurrentTrial.result["selectedCorrectDirection"] == true)
+                if ((bool)Session.instance.CurrentTrial.result["selectedCorrectDirection"] == true)
                 {
                     // Adjust coherence if two consecutive correct "calibration" trials
                     if (Session.instance.CurrentTrial.numberInBlock > 1)
                     {
                         Trial PreviousTrial = Session.instance.CurrentBlock.GetRelativeTrial(Session.instance.CurrentTrial.numberInBlock - 1);
-                        if ((bool) Session.instance.CurrentTrial.result["selectedCorrectDirection"] == true &&
-                            (bool) PreviousTrial.result["selectedCorrectDirection"] == true)
+                        if ((bool)Session.instance.CurrentTrial.result["selectedCorrectDirection"] == true &&
+                            (bool)PreviousTrial.result["selectedCorrectDirection"] == true)
                         {
                             // Modify "both", grouped coherence
                             Coherences["both"][LOW_INDEX] -= 0.01f;
@@ -524,7 +524,7 @@ public class ExperimentManager : MonoBehaviour
             if (ActiveBlock == PracticeBlockIndex)
             {
                 // Display feedback during the practice trials
-                if ((bool) Session.instance.CurrentTrial.result["selectedCorrectDirection"] == true)
+                if ((bool)Session.instance.CurrentTrial.result["selectedCorrectDirection"] == true)
                 {
                     StartCoroutine(DisplayStimuli("feedback_correct"));
                 }
@@ -547,7 +547,7 @@ public class ExperimentManager : MonoBehaviour
         {
             // Store timing data
             Session.instance.CurrentTrial.result["confidenceEnd"] = Time.time;
-            Session.instance.CurrentTrial.result["confidenceRT"] = (float) Session.instance.CurrentTrial.result["confidenceEnd"] - (float) Session.instance.CurrentTrial.result["confidenceStart"];
+            Session.instance.CurrentTrial.result["confidenceRT"] = (float)Session.instance.CurrentTrial.result["confidenceEnd"] - (float)Session.instance.CurrentTrial.result["confidenceStart"];
 
             // Store the confidence selection
             Session.instance.CurrentTrial.result["confidenceSelection"] = selection;
@@ -651,7 +651,8 @@ public class ExperimentManager : MonoBehaviour
                     uiManager.SetVisible(false);
 
                     // Trigger eye-tracking calibration the end the trial
-                    calibrationManager.RunCalibration(() => {
+                    calibrationManager.RunCalibration(() =>
+                    {
                         EndTrial();
                     });
                 }

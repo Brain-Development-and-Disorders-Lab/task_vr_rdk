@@ -30,7 +30,7 @@ namespace Stimuli
         private float DotWorldRadius;
         private List<Dot> Dots = new();
         private float DotCoherence = 0.5f;
-        private float DotDirection = (float) Math.PI; // "reference" dot type direction
+        private float DotDirection = (float)Math.PI; // "reference" dot type direction
 
         // Timer for preserving consistent update rates
         private float UpdateTimer = 0.0f;
@@ -133,7 +133,8 @@ namespace Stimuli
                 foreach (Dot dot in Dots)
                 {
                     // Only set the dot to be visible if it is within the aperture
-                    if (visibility == true & Mathf.Sqrt(Mathf.Pow(dot.GetPosition().x, 2.0f) + Mathf.Pow(dot.GetPosition().y, 2.0f)) <= ArcWorldRadius) {
+                    if (visibility == true & Mathf.Sqrt(Mathf.Pow(dot.GetPosition().x, 2.0f) + Mathf.Pow(dot.GetPosition().y, 2.0f)) <= ArcWorldRadius)
+                    {
                         dot.SetVisible(true);
                     }
                     else
@@ -171,39 +172,39 @@ namespace Stimuli
 
         public GameObject CreateArc(float radius, float startAngle, float endAngle, int segments, Color color)
         {
-        // Create base GameObject
-        GameObject arcObject = new GameObject();
-        arcObject.name = "rdk_arc_object";
-        arcObject.AddComponent<LineRenderer>();
-        arcObject.transform.SetParent(stimulusAnchor.transform, false);
-        arcObject.SetActive(false);
+            // Create base GameObject
+            GameObject arcObject = new GameObject();
+            arcObject.name = "rdk_arc_object";
+            arcObject.AddComponent<LineRenderer>();
+            arcObject.transform.SetParent(stimulusAnchor.transform, false);
+            arcObject.SetActive(false);
 
-        // Generate points to form the arc
-        Vector3[] arcPoints = new Vector3[segments];
-        float angle = startAngle;
-        float arcLength = endAngle - startAngle;
+            // Generate points to form the arc
+            Vector3[] arcPoints = new Vector3[segments];
+            float angle = startAngle;
+            float arcLength = endAngle - startAngle;
 
-        for (int i = 0; i < segments; i++)
-        {
-            float x = Mathf.Sin(Mathf.Deg2Rad * angle) * radius;
-            float y = Mathf.Cos(Mathf.Deg2Rad * angle) * radius;
+            for (int i = 0; i < segments; i++)
+            {
+                float x = Mathf.Sin(Mathf.Deg2Rad * angle) * radius;
+                float y = Mathf.Cos(Mathf.Deg2Rad * angle) * radius;
 
-            arcPoints[i] = new Vector3(x, y, 0.0f);
+                arcPoints[i] = new Vector3(x, y, 0.0f);
 
-            angle += arcLength / segments;
-        }
+                angle += arcLength / segments;
+            }
 
-        // Create the LineRenderer
-        LineRenderer line = arcObject.GetComponent<LineRenderer>();
-        line.useWorldSpace = false;
-        line.positionCount = arcPoints.Length;
-        line.SetPositions(arcPoints);
-        line.material = new Material(Shader.Find("Sprites/Default"));
-        line.material.SetColor("_Color", color);
-        line.startWidth = ArcWorldWidth;
-        line.endWidth = ArcWorldWidth;
+            // Create the LineRenderer
+            LineRenderer line = arcObject.GetComponent<LineRenderer>();
+            line.useWorldSpace = false;
+            line.positionCount = arcPoints.Length;
+            line.SetPositions(arcPoints);
+            line.material = new Material(Shader.Find("Sprites/Default"));
+            line.material.SetColor("_Color", color);
+            line.startWidth = ArcWorldWidth;
+            line.endWidth = ArcWorldWidth;
 
-        return arcObject;
+            return arcObject;
         }
 
         public GameObject CreateFixationCross(string color = "white")

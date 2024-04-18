@@ -154,9 +154,9 @@ namespace Calibration
                 R_averageOffsetCorrection += DirectionalOffsets[UnitVectorDirection].GetRight();
             }
 
-            L_averageOffsetCorrection /=  GazeData.Keys.Count;
-            R_averageOffsetCorrection /=  GazeData.Keys.Count;
-            GlobalOffset = new (L_averageOffsetCorrection, R_averageOffsetCorrection);
+            L_averageOffsetCorrection /= GazeData.Keys.Count;
+            R_averageOffsetCorrection /= GazeData.Keys.Count;
+            GlobalOffset = new(L_averageOffsetCorrection, R_averageOffsetCorrection);
         }
 
         public Dictionary<string, GazeVector> GetDirectionalOffsets()
@@ -204,7 +204,7 @@ namespace Calibration
                     // Capture eye tracking data and store alongside location
                     Vector3 l_p = leftEyeTracker.GetGazeEstimate();
                     Vector3 r_p = rightEyeTracker.GetGazeEstimate();
-                    GazeData[UnitVectorsPath.Keys.ToList()[UnitVectorIndex]].Add(new (l_p, r_p));
+                    GazeData[UnitVectorsPath.Keys.ToList()[UnitVectorIndex]].Add(new(l_p, r_p));
                 }
             }
         }

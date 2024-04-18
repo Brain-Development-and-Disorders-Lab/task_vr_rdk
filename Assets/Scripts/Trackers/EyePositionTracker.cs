@@ -135,11 +135,11 @@ namespace UXF
             Vector3 offsetVector;
             if (TrackedEye == "left")
             {
-                offsetVector = (Vector3) calibrationManager.GetDirectionalOffsets()[quadrant].GetLeft();
+                offsetVector = (Vector3)calibrationManager.GetDirectionalOffsets()[quadrant].GetLeft();
             }
             else
             {
-                offsetVector = (Vector3) calibrationManager.GetDirectionalOffsets()[quadrant].GetRight();
+                offsetVector = (Vector3)calibrationManager.GetDirectionalOffsets()[quadrant].GetRight();
             }
             indicatorCalibrated.transform.position = currentGaze - offsetVector;
         }

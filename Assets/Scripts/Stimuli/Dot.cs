@@ -33,7 +33,7 @@ namespace Stimuli
             // Update direction depending on initial behaviour
             if (behavior == "random")
             {
-                DotDirection = (float) (2.0f * Math.PI * UnityEngine.Random.value);
+                DotDirection = (float)(2.0f * Math.PI * UnityEngine.Random.value);
             }
 
             CreateGameObject();
@@ -122,12 +122,16 @@ namespace Stimuli
                 DotObject.GetComponent<SpriteRenderer>().enabled = visibility;
 
                 // Random direction adjustment every 12 frames
-                if (DotBehavior == "random" & Time.frameCount % 12 == 0) {
+                if (DotBehavior == "random" & Time.frameCount % 12 == 0)
+                {
                     // Adjust the direction
                     float delta = UnityEngine.Random.value;
-                    if (UnityEngine.Random.value > 0.5f) {
+                    if (UnityEngine.Random.value > 0.5f)
+                    {
                         DotDirection -= Mathf.PI / 4 * delta;
-                    } else {
+                    }
+                    else
+                    {
                         DotDirection += Mathf.PI / 4 * delta;
                     }
                 }
