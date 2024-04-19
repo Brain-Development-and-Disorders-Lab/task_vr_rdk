@@ -239,8 +239,8 @@ namespace Stimuli
             horizontalLine.SetPosition(1, new Vector3(FixationWorldRadius, 0.0f, 0.0f));
             horizontalLine.material = new Material(Shader.Find("Sprites/Default"));
             horizontalLine.material.SetColor("_Color", CrossColor);
-            horizontalLine.startWidth = ArcWorldWidth;
-            horizontalLine.endWidth = ArcWorldWidth;
+            horizontalLine.startWidth = ArcWorldWidth * 0.4f;
+            horizontalLine.endWidth = ArcWorldWidth * 0.4f;
 
             // Create vertical component
             GameObject fixationObjectVertical = new GameObject();
@@ -256,8 +256,8 @@ namespace Stimuli
             verticalLine.SetPosition(1, new Vector3(0.0f, FixationWorldRadius, 0.0f));
             verticalLine.material = new Material(Shader.Find("Sprites/Default"));
             verticalLine.material.SetColor("_Color", CrossColor);
-            verticalLine.startWidth = ArcWorldWidth;
-            verticalLine.endWidth = ArcWorldWidth;
+            verticalLine.startWidth = ArcWorldWidth * 0.4f;
+            verticalLine.endWidth = ArcWorldWidth * 0.4f;
 
             return fixationObjectParent;
         }
