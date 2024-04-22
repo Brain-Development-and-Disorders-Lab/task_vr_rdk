@@ -13,8 +13,8 @@ using Stimuli;
 
 public class ExperimentManager : MonoBehaviour
 {
-    readonly int EyetrackingSetupTrials = 1;
-    readonly int EyetrackingSetupIndex = 1;
+    readonly int HeadsetSetupTrials = 1;
+    readonly int HeadsetSetupIndex = 1;
     readonly int WelcomeTrials = 1; // Welcome instructions, includes tutorial instructions
     readonly int WelcomeBlockIndex = 2;
     readonly int TutorialTrials = 20; // Tutorial trials
@@ -59,6 +59,7 @@ public class ExperimentManager : MonoBehaviour
 
     // Confidence parameters
     private readonly int CONFIDENCE_BLOCK_SIZE = 2; // Number of trials to run before asking for confidence
+    private CameraManager.VisualField ActiveVisualField; // Variable to store the active visual field
 
     /// <summary>
     /// Generate the experiment flow
@@ -68,7 +69,7 @@ public class ExperimentManager : MonoBehaviour
     {
         // Create trial blocks
         session.CreateBlock(WelcomeTrials);
-        session.CreateBlock(EyetrackingSetupTrials);
+        session.CreateBlock(HeadsetSetupTrials);
         session.CreateBlock(TutorialTrials);
         session.CreateBlock(PrePracticeTrials);
         session.CreateBlock(PracticeTrials);
@@ -172,6 +173,9 @@ public class ExperimentManager : MonoBehaviour
                 // Randomly select a starting field
                 cameraManager.SetActiveField(UnityEngine.Random.value > 0.5f ? CameraManager.VisualField.Left : CameraManager.VisualField.Right);
             }
+
+            // Store the active visual field locally, since it is changed to present the confidence screen
+            ActiveVisualField = cameraManager.GetActiveField();
         }
 
         // Select the coherence value depending on active camera and difficulty
@@ -228,7 +232,7 @@ public class ExperimentManager : MonoBehaviour
             SetupWelcome();
             StartCoroutine(DisplayStimuli("welcome"));
         }
-        else if (ActiveBlock == EyetrackingSetupIndex)
+        else if (ActiveBlock == HeadsetSetupIndex)
         {
             StartCoroutine(DisplayStimuli("eyetracking"));
         }
@@ -415,10 +419,13 @@ public class ExperimentManager : MonoBehaviour
         }
         else if (stimuli == "confidence")
         {
-            // Confidence (1 second)
+            // Override and set the camera to display in both eyes
+            cameraManager.SetActiveField(CameraManager.VisualField.Both);
+
+            // Confidence
             uiManager.SetVisible(true);
             uiManager.SetHeader("");
-            uiManager.SetBody("Did you feel more confident about your response to:\n\n\tThe <b>previous<b> trial or <b>this<b> trial?");
+            uiManager.SetBody("Did you feel more confident about your response to: The <b>previous</b> trial or <b>this</b> trial?");
             uiManager.SetLeftButton(true, true, "Previous Trial");
             uiManager.SetRightButton(true, true, "This Trial");
 
@@ -448,9 +455,10 @@ public class ExperimentManager : MonoBehaviour
     /// </summary>
     private void HandleExperimentInput(string selection)
     {
-        // If `selectedDirection` is empty, this is reference direction input
+        // Handle inputs depending on what data points exist on the current trial
         if (!Session.instance.CurrentTrial.result.ContainsKey("selectedDirection"))
         {
+            // If `selectedDirection` is empty, this is reference direction input
             // Store timing data
             Session.instance.CurrentTrial.result["referenceEnd"] = Time.time;
             Session.instance.CurrentTrial.result["referenceRT"] = (float)Session.instance.CurrentTrial.result["referenceEnd"] - (float)Session.instance.CurrentTrial.result["referenceStart"];
@@ -545,12 +553,17 @@ public class ExperimentManager : MonoBehaviour
         }
         else if (!Session.instance.CurrentTrial.result.ContainsKey("confidenceSelection"))
         {
+            // If `confidenceSelection` is empty, this is a confidence input
             // Store timing data
             Session.instance.CurrentTrial.result["confidenceEnd"] = Time.time;
             Session.instance.CurrentTrial.result["confidenceRT"] = (float)Session.instance.CurrentTrial.result["confidenceEnd"] - (float)Session.instance.CurrentTrial.result["confidenceStart"];
 
             // Store the confidence selection
             Session.instance.CurrentTrial.result["confidenceSelection"] = selection;
+
+            // Reset the active camera
+            cameraManager.SetActiveField(ActiveVisualField);
+
             EndTrial();
         }
     }
@@ -645,7 +658,7 @@ public class ExperimentManager : MonoBehaviour
                         EndTrial();
                     }
                 }
-                else if (ActiveBlock == EyetrackingSetupIndex)
+                else if (ActiveBlock == HeadsetSetupIndex)
                 {
                     // Hide the UI
                     uiManager.SetVisible(false);
