@@ -84,7 +84,7 @@ namespace Stimuli
             BodyTextComponent.text = BodyText;
             BodyTextComponent.fontSize = 6.0f;
             BodyTextComponent.material.color = Color.white;
-            BodyTextComponent.alignment = TextAlignmentOptions.MidlineLeft;
+            BodyTextComponent.alignment = TextAlignmentOptions.Center;
             BodyTextComponent.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
             BodyTextComponent.transform.localPosition = new Vector3(0.0f, -5.0f, 0.0f);
             BodyTextComponent.rectTransform.sizeDelta = new Vector2(120.0f, 80.0f);
