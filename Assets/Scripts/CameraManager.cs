@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 
+using ExperimentUtilities;
+
 public class CameraManager : MonoBehaviour
 {
     // Left and Right eye cameras
@@ -42,7 +44,7 @@ public class CameraManager : MonoBehaviour
     private VisualField activeField = VisualField.Both;
 
     // Logger
-    private LoggerManager logger;
+    private VRLogger logger;
 
     private void Start()
     {
@@ -57,7 +59,7 @@ public class CameraManager : MonoBehaviour
         }
 
         // Logger
-        logger = FindAnyObjectByType<LoggerManager>();
+        logger = FindAnyObjectByType<VRLogger>();
     }
 
     private void CalculateOffset()

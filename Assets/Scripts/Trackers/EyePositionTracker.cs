@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 // Custom namespaces
 using Calibration;
+using ExperimentUtilities;
 
 namespace UXF
 {
@@ -37,11 +38,11 @@ namespace UXF
         private Vector3 GazeEstimate;
 
         // Other references
-        private LoggerManager Logger;
+        private VRLogger logger;
 
         public void Start()
         {
-            Logger = FindObjectOfType<LoggerManager>();
+            logger = FindObjectOfType<VRLogger>();
 
             // Get calibration component
             calibrationManager = FindObjectOfType<CalibrationManager>();
