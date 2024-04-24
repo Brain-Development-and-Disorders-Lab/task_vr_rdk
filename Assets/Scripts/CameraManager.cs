@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 
-using ExperimentUtilities;
+// Custom namespaces
+using Utilities;
 
 public class CameraManager : MonoBehaviour
 {

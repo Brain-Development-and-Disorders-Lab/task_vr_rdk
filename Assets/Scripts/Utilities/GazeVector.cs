@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace ExperimentUtilities
+namespace Utilities
 {
     /// <summary>
     /// Struct to generalize a pair of vector components representing the left and right eye gaze estimates.

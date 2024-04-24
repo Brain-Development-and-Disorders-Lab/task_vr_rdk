@@ -5,7 +5,7 @@ using System.Linq;
 using UXF;
 
 // Custom namespaces
-using ExperimentUtilities;
+using Utilities;
 
 namespace Calibration
 {

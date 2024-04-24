@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 using UXF;
-using System.Linq;
 using MathNet.Numerics.Statistics;
 
 // Custom namespaces
 using Calibration;
 using Stimuli;
+using Utilities;
 
 public class ExperimentManager : MonoBehaviour
 {
@@ -646,7 +647,7 @@ public class ExperimentManager : MonoBehaviour
         if (InputEnabled && InputReset)
         {
             // Left-side controls
-            if (OVRInput.Get(OVRInput.Axis1D.PrimaryIndexTrigger) > 0.8f || Input.GetKeyDown(KeyCode.Alpha2))
+            if (VRInput.PollLeftTrigger())
             {
                 if (ActiveBlock == BlockIndex.Welcome)
                 {
@@ -676,7 +677,7 @@ public class ExperimentManager : MonoBehaviour
             }
 
             // Right-side controls
-            if (OVRInput.Get(OVRInput.Axis1D.SecondaryIndexTrigger) > 0.8f || Input.GetKeyDown(KeyCode.Alpha7))
+            if (VRInput.PollRightTrigger())
             {
                 if (ActiveBlock == BlockIndex.Welcome ||
                     ActiveBlock == BlockIndex.PrePractice ||
@@ -723,16 +724,10 @@ public class ExperimentManager : MonoBehaviour
             }
         }
 
-        if (InputEnabled && InputReset == false)
+        // Reset input state to prevent holding buttons to repeatedly select options
+        if (InputEnabled && InputReset == false && !VRInput.PollAnyInput())
         {
-            // Reset input state to prevent holding buttons to repeatedly select options
-            if (OVRInput.Get(OVRInput.Axis1D.PrimaryIndexTrigger) == 0.0f &&
-                OVRInput.Get(OVRInput.Axis1D.SecondaryIndexTrigger) == 0.0f &&
-                Input.GetKeyDown(KeyCode.Alpha2) == false &&
-                Input.GetKeyDown(KeyCode.Alpha7) == false)
-            {
-                InputReset = true;
-            }
+            InputReset = true;
         }
     }
 }
