@@ -48,6 +48,7 @@ public class ExperimentManager : MonoBehaviour
     private readonly int HIGH_INDEX = 1;
     private readonly int EYE_BLOCK_SIZE = 10; // Number of trials per eye
 
+    // Store references to Manager classes
     StimulusManager stimulusManager;
     UIManager uiManager;
     CameraManager cameraManager;
@@ -104,6 +105,9 @@ public class ExperimentManager : MonoBehaviour
         Application.Quit();
     }
 
+    /// <summary>
+    /// Setup the "Welcome" screen presented to participants after any headset calibration operations.
+    /// </summary>
     private void SetupWelcome()
     {
         // Setup the UI manager with instructions
@@ -117,6 +121,10 @@ public class ExperimentManager : MonoBehaviour
         cameraManager.SetActiveField(CameraManager.VisualField.Both);
     }
 
+    /// <summary>
+    /// Setup operations to perform prior to any dot motion stimuli. Also responsible for generating coherence values
+    /// after the calibration stages.
+    /// </summary>
     private void SetupMotion()
     {
         // Setup performed at the start of the first "main" type trial
@@ -218,6 +226,10 @@ public class ExperimentManager : MonoBehaviour
         uiManager.EnablePagination(false);
     }
 
+    /// <summary>
+    /// Store timestamps and locale metadata before presenting the stimuli associated with a Trial.
+    /// </summary>
+    /// <param name="trial">UXF Trial object representing the current trial</param>
     public void RunTrial(Trial trial)
     {
         // Store local date and time data
@@ -226,6 +238,7 @@ public class ExperimentManager : MonoBehaviour
         Session.instance.CurrentTrial.result["localTimezone"] = TimeZoneInfo.Local.DisplayName;
         Session.instance.CurrentTrial.result["trialStart"] = Time.time;
 
+        // Based on the active block, run any required setup operations and present the required stimuli
         ActiveBlock = trial.block.number;
         if (ActiveBlock == WelcomeBlockIndex)
         {
@@ -298,7 +311,7 @@ public class ExperimentManager : MonoBehaviour
 
             // Input delay
             yield return StartCoroutine(WaitSeconds(0.25f, true));
-            EnableInput(true);
+            SetInputEnabled(true);
         }
         else if (stimuli == "tutorial")
         {
@@ -322,7 +335,7 @@ public class ExperimentManager : MonoBehaviour
             Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
             stimulusManager.SetVisible("decision", true);
             yield return StartCoroutine(WaitSeconds(0.25f, true));
-            EnableInput(true);
+            SetInputEnabled(true);
         }
         else if (stimuli == "prepractice")
         {
@@ -337,7 +350,7 @@ public class ExperimentManager : MonoBehaviour
 
             // Input delay
             yield return StartCoroutine(WaitSeconds(0.25f, true));
-            EnableInput(true);
+            SetInputEnabled(true);
         }
         else if (stimuli == "practice")
         {
@@ -358,7 +371,7 @@ public class ExperimentManager : MonoBehaviour
             Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
             stimulusManager.SetVisible("decision", true);
             yield return StartCoroutine(WaitSeconds(0.25f, true));
-            EnableInput(true);
+            SetInputEnabled(true);
         }
         else if (stimuli == "premain")
         {
@@ -373,7 +386,7 @@ public class ExperimentManager : MonoBehaviour
 
             // Input delay
             yield return StartCoroutine(WaitSeconds(0.25f, true));
-            EnableInput(true);
+            SetInputEnabled(true);
         }
         else if (stimuli == "calibration")
         {
@@ -394,7 +407,7 @@ public class ExperimentManager : MonoBehaviour
             Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
             stimulusManager.SetVisible("decision", true);
             yield return StartCoroutine(WaitSeconds(0.25f, true));
-            EnableInput(true);
+            SetInputEnabled(true);
         }
         else if (stimuli == "main")
         {
@@ -415,7 +428,7 @@ public class ExperimentManager : MonoBehaviour
             Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
             stimulusManager.SetVisible("decision", true);
             yield return StartCoroutine(WaitSeconds(0.25f, true));
-            EnableInput(true);
+            SetInputEnabled(true);
         }
         else if (stimuli == "confidence")
         {
@@ -432,7 +445,7 @@ public class ExperimentManager : MonoBehaviour
             // Input delay
             Session.instance.CurrentTrial.result["confidenceStart"] = Time.time;
             yield return StartCoroutine(WaitSeconds(0.25f, true));
-            EnableInput(true);
+            SetInputEnabled(true);
         }
         else if (stimuli == "feedback_correct")
         {
@@ -451,7 +464,7 @@ public class ExperimentManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Wrapper function to handle input responses
+    /// Wrapper function to handle input
     /// </summary>
     private void HandleExperimentInput(string selection)
     {
@@ -585,16 +598,24 @@ public class ExperimentManager : MonoBehaviour
         }
     }
 
-    private void EnableInput(bool state)
+    private void SetInputEnabled(bool state)
     {
         InputEnabled = state;
     }
 
     private IEnumerator WaitSeconds(float seconds, bool disableInput = false, Action callback = null)
     {
-        if (disableInput) EnableInput(false);
+        if (disableInput)
+        {
+            SetInputEnabled(false);
+        }
+
         yield return new WaitForSeconds(seconds);
-        if (disableInput) EnableInput(true);
+
+        if (disableInput)
+        {
+            SetInputEnabled(true);
+        }
 
         // Run callback function
         callback?.Invoke();
@@ -613,7 +634,7 @@ public class ExperimentManager : MonoBehaviour
                     {
                         // If pagination has next page, advance
                         uiManager.PreviousPage();
-                        EnableInput(true);
+                        SetInputEnabled(true);
 
                         // Update the "Next" button if the last page
                         if (uiManager.HasNextPage())
@@ -645,7 +666,7 @@ public class ExperimentManager : MonoBehaviour
                     {
                         // If pagination has next page, advance
                         uiManager.NextPage();
-                        EnableInput(true);
+                        SetInputEnabled(true);
 
                         // Update the "Next" button if the last page
                         if (!uiManager.HasNextPage())
