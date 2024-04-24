@@ -7,12 +7,21 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
+      # Clear disk space
+      - uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: false
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
       # Checkout
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           lfs: true
-
       # Cache
       - uses: actions/cache@v3
         with:
@@ -29,7 +38,6 @@ jobs:
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           targetPlatform: Android
-
       # Output
       - uses: actions/upload-artifact@v3
         with:
