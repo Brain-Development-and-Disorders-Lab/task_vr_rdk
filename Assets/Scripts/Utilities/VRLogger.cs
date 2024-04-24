@@ -22,12 +22,12 @@ namespace ExperimentUtilities
         private List<GameObject> messageContainers;
 
         // Set the number of message rows displayed
-        private int DefaultMessageLimit = 20;
+        public int MessageLimit = 20;
 
         private void CreateLoggerRows()
         {
             // Iterate over the list of messages
-            for (int i = 0; i < DefaultMessageLimit; i++)
+            for (int i = 0; i < MessageLimit; i++)
             {
                 GameObject textContainer = new GameObject("logger_message_" + i.ToString());
                 textContainer.transform.position = new Vector3(150.0f, 0.0f - 15.0f * i, 0.0f);
@@ -79,7 +79,7 @@ namespace ExperimentUtilities
         public void Log(string message)
         {
             messages.Add(message);
-            if (messages.Count > DefaultMessageLimit)
+            if (messages.Count > MessageLimit)
             {
                 messages.RemoveAt(0);
                 messages.TrimExcess();
