@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 
 public class CameraManager : MonoBehaviour
 {
@@ -19,10 +18,7 @@ public class CameraManager : MonoBehaviour
     [SerializeField]
     private bool FollowHeadMovement;
 
-    // Store the original anchor position
-    private Vector3 InitialAnchorPosition;
     private float StimulusAnchorDistance;
-    private float UIAnchorDistance;
 
     // Visual offset angle to place stimulus in single hemifield
     [SerializeField]
@@ -50,15 +46,14 @@ public class CameraManager : MonoBehaviour
 
     private void Start()
     {
-        InitialAnchorPosition = new Vector3(StimulusAnchor.transform.position.x, StimulusAnchor.transform.position.y, StimulusAnchor.transform.position.z);
-        CalculateOffset();
-        UIAnchorDistance = Mathf.Abs(LeftCamera.transform.position.z - UIAnchor.transform.position.z);
-
         // Check if OVRCameraRig has been specified, required for head tracking
-        if (CameraRig == null)
+        if (CameraRig)
         {
-            Debug.LogWarning("OVRCameraRig instance not specified, disabling head tracking");
-            FollowHeadMovement = false;
+            // Set the anchor object for stimuli and UI as a child of the CameraRig
+            StimulusAnchor.transform.SetParent(CameraRig.centerEyeAnchor.transform, false);
+            UIAnchor.transform.SetParent(CameraRig.centerEyeAnchor.transform, false);
+
+            CalculateOffset();
         }
 
         // Logger
@@ -96,6 +91,35 @@ public class CameraManager : MonoBehaviour
         {
             activeField = field;
         }
+
+        // Apply local offset adjustments for lateralized presentation
+        if (field == VisualField.Left)
+        {
+            StimulusAnchor.transform.localPosition = new Vector3(0.0f - TotalOffset, 0.0f, StimulusAnchorDistance);
+            if (UseCullingMask)
+            {
+                LeftCamera.cullingMask = ~(1 << 6);
+                RightCamera.cullingMask = 1 << 6;
+            }
+        }
+        else if (field == VisualField.Right)
+        {
+            StimulusAnchor.transform.localPosition = new Vector3(0.0f + TotalOffset, 0.0f, StimulusAnchorDistance);
+            if (UseCullingMask)
+            {
+                LeftCamera.cullingMask = 1 << 6;
+                RightCamera.cullingMask = ~(1 << 6);
+            }
+        }
+        else
+        {
+            StimulusAnchor.transform.localPosition = new Vector3(0.0f, 0.0f, StimulusAnchorDistance);
+            if (UseCullingMask)
+            {
+                LeftCamera.cullingMask = ~(1 << 6);
+                RightCamera.cullingMask = ~(1 << 6);
+            }
+        }
     }
 
     /// <summary>
@@ -116,65 +140,5 @@ public class CameraManager : MonoBehaviour
     public VisualField GetActiveField()
     {
         return activeField;
-    }
-
-    // Update active cameras every frame
-    void Update()
-    {
-        // If tracking head movement, update StimulusAnchor position
-        if (FollowHeadMovement)
-        {
-            // Get the head position
-            Vector3 headProjection = CameraRig.centerEyeAnchor.transform.TransformDirection(Vector3.forward);
-            Vector3 headRotation = CameraRig.centerEyeAnchor.transform.eulerAngles;
-
-            // Projections for stimulus and UI anchors
-            Vector3 StimulusProjection = headProjection * StimulusAnchorDistance;
-            Vector3 UIProjection = headProjection * UIAnchorDistance;
-
-            // Update position and rotation
-            StimulusAnchor.transform.position = new Vector3(StimulusProjection.x, StimulusProjection.y, StimulusProjection.z);
-            StimulusAnchor.transform.eulerAngles = headRotation;
-            UIAnchor.transform.position = new Vector3(UIProjection.x, UIProjection.y, UIProjection.z);
-            UIAnchor.transform.eulerAngles = headRotation;
-        }
-
-        // Get the current position
-        Vector3 currentPosition = StimulusAnchor.transform.position;
-
-        // Apply masking depending on the active visual field
-        if (activeField == VisualField.Left)
-        {
-            // Left only
-            if (UseCullingMask)
-            {
-                LeftCamera.cullingMask = ~(1 << 6);
-                RightCamera.cullingMask = 1 << 6;
-            }
-
-            // Set position
-            StimulusAnchor.transform.position = new Vector3(currentPosition.x - TotalOffset, currentPosition.y, currentPosition.z);
-        }
-        else if (activeField == VisualField.Right)
-        {
-            // Right only
-            if (UseCullingMask)
-            {
-                LeftCamera.cullingMask = 1 << 6;
-                RightCamera.cullingMask = ~(1 << 6);
-            }
-
-            // Set position
-            StimulusAnchor.transform.position = new Vector3(currentPosition.x + TotalOffset, currentPosition.y, currentPosition.z);
-        }
-        else
-        {
-            // Both
-            if (UseCullingMask)
-            {
-                LeftCamera.cullingMask = ~(1 << 6);
-                RightCamera.cullingMask = ~(1 << 6);
-            }
-        }
     }
 }
