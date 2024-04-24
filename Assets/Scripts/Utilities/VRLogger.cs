@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -21,8 +20,8 @@ namespace ExperimentUtilities
         private List<string> messages;
         private List<GameObject> messageContainers;
 
-        // Set the number of message rows displayed
-        public int MessageLimit = 20;
+        public int MessageLimit = 20; // Set the number of message rows displayed
+        public bool UseHeadTracking = true; // Fix the logger to headset head tracking position
 
         private void CreateLoggerRows()
         {
@@ -69,6 +68,16 @@ namespace ExperimentUtilities
 
             // Instatiate the rows
             CreateLoggerRows();
+
+            // Fix to head movement if in VR context
+            if (UseHeadTracking)
+            {
+                OVRCameraRig cameraRig = FindObjectOfType<OVRCameraRig>();
+                if (cameraRig)
+                {
+                    logCanvas.transform.SetParent(cameraRig.centerEyeAnchor.transform, false);
+                }
+            }
         }
 
         void Update()

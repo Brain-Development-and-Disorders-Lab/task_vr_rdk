@@ -29,7 +29,7 @@ public class CameraManager : MonoBehaviour
     private float TotalOffset = 0.0f;
 
     // Optional parameter to use a culling mask for full "eyepatch" effect (not recommended)
-    [SerializeField]
+    [Tooltip("Enable a layer-based mask to provide the eye-path effect. Not recommended but may be required.")]
     public bool UseCullingMask = false;
 
     // Camera presentation modes
