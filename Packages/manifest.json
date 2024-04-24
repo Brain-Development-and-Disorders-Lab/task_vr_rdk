@@ -1,6 +1,19 @@
 {
+  "scopedRegistries": [
+    {
+      "name": "Meta",
+      "url": "https://npm.developer.oculus.com",
+      "scopes": [
+        "com.meta.xr"
+      ]
+    }
+  ],
   "dependencies": {
-    "com.meta.xr.sdk.all": "60.0.0",
+    "com.meta.xr.mrutilitykit": "64.0.0",
+    "com.meta.xr.sdk.audio": "64.0.0",
+    "com.meta.xr.sdk.core": "64.0.0",
+    "com.meta.xr.sdk.haptics": "64.0.0",
+    "com.meta.xr.simulator": "64.0.0",
     "com.unity.collab-proxy": "2.2.0",
     "com.unity.feature.development": "1.0.1",
     "com.unity.textmeshpro": "3.0.6",
