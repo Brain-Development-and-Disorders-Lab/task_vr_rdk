@@ -13,28 +13,33 @@ using Stimuli;
 
 public class ExperimentManager : MonoBehaviour
 {
-    readonly int HeadsetSetupTrials = 1;
-    readonly int HeadsetSetupIndex = 1;
-    readonly int WelcomeTrials = 1; // Welcome instructions, includes tutorial instructions
-    readonly int WelcomeBlockIndex = 2;
-    readonly int TutorialTrials = 20; // Tutorial trials
-    readonly int TutorialBlockIndex = 3;
+    // Manage the index of specific blocks occuring in the experiment timeline
+    enum BlockIndex
+    {
+        HeadsetSetup = 1,
+        Welcome = 2,
+        Tutorial = 3,
+        PrePractice = 4,
+        Practice = 5,
+        PreMain = 6,
+        Calibration = 7,
+        Main = 8,
+    };
 
-    readonly int PrePracticeTrials = 1; // Practice instructions
-    readonly int PrePracticeBlockIndex = 4;
-    readonly int PracticeTrials = 20; // Practice trials
-    readonly int PracticeBlockIndex = 5;
+    // Manage the number of trials within a specific block in the experiment timeline
+    enum BlockSize
+    {
+        HeadsetSetup = 1,
+        Welcome = 1, // Welcome instructions, includes tutorial instructions
+        Tutorial = 20, // Tutorial trials
+        PrePractice = 1, // Practice instructions
+        Practice = 20, // Practice trials
+        PreMain = 1, // Main instructions
+        Calibration = 120,
+        Main = 200,
+    };
 
-    readonly int PreMainTrials = 1; // Main instructions
-    readonly int PreMainBlockIndex = 6;
-
-    readonly int CalibrationTrials = 120;
-    readonly int CalibrationBlockIndex = 7;
-
-    readonly int MainTrials = 200;
-    readonly int MainBlockIndex = 8;
-
-    private int ActiveBlock = 1; // Store the currently active Block
+    private BlockIndex ActiveBlock = BlockIndex.HeadsetSetup; // Store the currently active Block
 
     // Coherence data structure
     private Dictionary<string, float[]> Coherences = new()
@@ -68,15 +73,30 @@ public class ExperimentManager : MonoBehaviour
     /// <param name="session"></param>
     public void GenerateExperiment(Session session)
     {
+        // Validate the "BlockIndex" and "BlockSize" variables are the same length
+        if (Enum.GetNames(typeof(BlockIndex)).Length != Enum.GetNames(typeof(BlockSize)).Length)
+        {
+            Debug.LogWarning("\"BlockIndex\" length does not match \"BlockSize\" length. Timline will not generate correctly.");
+        }
+
+        // Validate the "BlockIndex" and "BlockSize" variables contain the same entries
+        foreach (string blockName in Enum.GetNames(typeof(BlockIndex)))
+        {
+            if (!Enum.GetNames(typeof(BlockSize)).Contains(blockName))
+            {
+                Debug.LogWarning("\"BlockSize\" does not contain block entry: " + blockName);
+            }
+        }
+
         // Create trial blocks
-        session.CreateBlock(WelcomeTrials);
-        session.CreateBlock(HeadsetSetupTrials);
-        session.CreateBlock(TutorialTrials);
-        session.CreateBlock(PrePracticeTrials);
-        session.CreateBlock(PracticeTrials);
-        session.CreateBlock(PreMainTrials);
-        session.CreateBlock(CalibrationTrials);
-        session.CreateBlock(MainTrials);
+        session.CreateBlock((int)BlockSize.Welcome);
+        session.CreateBlock((int)BlockSize.HeadsetSetup);
+        session.CreateBlock((int)BlockSize.Tutorial);
+        session.CreateBlock((int)BlockSize.PrePractice);
+        session.CreateBlock((int)BlockSize.Practice);
+        session.CreateBlock((int)BlockSize.PreMain);
+        session.CreateBlock((int)BlockSize.Calibration);
+        session.CreateBlock((int)BlockSize.Main);
 
         // Store reference to other classes
         stimulusManager = GetComponent<StimulusManager>();
@@ -128,16 +148,16 @@ public class ExperimentManager : MonoBehaviour
     private void SetupMotion()
     {
         // Setup performed at the start of the first "main" type trial
-        if (ActiveBlock == MainBlockIndex && Session.instance.CurrentTrial.numberInBlock == 1)
+        if (ActiveBlock == BlockIndex.Main && Session.instance.CurrentTrial.numberInBlock == 1)
         {
             // Calculate the coherences to be used in the actual trials, use median of last 20 calibration trials
-            List<Trial> CalibrationTrials = Session.instance.GetBlock(CalibrationBlockIndex).trials;
+            List<Trial> CalibrationTrials = Session.instance.GetBlock((int)BlockIndex.Calibration).trials;
             CalibrationTrials.Reverse();
 
             // Calibration trials have the same coherence for low and high
-            List<float> BothCoherenceValues = new List<float>();
-            List<float> LeftCoherenceValues = new List<float>();
-            List<float> RightCoherenceValues = new List<float>();
+            List<float> BothCoherenceValues = new();
+            List<float> LeftCoherenceValues = new();
+            List<float> RightCoherenceValues = new();
             foreach (Trial t in CalibrationTrials)
             {
                 // Get each coherence value, split by "," token and cast back to float
@@ -239,40 +259,40 @@ public class ExperimentManager : MonoBehaviour
         Session.instance.CurrentTrial.result["trialStart"] = Time.time;
 
         // Based on the active block, run any required setup operations and present the required stimuli
-        ActiveBlock = trial.block.number;
-        if (ActiveBlock == WelcomeBlockIndex)
+        ActiveBlock = (BlockIndex)trial.block.number;
+        if (ActiveBlock == BlockIndex.Welcome)
         {
             SetupWelcome();
             StartCoroutine(DisplayStimuli("welcome"));
         }
-        else if (ActiveBlock == HeadsetSetupIndex)
+        else if (ActiveBlock == BlockIndex.HeadsetSetup)
         {
             StartCoroutine(DisplayStimuli("eyetracking"));
         }
-        else if (ActiveBlock == TutorialBlockIndex)
+        else if (ActiveBlock == BlockIndex.Tutorial)
         {
             SetupMotion();
             StartCoroutine(DisplayStimuli("tutorial"));
         }
-        else if (ActiveBlock == PrePracticeBlockIndex)
+        else if (ActiveBlock == BlockIndex.PrePractice)
         {
             StartCoroutine(DisplayStimuli("prepractice"));
         }
-        else if (ActiveBlock == PracticeBlockIndex)
+        else if (ActiveBlock == BlockIndex.Practice)
         {
             SetupMotion();
             StartCoroutine(DisplayStimuli("practice"));
         }
-        else if (ActiveBlock == PreMainBlockIndex)
+        else if (ActiveBlock == BlockIndex.PreMain)
         {
             StartCoroutine(DisplayStimuli("premain"));
         }
-        else if (ActiveBlock == CalibrationBlockIndex)
+        else if (ActiveBlock == BlockIndex.Calibration)
         {
             SetupMotion();
             StartCoroutine(DisplayStimuli("calibration"));
         }
-        else if (ActiveBlock == MainBlockIndex)
+        else if (ActiveBlock == BlockIndex.Main)
         {
             SetupMotion();
             StartCoroutine(DisplayStimuli("main"));
@@ -344,7 +364,7 @@ public class ExperimentManager : MonoBehaviour
 
             uiManager.SetVisible(true);
             uiManager.SetHeader("Practice Trials");
-            uiManager.SetBody("You will now complete another " + PracticeTrials + " practice trials. After selecting a direction, the cross in the center of the circlular area will briefly change color if your answer was correct or not. Green is a correct answer, red is an incorrect answer.\n\nWhen you are ready and comfortable, press the right controller trigger to select <b>Next</b> and continue.");
+            uiManager.SetBody("You will now complete another " + BlockSize.Practice + " practice trials. After selecting a direction, the cross in the center of the circlular area will briefly change color if your answer was correct or not. Green is a correct answer, red is an incorrect answer.\n\nWhen you are ready and comfortable, press the right controller trigger to select <b>Next</b> and continue.");
             uiManager.SetLeftButton(false, true, "Back");
             uiManager.SetRightButton(true, true, "Next");
 
@@ -380,7 +400,7 @@ public class ExperimentManager : MonoBehaviour
 
             uiManager.SetVisible(true);
             uiManager.SetHeader("Main Trials");
-            uiManager.SetBody("That concludes the practice trials. You will now play " + (CalibrationTrials + MainTrials) + " main trials.\n\nYou will not be shown if you answered correctly or not, but sometimes you will be asked whether you were more confident in that trial than in the previous trial.\n\nWhen you are ready and comfortable, press the right controller trigger to select <b>Next</b> and continue.");
+            uiManager.SetBody("That concludes the practice trials. You will now play " + ((int)BlockSize.Calibration + (int)BlockSize.Main) + " main trials.\n\nYou will not be shown if you answered correctly or not, but sometimes you will be asked whether you were more confident in that trial than in the previous trial.\n\nWhen you are ready and comfortable, press the right controller trigger to select <b>Next</b> and continue.");
             uiManager.SetLeftButton(false, true, "Back");
             uiManager.SetRightButton(true, true, "Next");
 
@@ -490,7 +510,7 @@ public class ExperimentManager : MonoBehaviour
                 Session.instance.CurrentTrial.result["selectedCorrectDirection"] = true;
             }
 
-            if (ActiveBlock == CalibrationBlockIndex)
+            if (ActiveBlock == BlockIndex.Calibration)
             {
                 // If in the calibration stage, adjust the coherence value
                 if ((bool)Session.instance.CurrentTrial.result["selectedCorrectDirection"] == true)
@@ -542,7 +562,7 @@ public class ExperimentManager : MonoBehaviour
             }
 
             // Some trials display additional components, otherwise end the trial
-            if (ActiveBlock == PracticeBlockIndex)
+            if (ActiveBlock == BlockIndex.Practice)
             {
                 // Display feedback during the practice trials
                 if ((bool)Session.instance.CurrentTrial.result["selectedCorrectDirection"] == true)
@@ -554,7 +574,7 @@ public class ExperimentManager : MonoBehaviour
                     StartCoroutine(DisplayStimuli("feedback_incorrect"));
                 }
             }
-            else if ((ActiveBlock == TutorialBlockIndex || ActiveBlock == CalibrationBlockIndex || ActiveBlock == MainBlockIndex) &&
+            else if ((ActiveBlock == BlockIndex.Tutorial || ActiveBlock == BlockIndex.Calibration || ActiveBlock == BlockIndex.Main) &&
                 Session.instance.CurrentTrial.numberInBlock % CONFIDENCE_BLOCK_SIZE == 0)
             {
                 StartCoroutine(DisplayStimuli("confidence"));
@@ -628,7 +648,7 @@ public class ExperimentManager : MonoBehaviour
             // Left-side controls
             if (OVRInput.Get(OVRInput.Axis1D.PrimaryIndexTrigger) > 0.8f || Input.GetKeyDown(KeyCode.Alpha2))
             {
-                if (ActiveBlock == WelcomeBlockIndex)
+                if (ActiveBlock == BlockIndex.Welcome)
                 {
                     if (uiManager.HasPreviousPage())
                     {
@@ -644,10 +664,10 @@ public class ExperimentManager : MonoBehaviour
                     }
                 }
                 else if (
-                    ActiveBlock == TutorialBlockIndex ||
-                    ActiveBlock == PracticeBlockIndex ||
-                    ActiveBlock == CalibrationBlockIndex ||
-                    ActiveBlock == MainBlockIndex)
+                    ActiveBlock == BlockIndex.Tutorial ||
+                    ActiveBlock == BlockIndex.Practice ||
+                    ActiveBlock == BlockIndex.Calibration ||
+                    ActiveBlock == BlockIndex.Main)
                 {
                     // "Left" direction selected
                     HandleExperimentInput("left");
@@ -658,9 +678,9 @@ public class ExperimentManager : MonoBehaviour
             // Right-side controls
             if (OVRInput.Get(OVRInput.Axis1D.SecondaryIndexTrigger) > 0.8f || Input.GetKeyDown(KeyCode.Alpha7))
             {
-                if (ActiveBlock == WelcomeBlockIndex ||
-                    ActiveBlock == PrePracticeBlockIndex ||
-                    ActiveBlock == PreMainBlockIndex)
+                if (ActiveBlock == BlockIndex.Welcome ||
+                    ActiveBlock == BlockIndex.PrePractice ||
+                    ActiveBlock == BlockIndex.PreMain)
                 {
                     if (uiManager.HasNextPage())
                     {
@@ -679,7 +699,7 @@ public class ExperimentManager : MonoBehaviour
                         EndTrial();
                     }
                 }
-                else if (ActiveBlock == HeadsetSetupIndex)
+                else if (ActiveBlock == BlockIndex.HeadsetSetup)
                 {
                     // Hide the UI
                     uiManager.SetVisible(false);
@@ -691,10 +711,10 @@ public class ExperimentManager : MonoBehaviour
                     });
                 }
                 else if (
-                    ActiveBlock == TutorialBlockIndex ||
-                    ActiveBlock == PracticeBlockIndex ||
-                    ActiveBlock == CalibrationBlockIndex ||
-                    ActiveBlock == MainBlockIndex)
+                    ActiveBlock == BlockIndex.Tutorial ||
+                    ActiveBlock == BlockIndex.Practice ||
+                    ActiveBlock == BlockIndex.Calibration ||
+                    ActiveBlock == BlockIndex.Main)
                 {
                     // "Right" direction selected
                     HandleExperimentInput("right");
