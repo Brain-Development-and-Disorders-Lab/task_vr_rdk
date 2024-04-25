@@ -20,7 +20,7 @@ namespace Stimuli
         private float ArcWorldRadius;
         private readonly float ArcWidth = 0.08f; // Specified in supplementary materials
         private float ArcWorldWidth;
-        private readonly float FixationDiameter = 0.2f; // Specified in supplementary materials
+        private readonly float FixationDiameter = 0.05f; // Specified in supplementary materials
         private float FixationWorldRadius;
 
         // Dot parameters
@@ -64,7 +64,7 @@ namespace Stimuli
             StimulusDistance = Mathf.Abs(transform.position.z - stimulusAnchor.transform.position.z);
             ArcWorldRadius = StimulusDistance * Mathf.Tan(ScalingFactor * ArcDiameter / 2 * (Mathf.PI / 180.0f));
             ArcWorldWidth = ArcWidth;
-            FixationWorldRadius = 0.05f;
+            FixationWorldRadius = FixationDiameter;
             DotWorldRadius = StimulusDistance * Mathf.Tan(ScalingFactor * DotDiameter / 2 * (Mathf.PI / 180.0f));
         }
 

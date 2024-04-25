@@ -121,6 +121,11 @@ namespace Calibration
             return CalibrationComplete;
         }
 
+        public bool IsCalibrationActive()
+        {
+            return CalibrationActive;
+        }
+
         private void CalculateCalibrationValues()
         {
             // Function to examine each point and calculate average vector difference from each point

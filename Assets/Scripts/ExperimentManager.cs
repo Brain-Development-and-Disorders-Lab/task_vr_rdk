@@ -14,6 +14,9 @@ using Utilities;
 
 public class ExperimentManager : MonoBehaviour
 {
+    // Loading screen object, parent object that contains all loading screen components
+    public GameObject LoadingScreen;
+
     // Manage the index of specific blocks occuring in the experiment timeline
     enum BlockIndex
     {
@@ -115,6 +118,13 @@ public class ExperimentManager : MonoBehaviour
     /// <param name="session"></param>
     public void BeginExperiment(Session session)
     {
+        // If a loading screen was specified, disable / hide it
+        if (LoadingScreen)
+        {
+            LoadingScreen.SetActive(false);
+        }
+
+        // Start the first trial of the Session
         session.BeginNextTrial();
     }
 
@@ -653,9 +663,12 @@ public class ExperimentManager : MonoBehaviour
                 {
                     if (uiManager.HasPreviousPage())
                     {
-                        // If pagination has next page, advance
+                        // If pagination has previous page, go back
                         uiManager.PreviousPage();
                         SetInputEnabled(true);
+
+                        // Trigger controller haptics
+                        VRInput.SetHaptics(15.0f, 0.4f, 0.1f, true, false);
 
                         // Update the "Next" button if the last page
                         if (uiManager.HasNextPage())
@@ -670,6 +683,9 @@ public class ExperimentManager : MonoBehaviour
                     ActiveBlock == BlockIndex.Calibration ||
                     ActiveBlock == BlockIndex.Main)
                 {
+                    // Trigger controller haptics
+                    VRInput.SetHaptics(15.0f, 0.4f, 0.1f, true, false);
+
                     // "Left" direction selected
                     HandleExperimentInput("left");
                 }
@@ -689,6 +705,9 @@ public class ExperimentManager : MonoBehaviour
                         uiManager.NextPage();
                         SetInputEnabled(true);
 
+                        // Trigger controller haptics
+                        VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
+
                         // Update the "Next" button if the last page
                         if (!uiManager.HasNextPage())
                         {
@@ -697,6 +716,9 @@ public class ExperimentManager : MonoBehaviour
                     }
                     else
                     {
+                        // Trigger controller haptics
+                        VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
+
                         EndTrial();
                     }
                 }
@@ -704,6 +726,13 @@ public class ExperimentManager : MonoBehaviour
                 {
                     // Hide the UI
                     uiManager.SetVisible(false);
+
+                    // Only provide haptic feedback before calibration is run
+                    if (!calibrationManager.IsCalibrationActive() && !calibrationManager.CalibrationStatus())
+                    {
+                        // Trigger controller haptics
+                        VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
+                    }
 
                     // Trigger eye-tracking calibration the end the trial
                     calibrationManager.RunCalibration(() =>
@@ -717,6 +746,9 @@ public class ExperimentManager : MonoBehaviour
                     ActiveBlock == BlockIndex.Calibration ||
                     ActiveBlock == BlockIndex.Main)
                 {
+                    // Trigger controller haptics
+                    VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
+
                     // "Right" direction selected
                     HandleExperimentInput("right");
                 }
