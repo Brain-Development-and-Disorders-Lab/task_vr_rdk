@@ -323,8 +323,8 @@ public class ExperimentManager : MonoBehaviour
 
             uiManager.SetVisible(true);
             uiManager.SetHeader("Welcome");
-            uiManager.SetLeftButton(false, true, "Back");
-            uiManager.SetRightButton(true, true, "Next");
+            uiManager.SetLeftButtonState(false, true, "Back");
+            uiManager.SetRightButtonState(true, true, "Next");
 
             // Input delay
             yield return StartCoroutine(WaitSeconds(0.25f, true));
@@ -337,8 +337,8 @@ public class ExperimentManager : MonoBehaviour
             uiManager.SetVisible(true);
             uiManager.SetHeader("Headset Calibration");
             uiManager.SetBody("You will be shown a red dot in front of you. Follow the dot movement with your eyes. After a brief series of movements, the calibration will automatically end and you will be shown the task instructions.\n\nPress the right controller trigger to select <b>Start</b>.");
-            uiManager.SetLeftButton(false, false, "");
-            uiManager.SetRightButton(true, true, "Start");
+            uiManager.SetLeftButtonState(false, false, "");
+            uiManager.SetRightButtonState(true, true, "Start");
 
             // Input delay
             yield return StartCoroutine(WaitSeconds(0.25f, true));
@@ -376,8 +376,8 @@ public class ExperimentManager : MonoBehaviour
             uiManager.SetVisible(true);
             uiManager.SetHeader("Practice Trials");
             uiManager.SetBody("You will now complete another " + BlockSize.Practice + " practice trials. After selecting a direction, the cross in the center of the circlular area will briefly change color if your answer was correct or not. Green is a correct answer, red is an incorrect answer.\n\nWhen you are ready and comfortable, press the right controller trigger to select <b>Next</b> and continue.");
-            uiManager.SetLeftButton(false, true, "Back");
-            uiManager.SetRightButton(true, true, "Next");
+            uiManager.SetLeftButtonState(false, true, "Back");
+            uiManager.SetRightButtonState(true, true, "Next");
 
             // Input delay
             yield return StartCoroutine(WaitSeconds(0.25f, true));
@@ -412,8 +412,8 @@ public class ExperimentManager : MonoBehaviour
             uiManager.SetVisible(true);
             uiManager.SetHeader("Main Trials");
             uiManager.SetBody("That concludes the practice trials. You will now play " + ((int)BlockSize.Calibration + (int)BlockSize.Main) + " main trials.\n\nYou will not be shown if you answered correctly or not, but sometimes you will be asked whether you were more confident in that trial than in the previous trial.\n\nWhen you are ready and comfortable, press the right controller trigger to select <b>Next</b> and continue.");
-            uiManager.SetLeftButton(false, true, "Back");
-            uiManager.SetRightButton(true, true, "Next");
+            uiManager.SetLeftButtonState(false, true, "Back");
+            uiManager.SetRightButtonState(true, true, "Next");
 
             // Input delay
             yield return StartCoroutine(WaitSeconds(0.25f, true));
@@ -470,8 +470,8 @@ public class ExperimentManager : MonoBehaviour
             uiManager.SetVisible(true);
             uiManager.SetHeader("");
             uiManager.SetBody("Did you feel more confident about your response to: The <b>previous</b> trial or <b>this</b> trial?");
-            uiManager.SetLeftButton(true, true, "Previous Trial");
-            uiManager.SetRightButton(true, true, "This Trial");
+            uiManager.SetLeftButtonState(true, true, "Previous Trial");
+            uiManager.SetRightButtonState(true, true, "This Trial");
 
             // Input delay
             Session.instance.CurrentTrial.result["confidenceStart"] = Time.time;
@@ -673,7 +673,7 @@ public class ExperimentManager : MonoBehaviour
                         // Update the "Next" button if the last page
                         if (uiManager.HasNextPage())
                         {
-                            uiManager.SetRightButton(true, true, "Next");
+                            uiManager.SetRightButtonState(true, true, "Next");
                         }
                     }
                 }
@@ -711,7 +711,7 @@ public class ExperimentManager : MonoBehaviour
                         // Update the "Next" button if the last page
                         if (!uiManager.HasNextPage())
                         {
-                            uiManager.SetRightButton(true, true, "Continue");
+                            uiManager.SetRightButtonState(true, true, "Continue");
                         }
                     }
                     else
