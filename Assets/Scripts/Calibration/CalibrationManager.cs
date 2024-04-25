@@ -5,7 +5,7 @@ using System.Linq;
 using UXF;
 
 // Custom namespaces
-using ExperimentUtilities;
+using Utilities;
 
 namespace Calibration
 {
@@ -58,7 +58,7 @@ namespace Calibration
         [SerializeField]
         public GameObject StimulusAnchor;
 
-        private LoggerManager Logger;
+        private VRLogger logger;
 
         /// <summary>
         /// Setup function to initialize the fixation object and movement path of object
@@ -85,8 +85,8 @@ namespace Calibration
         /// </summary>
         void Start()
         {
-            // Grab the Logger object
-            Logger = FindAnyObjectByType<LoggerManager>();
+            // Grab the "VRLogger" object
+            logger = FindAnyObjectByType<VRLogger>();
             SetupCalibration();
         }
 
@@ -119,6 +119,11 @@ namespace Calibration
         public bool CalibrationStatus()
         {
             return CalibrationComplete;
+        }
+
+        public bool IsCalibrationActive()
+        {
+            return CalibrationActive;
         }
 
         private void CalculateCalibrationValues()
