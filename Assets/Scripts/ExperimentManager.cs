@@ -370,12 +370,15 @@ public class ExperimentManager : MonoBehaviour
         }
         else if (stimuli == "prepractice")
         {
+            // Override and set the camera to display in both eyes
+            cameraManager.SetActiveField(CameraManager.VisualField.Both);
+
             // Store the displayed stimuli type
             Session.instance.CurrentTrial.result["name"] = stimuli;
 
             uiManager.SetVisible(true);
             uiManager.SetHeader("Practice Trials");
-            uiManager.SetBody("You will now complete another " + BlockSize.Practice + " practice trials. After selecting a direction, the cross in the center of the circlular area will briefly change color if your answer was correct or not. Green is a correct answer, red is an incorrect answer.\n\nWhen you are ready and comfortable, press the right controller trigger to select <b>Next</b> and continue.");
+            uiManager.SetBody("You will now complete another " + (int)BlockSize.Practice + " practice trials. After selecting a direction, the cross in the center of the circlular area will briefly change color if your answer was correct or not. Green is a correct answer, red is an incorrect answer.\n\nWhen you are ready and comfortable, press the right controller trigger to select <b>Next</b> and continue.");
             uiManager.SetLeftButtonState(false, true, "Back");
             uiManager.SetRightButtonState(true, true, "Next");
 
@@ -406,6 +409,9 @@ public class ExperimentManager : MonoBehaviour
         }
         else if (stimuli == "premain")
         {
+            // Override and set the camera to display in both eyes
+            cameraManager.SetActiveField(CameraManager.VisualField.Both);
+
             // Store the displayed stimuli type
             Session.instance.CurrentTrial.result["name"] = stimuli;
 
