@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 namespace Stimuli
 {
@@ -188,18 +189,28 @@ namespace Stimuli
             }
         }
 
-        public void SetLeftButton(bool enabled, bool visible = true, string text = "Back")
+        public void SetLeftButtonState(bool enabled, bool visible = true, string text = "Back")
         {
             LButton.GetComponentInChildren<TextMeshProUGUI>().text = text;
             LButton.GetComponent<Button>().interactable = enabled;
             LButton.SetActive(visible);
         }
 
-        public void SetRightButton(bool enabled, bool visible = true, string text = "Next")
+        public void SetRightButtonState(bool enabled, bool visible = true, string text = "Next")
         {
             RButton.GetComponentInChildren<TextMeshProUGUI>().text = text;
             RButton.GetComponent<Button>().interactable = enabled;
             RButton.SetActive(visible);
+        }
+
+        public void ClickLeftButton()
+        {
+            ExecuteEvents.Execute(LButton, new BaseEventData(EventSystem.current), ExecuteEvents.submitHandler);
+        }
+
+        public void ClickRightButton()
+        {
+            ExecuteEvents.Execute(RButton, new BaseEventData(EventSystem.current), ExecuteEvents.submitHandler);
         }
 
         public void SetVisible(bool state)
