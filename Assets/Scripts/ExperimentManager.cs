@@ -365,7 +365,7 @@ public class ExperimentManager : MonoBehaviour
             // Decision (wait)
             Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
             stimulusManager.SetVisible("decision", true);
-            yield return StartCoroutine(WaitSeconds(0.25f, true));
+            yield return StartCoroutine(WaitSeconds(0.15f, true));
             SetInputEnabled(true);
         }
         else if (stimuli == "prepractice")
@@ -378,12 +378,12 @@ public class ExperimentManager : MonoBehaviour
 
             uiManager.SetVisible(true);
             uiManager.SetHeader("Practice Trials");
-            uiManager.SetBody("You will now complete another " + (int)BlockSize.Practice + " practice trials. After selecting a direction, the cross in the center of the circlular area will briefly change color if your answer was correct or not. Green is a correct answer, red is an incorrect answer.\n\nWhen you are ready and comfortable, press the right controller trigger to select <b>Next</b> and continue.");
+            uiManager.SetBody("You will now complete another " + (int)BlockSize.Practice + " practice trials. After selecting a direction, the cross in the center of the circular area will briefly change color if your answer was correct or not. Green is a correct answer, red is an incorrect answer.\n\nWhen you are ready and comfortable, press the right controller trigger to select <b>Next</b> and continue.");
             uiManager.SetLeftButtonState(false, true, "Back");
             uiManager.SetRightButtonState(true, true, "Next");
 
             // Input delay
-            yield return StartCoroutine(WaitSeconds(0.25f, true));
+            yield return StartCoroutine(WaitSeconds(0.15f, true));
             SetInputEnabled(true);
         }
         else if (stimuli == "practice")
@@ -404,7 +404,7 @@ public class ExperimentManager : MonoBehaviour
             // Decision (wait)
             Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
             stimulusManager.SetVisible("decision", true);
-            yield return StartCoroutine(WaitSeconds(0.25f, true));
+            yield return StartCoroutine(WaitSeconds(0.15f, true));
             SetInputEnabled(true);
         }
         else if (stimuli == "premain")
@@ -422,7 +422,7 @@ public class ExperimentManager : MonoBehaviour
             uiManager.SetRightButtonState(true, true, "Next");
 
             // Input delay
-            yield return StartCoroutine(WaitSeconds(0.25f, true));
+            yield return StartCoroutine(WaitSeconds(0.15f, true));
             SetInputEnabled(true);
         }
         else if (stimuli == "calibration")
@@ -443,7 +443,7 @@ public class ExperimentManager : MonoBehaviour
             // Decision (wait)
             Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
             stimulusManager.SetVisible("decision", true);
-            yield return StartCoroutine(WaitSeconds(0.25f, true));
+            yield return StartCoroutine(WaitSeconds(0.15f, true));
             SetInputEnabled(true);
         }
         else if (stimuli == "main")
@@ -464,7 +464,7 @@ public class ExperimentManager : MonoBehaviour
             // Decision (wait)
             Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
             stimulusManager.SetVisible("decision", true);
-            yield return StartCoroutine(WaitSeconds(0.25f, true));
+            yield return StartCoroutine(WaitSeconds(0.15f, true));
             SetInputEnabled(true);
         }
         else if (stimuli == "confidence")
@@ -475,13 +475,13 @@ public class ExperimentManager : MonoBehaviour
             // Confidence
             uiManager.SetVisible(true);
             uiManager.SetHeader("");
-            uiManager.SetBody("Did you feel more confident about your response to: The <b>previous</b> trial or <b>this</b> trial?");
-            uiManager.SetLeftButtonState(true, true, "Previous Trial");
+            uiManager.SetBody("Did you feel more confident about your response to: The <b>last</b> trial or <b>this</b> trial?");
+            uiManager.SetLeftButtonState(true, true, "Last Trial");
             uiManager.SetRightButtonState(true, true, "This Trial");
 
             // Input delay
             Session.instance.CurrentTrial.result["confidenceStart"] = Time.time;
-            yield return StartCoroutine(WaitSeconds(0.25f, true));
+            yield return StartCoroutine(WaitSeconds(0.15f, true));
             SetInputEnabled(true);
         }
         else if (stimuli == "feedback_correct")

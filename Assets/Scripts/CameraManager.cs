@@ -26,6 +26,8 @@ public class CameraManager : MonoBehaviour
     // Visual offset angle to place stimulus in single hemifield
     [SerializeField]
     private float OffsetAngle = 3.0f; // Degrees
+    [SerializeField]
+    private float VerticalOffset = -2.0f;
     private float StimulusRadius = 0.0f; // Additional world-units to offset the stimulus
     private float TotalOffset = 0.0f;
 
@@ -98,7 +100,7 @@ public class CameraManager : MonoBehaviour
         // Apply local offset adjustments for lateralized presentation
         if (field == VisualField.Left)
         {
-            StimulusAnchor.transform.localPosition = new Vector3(0.0f - TotalOffset, 0.0f, StimulusAnchorDistance);
+            StimulusAnchor.transform.localPosition = new Vector3(0.0f - TotalOffset, 0.0f + VerticalOffset, StimulusAnchorDistance);
             if (UseCullingMask)
             {
                 LeftCamera.cullingMask = ~(1 << 6);
@@ -107,7 +109,7 @@ public class CameraManager : MonoBehaviour
         }
         else if (field == VisualField.Right)
         {
-            StimulusAnchor.transform.localPosition = new Vector3(0.0f + TotalOffset, 0.0f, StimulusAnchorDistance);
+            StimulusAnchor.transform.localPosition = new Vector3(0.0f + TotalOffset, 0.0f + VerticalOffset, StimulusAnchorDistance);
             if (UseCullingMask)
             {
                 LeftCamera.cullingMask = 1 << 6;
@@ -116,7 +118,7 @@ public class CameraManager : MonoBehaviour
         }
         else
         {
-            StimulusAnchor.transform.localPosition = new Vector3(0.0f, 0.0f, StimulusAnchorDistance);
+            StimulusAnchor.transform.localPosition = new Vector3(0.0f, 0.0f + VerticalOffset, StimulusAnchorDistance);
             if (UseCullingMask)
             {
                 LeftCamera.cullingMask = ~(1 << 6);
