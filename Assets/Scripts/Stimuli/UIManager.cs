@@ -12,6 +12,8 @@ namespace Stimuli
         private Canvas UICanvas;
         [SerializeField]
         private float ScalingFactor = 0.1f; // Adjust scaling of stimulus to be viewable
+        [SerializeField]
+        private float VerticalOffset = -2.0f; // Adjust the vertical positioning of the UI
 
         // Calculated dimensions of stimuli
         private float StimulusDistance;
@@ -49,6 +51,9 @@ namespace Stimuli
                 SetVisible(false);
                 return;
             }
+
+            // Update the UICanvas positioning to incorporate a vertical offset
+            UICanvas.transform.position = new Vector3(0.0f, 10.0f * VerticalOffset, 200.0f);
 
             // Create GameObject for header
             HeaderContainer = new GameObject();
