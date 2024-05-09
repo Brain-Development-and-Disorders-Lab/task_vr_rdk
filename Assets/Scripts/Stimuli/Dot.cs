@@ -7,7 +7,8 @@ namespace Stimuli
     {
         private GameObject DotAnchor;
         private float DotRadius;
-        private float ApertureRadius;
+        private float ApertureWidth;
+        private float ApertureHeight;
         private string DotBehavior;
         private float DotX;
         private float DotY;
@@ -19,15 +20,16 @@ namespace Stimuli
         private bool DotVisible;
         private bool DotActive = true;
 
-        public Dot(GameObject anchor, float radius, float aperture, string behavior, float x = 0.0f, float y = 0.0f, bool visible = true)
+        public Dot(GameObject anchor, float radius, float apertureWidth, float apertureHeight, string behavior, float x = 0.0f, float y = 0.0f, bool visible = true)
         {
             DotAnchor = anchor;
             DotRadius = radius;
-            ApertureRadius = aperture;
+            ApertureWidth = apertureWidth;
+            ApertureHeight = apertureHeight;
             DotBehavior = behavior;
             DotX = x;
             DotY = y;
-            DotDirection = Mathf.PI;
+            DotDirection = Mathf.PI / 2; // Default direction is up
             DotVisible = visible;
 
             // Update direction depending on initial behaviour
@@ -108,6 +110,19 @@ namespace Stimuli
             }
         }
 
+        private bool IsVisible(float x, float y)
+        {
+            float halfWidth = ApertureWidth / 2.0f;
+            float halfHeight = ApertureHeight / 2.0f;
+
+            float leftBound = -halfWidth;
+            float rightBound = halfWidth;
+            float topBound = halfHeight;
+            float bottomBound = -halfHeight;
+
+            return x >= leftBound && x <= rightBound && y >= bottomBound && y <= topBound;
+        }
+
         public void Update()
         {
             if (DotActive == true)
@@ -118,11 +133,11 @@ namespace Stimuli
                 float updatedY = originalPosition.y;
 
                 // Update visibility
-                bool visibility = Mathf.Sqrt(Mathf.Pow(updatedX, 2.0f) + Mathf.Pow(updatedY, 2.0f)) <= ApertureRadius;
+                bool visibility = IsVisible(updatedX, updatedY);
                 DotObject.GetComponent<SpriteRenderer>().enabled = visibility;
 
                 // Random direction adjustment every 12 frames
-                if (DotBehavior == "random" & Time.frameCount % 12 == 0)
+                if (DotBehavior == "random" && Time.frameCount % 12 == 0)
                 {
                     // Adjust the direction
                     float delta = UnityEngine.Random.value;
@@ -136,17 +151,41 @@ namespace Stimuli
                     }
                 }
 
-                // Behaviour around aperture radius
-                if (DotBehavior == "reference" & Mathf.Abs(updatedX) > ApertureRadius)
+                if (DotBehavior == "reference")
                 {
-                    // Reset position
-                    updatedX -= 2.0f * ApertureRadius * Mathf.Cos(DotDirection);
-                    updatedY -= 2.0f * ApertureRadius * Mathf.Sin(DotDirection);
+                    // Reset depending on which edge the dot reached
+                    if (updatedY > ApertureHeight / 2)
+                    {
+                        updatedY -= ApertureHeight;
+                    }
+                    else if (updatedY < -ApertureHeight / 2)
+                    {
+                        updatedY += ApertureHeight;
+                    }
                 }
-                else if (DotBehavior == "random" & !visibility)
+                else if (DotBehavior == "random" && !visibility)
                 {
-                    // Oppose current position, "bounce" effect
-                    DotDirection -= Mathf.PI;
+                    // Reset depending on which edge the dot reached
+                    if (updatedY > ApertureHeight / 2)
+                    {
+                        updatedY -= ApertureHeight;
+                        updatedY += DotRadius * 2.0f;
+                    }
+                    else if (updatedY < -ApertureHeight / 2)
+                    {
+                        updatedY += ApertureHeight;
+                        updatedY -= DotRadius * 2.0f;
+                    }
+                    else if (updatedX > ApertureWidth / 2)
+                    {
+                        updatedX -= ApertureWidth;
+                        updatedX += DotRadius * 2.0f;
+                    }
+                    else if (updatedX < -ApertureWidth / 2)
+                    {
+                        updatedX += ApertureWidth;
+                        updatedX -= DotRadius * 2.0f;
+                    }
                 }
 
                 // Update overall position

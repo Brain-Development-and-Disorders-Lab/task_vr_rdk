@@ -20,7 +20,7 @@ namespace Stimuli
         private float ArcWorldRadius;
         private float ApertureWorldWidth;
         private float ApertureWorldHeight;
-        private readonly float ArcWidth = 0.08f; // Specified in supplementary materials
+        private readonly float ArcWidth = 0.04f; // Specified in supplementary materials
         private float ArcWorldWidth;
         private readonly float FixationDiameter = 0.05f; // Specified in supplementary materials
         private float FixationWorldRadius;
@@ -293,16 +293,16 @@ namespace Stimuli
 
         public void CreateDots()
         {
-            float halfWidth = ApertureWorldWidth / 2.0f;
-            float halfHeight = ApertureWorldHeight / 2.0f;
-
-            for (int i = 0; i < 200; i++)
+            float DotDensity = 16.0f;
+            int DotCount = (int)(ArcDiameter * (ArcDiameter * 2.0f) * DotDensity);
+            Debug.Log("Dots: " + DotCount.ToString());
+            for (int i = 0; i < DotCount; i++)
             {
-                float x = UnityEngine.Random.Range(0.0f - halfWidth, 0.0f + halfWidth);
-                float y = UnityEngine.Random.Range(0.0f - halfHeight, 0.0f + halfHeight);
+                float x = UnityEngine.Random.Range(-ApertureWorldWidth / 2.0f, ApertureWorldWidth / 2.0f);
+                float y = UnityEngine.Random.Range(-ApertureWorldHeight / 2.0f, ApertureWorldHeight / 2.0f);
 
                 string dotBehavior = UnityEngine.Random.value > DotCoherence ? "random" : "reference";
-                Dots.Add(new Dot(stimulusAnchor, DotWorldRadius, ArcWorldRadius, dotBehavior, x, y, false));
+                Dots.Add(new Dot(stimulusAnchor, DotWorldRadius, ApertureWorldWidth, ApertureWorldHeight, dotBehavior, x, y, false));
             }
         }
 

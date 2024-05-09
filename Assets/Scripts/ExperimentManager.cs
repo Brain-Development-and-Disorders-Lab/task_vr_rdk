@@ -246,9 +246,9 @@ public class ExperimentManager : MonoBehaviour
         Session.instance.CurrentTrial.result["rightCoherences"] = Coherences["right"][0] + "," + Coherences["right"][1];
 
         // Set the reference direction randomly
-        float dotDirection = UnityEngine.Random.value > 0.5f ? 0.0f : (float)Math.PI;
+        float dotDirection = UnityEngine.Random.value > 0.5f ? (float)Math.PI / 2 : (float)Math.PI * 3 / 2;
         stimulusManager.SetDirection(dotDirection);
-        Session.instance.CurrentTrial.result["referenceDirection"] = stimulusManager.GetDirection() == 0.0f ? "right" : "left";
+        Session.instance.CurrentTrial.result["referenceDirection"] = stimulusManager.GetDirection() == (float)Math.PI / 2 ? "up" : "down";
 
         // Store the standard motion duration value (1.5 seconds)
         Session.instance.CurrentTrial.result["motionDuration"] = 1.5f;
