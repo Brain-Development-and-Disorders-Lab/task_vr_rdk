@@ -35,12 +35,12 @@ public class ExperimentManager : MonoBehaviour
     {
         HeadsetSetup = 1,
         Welcome = 1, // Welcome instructions, includes tutorial instructions
-        Tutorial = 20, // Tutorial trials
+        Tutorial = 2, // Tutorial trials
         PrePractice = 1, // Practice instructions
         Practice = 20, // Practice trials
         PreMain = 1, // Main instructions
-        Calibration = 120,
-        Main = 200,
+        Calibration = 24,
+        Main = 20,
     };
 
     private BlockIndex ActiveBlock = BlockIndex.HeadsetSetup; // Store the currently active Block
@@ -56,6 +56,10 @@ public class ExperimentManager : MonoBehaviour
     private readonly int LOW_INDEX = 0;
     private readonly int HIGH_INDEX = 1;
     private readonly int EYE_BLOCK_SIZE = 10; // Number of trials per eye
+
+    // Timing variables
+    private readonly float DISPLAY_DURATION = 0.180f; // 180 milliseconds
+    private readonly float POST_FIXATION_DELAY = 0.01f; // 10 milliseconds
 
     // Store references to Manager classes
     StimulusManager stimulusManager;
@@ -353,6 +357,7 @@ public class ExperimentManager : MonoBehaviour
             SetInputEnabled(false);
             stimulusManager.SetFixationCrossVisibility(true);
             yield return new WaitUntil(() => WaitForCentralFixation());
+            yield return StartCoroutine(WaitSeconds(POST_FIXATION_DELAY, true));
 
             // Store the displayed stimuli type
             Session.instance.CurrentTrial.result["name"] = stimuli;
@@ -362,11 +367,12 @@ public class ExperimentManager : MonoBehaviour
             yield return StartCoroutine(WaitSeconds(1.0f, true));
             stimulusManager.SetVisible("fixation", false);
 
-            // Motion ([1.0, 5.0) seconds)
+            // Motion
             stimulusManager.SetVisible("motion", true);
             // Override the standard motion duration
-            float TutorialMotionDuration = 1.0f + UnityEngine.Random.value * 4.0f;
-            Session.instance.CurrentTrial.result["motionDuration"] = TutorialMotionDuration;
+            // float TutorialMotionDuration = 1.0f + UnityEngine.Random.value * 4.0f;
+            // Session.instance.CurrentTrial.result["motionDuration"] = TutorialMotionDuration;
+            float TutorialMotionDuration = DISPLAY_DURATION;
             yield return StartCoroutine(WaitSeconds(TutorialMotionDuration, true));
             stimulusManager.SetVisible("motion", false);
             stimulusManager.SetFixationCrossVisibility(false);
@@ -400,6 +406,7 @@ public class ExperimentManager : MonoBehaviour
             SetInputEnabled(false);
             stimulusManager.SetFixationCrossVisibility(true);
             yield return new WaitUntil(() => WaitForCentralFixation());
+            yield return StartCoroutine(WaitSeconds(POST_FIXATION_DELAY, true));
 
             // Store the displayed stimuli type
             Session.instance.CurrentTrial.result["name"] = stimuli;
@@ -411,7 +418,7 @@ public class ExperimentManager : MonoBehaviour
 
             // Motion (1.5 seconds)
             stimulusManager.SetVisible("motion", true);
-            yield return StartCoroutine(WaitSeconds(1.5f, true));
+            yield return StartCoroutine(WaitSeconds(DISPLAY_DURATION, true));
             stimulusManager.SetVisible("motion", false);
             stimulusManager.SetFixationCrossVisibility(false);
 
@@ -444,6 +451,7 @@ public class ExperimentManager : MonoBehaviour
             SetInputEnabled(false);
             stimulusManager.SetFixationCrossVisibility(true);
             yield return new WaitUntil(() => WaitForCentralFixation());
+            yield return StartCoroutine(WaitSeconds(POST_FIXATION_DELAY, true));
 
             // Store the displayed stimuli type
             Session.instance.CurrentTrial.result["name"] = stimuli;
@@ -455,7 +463,7 @@ public class ExperimentManager : MonoBehaviour
 
             // Motion (1.5 seconds)
             stimulusManager.SetVisible("motion", true);
-            yield return StartCoroutine(WaitSeconds(1.5f, true));
+            yield return StartCoroutine(WaitSeconds(DISPLAY_DURATION, true));
             stimulusManager.SetVisible("motion", false);
             stimulusManager.SetFixationCrossVisibility(false);
 
@@ -470,6 +478,7 @@ public class ExperimentManager : MonoBehaviour
             SetInputEnabled(false);
             stimulusManager.SetFixationCrossVisibility(true);
             yield return new WaitUntil(() => WaitForCentralFixation());
+            yield return StartCoroutine(WaitSeconds(POST_FIXATION_DELAY, true));
 
             // Store the displayed stimuli type
             Session.instance.CurrentTrial.result["name"] = stimuli;
@@ -481,7 +490,7 @@ public class ExperimentManager : MonoBehaviour
 
             // Motion (1.5 seconds)
             stimulusManager.SetVisible("motion", true);
-            yield return StartCoroutine(WaitSeconds(1.5f, true));
+            yield return StartCoroutine(WaitSeconds(DISPLAY_DURATION, true));
             stimulusManager.SetVisible("motion", false);
             stimulusManager.SetFixationCrossVisibility(false);
 
@@ -678,7 +687,6 @@ public class ExperimentManager : MonoBehaviour
     /// <returns></returns>
     private bool WaitForCentralFixation()
     {
-        return true;
         Vector3 LeftGaze = LeftEyeTracker.GetGazeEstimate();
         Vector3 RightGaze = RightEyeTracker.GetGazeEstimate();
         Vector3 WorldPosition = stimulusManager.GetAnchor().transform.position;
@@ -696,7 +704,7 @@ public class ExperimentManager : MonoBehaviour
 
         // To-Do: Correct gaze estimate based on average error on center
 
-        return Mathf.Abs(LeftGaze.x - WorldPosition.x) <= 0.5f && Mathf.Abs(RightGaze.x - WorldPosition.x) <= 0.5f && Mathf.Abs(LeftGaze.y - WorldPosition.y) <= 0.5f && Mathf.Abs(RightGaze.y - WorldPosition.y) <= 0.5f;
+        return (Mathf.Abs(LeftGaze.x - WorldPosition.x) <= 0.5f && Mathf.Abs(LeftGaze.y - WorldPosition.y) <= 0.5f) || (Mathf.Abs(RightGaze.x - WorldPosition.x) <= 0.5f && Mathf.Abs(RightGaze.y - WorldPosition.y) <= 0.5f);
     }
 
     private IEnumerator WaitSeconds(float seconds, bool disableInput = false, Action callback = null)

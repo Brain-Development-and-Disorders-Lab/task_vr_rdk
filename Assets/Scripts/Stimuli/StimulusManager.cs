@@ -367,7 +367,7 @@ namespace Stimuli
             TextMeshProUGUI LButtonText = LButton.GetComponentInChildren<TextMeshProUGUI>();
             LButtonText.fontStyle = FontStyles.Bold;
             LButtonText.fontSize = 4.0f;
-            LButtonText.text = "Left";
+            LButtonText.text = "Up";
 
             // Right button, typically "next" action
             GameObject RButton = TMP_DefaultControls.CreateButton(ButtonResources);
@@ -379,7 +379,7 @@ namespace Stimuli
             TextMeshProUGUI RButtonText = RButton.GetComponentInChildren<TextMeshProUGUI>();
             RButtonText.fontStyle = FontStyles.Bold;
             RButtonText.fontSize = 4.0f;
-            RButtonText.text = "Right";
+            RButtonText.text = "Down";
 
             return buttonDecisionObject;
         }
