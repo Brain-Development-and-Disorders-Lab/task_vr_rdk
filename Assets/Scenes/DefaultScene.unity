@@ -409,7 +409,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2834388984357925155, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 29705
+      value: 31980
       objectReference: {fileID: 0}
     - target: {fileID: 2896031059644693069, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_IsActive
@@ -445,7 +445,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4267567203292169432, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 55680
+      value: 59880
       objectReference: {fileID: 0}
     - target: {fileID: 4612929069887686480, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_AnchorMax.y
@@ -738,6 +738,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LoadingScreen: {fileID: 439538600}
+  LeftEyeTracker: {fileID: 567733400}
+  RightEyeTracker: {fileID: 1593745115}
 --- !u!114 &215276331
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -755,10 +757,11 @@ MonoBehaviour:
   CameraRig: {fileID: 440981525}
   StimulusAnchor: {fileID: 1762882801}
   UIAnchor: {fileID: 1149117689}
+  FixationAnchor: {fileID: 223726298}
   FollowHeadMovement: 1
   OffsetAngle: 3
   VerticalOffset: -1.1
-  UseCullingMask: 1
+  UseCullingMask: 0
 --- !u!114 &215276332
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -772,6 +775,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   stimulusAnchor: {fileID: 1762882801}
+  fixationAnchor: {fileID: 223726298}
   ScalingFactor: 2
 --- !u!114 &215276333
 MonoBehaviour:
@@ -832,6 +836,37 @@ MonoBehaviour:
   leftEyeTracker: {fileID: 567733400}
   rightEyeTracker: {fileID: 1593745115}
   StimulusAnchor: {fileID: 1762882801}
+--- !u!1 &223726298
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 223726299}
+  m_Layer: 0
+  m_Name: FixationAnchor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &223726299
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 223726298}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -1.1, z: 10}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &241204850
 GameObject:
   m_ObjectHideFlags: 0
@@ -6961,4 +6996,5 @@ SceneRoots:
   - {fileID: 75052806}
   - {fileID: 1497933585}
   - {fileID: 1762882802}
+  - {fileID: 223726299}
   - {fileID: 1149117693}

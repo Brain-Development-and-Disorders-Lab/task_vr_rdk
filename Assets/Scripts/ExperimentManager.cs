@@ -550,11 +550,11 @@ public class ExperimentManager : MonoBehaviour
 
             // Determine if a correct response was made
             Session.instance.CurrentTrial.result["selectedCorrectDirection"] = false;
-            if (selection == "left" && stimulusManager.GetDirection() == (float)Math.PI)
+            if (selection == "up" && stimulusManager.GetDirection() == (float)Math.PI / 2)
             {
                 Session.instance.CurrentTrial.result["selectedCorrectDirection"] = true;
             }
-            else if (selection == "right" && stimulusManager.GetDirection() == 0.0f)
+            else if (selection == "down" && stimulusManager.GetDirection() == (float)Math.PI * 3 / 2)
             {
                 Session.instance.CurrentTrial.result["selectedCorrectDirection"] = true;
             }
@@ -751,8 +751,8 @@ public class ExperimentManager : MonoBehaviour
                     // Trigger controller haptics
                     VRInput.SetHaptics(15.0f, 0.4f, 0.1f, true, false);
 
-                    // "Left" direction selected
-                    HandleExperimentInput("left");
+                    // "Up" direction selected
+                    HandleExperimentInput("up");
                 }
                 InputReset = false;
             }
@@ -814,8 +814,8 @@ public class ExperimentManager : MonoBehaviour
                     // Trigger controller haptics
                     VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
 
-                    // "Right" direction selected
-                    HandleExperimentInput("right");
+                    // "Down" direction selected
+                    HandleExperimentInput("down");
                 }
                 InputReset = false;
             }
