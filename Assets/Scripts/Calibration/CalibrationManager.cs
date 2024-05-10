@@ -58,8 +58,6 @@ namespace Calibration
         [SerializeField]
         public GameObject StimulusAnchor;
 
-        private VRLogger logger;
-
         /// <summary>
         /// Setup function to initialize the fixation object and movement path of object
         /// </summary>
@@ -85,8 +83,6 @@ namespace Calibration
         /// </summary>
         void Start()
         {
-            // Grab the "VRLogger" object
-            logger = FindAnyObjectByType<VRLogger>();
             SetupCalibration();
         }
 
@@ -169,9 +165,9 @@ namespace Calibration
             return DirectionalOffsets;
         }
 
-        public GazeVector GetGlobalOffset()
+        public GazeVector GetCentralOffset()
         {
-            return GlobalOffset;
+            return DirectionalOffsets["c"];
         }
 
         public static Dictionary<string, Tuple<float, float>> GetQuadrants()

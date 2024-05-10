@@ -35,12 +35,12 @@ public class ExperimentManager : MonoBehaviour
     {
         HeadsetSetup = 1,
         Welcome = 1, // Welcome instructions, includes tutorial instructions
-        Tutorial = 2, // Tutorial trials
+        Tutorial = 20, // Tutorial trials
         PrePractice = 1, // Practice instructions
         Practice = 20, // Practice trials
         PreMain = 1, // Main instructions
-        Calibration = 24,
-        Main = 20,
+        Calibration = 120,
+        Main = 200,
     };
 
     private BlockIndex ActiveBlock = BlockIndex.HeadsetSetup; // Store the currently active Block
@@ -70,6 +70,8 @@ public class ExperimentManager : MonoBehaviour
     // Store references to EyePositionTracker instances
     public EyePositionTracker LeftEyeTracker;
     public EyePositionTracker RightEyeTracker;
+    private int FixationMeasurementCounter = 0; // Counter for number of fixation measurements
+    private readonly int RequireFixationMeasurements = 48; // Required on-target fixation measurements
 
     // Input parameters
     bool InputEnabled = false;
@@ -687,6 +689,7 @@ public class ExperimentManager : MonoBehaviour
     /// <returns></returns>
     private bool WaitForCentralFixation()
     {
+        // Get gaze estimates and the current world position
         Vector3 LeftGaze = LeftEyeTracker.GetGazeEstimate();
         Vector3 RightGaze = RightEyeTracker.GetGazeEstimate();
         Vector3 WorldPosition = stimulusManager.GetAnchor().transform.position;
@@ -702,9 +705,23 @@ public class ExperimentManager : MonoBehaviour
             WorldPosition.x -= GazeOffset;
         }
 
-        // To-Do: Correct gaze estimate based on average error on center
+        float GazeThreshold = 0.5f; // Error threshold (world units)
+        bool Fixated = false; // Fixated state
+        if ((Mathf.Abs(LeftGaze.x - WorldPosition.x) <= GazeThreshold && Mathf.Abs(LeftGaze.y - WorldPosition.y) <= GazeThreshold) || (Mathf.Abs(RightGaze.x - WorldPosition.x) <= GazeThreshold && Mathf.Abs(RightGaze.y - WorldPosition.y) <= GazeThreshold))
+        {
+            // If the gaze is directed in fixation, increment the counter to signify a measurement
+            FixationMeasurementCounter += 1;
+        }
 
-        return (Mathf.Abs(LeftGaze.x - WorldPosition.x) <= 0.5f && Mathf.Abs(LeftGaze.y - WorldPosition.y) <= 0.5f) || (Mathf.Abs(RightGaze.x - WorldPosition.x) <= 0.5f && Mathf.Abs(RightGaze.y - WorldPosition.y) <= 0.5f);
+        if (FixationMeasurementCounter >= RequireFixationMeasurements)
+        {
+            // Register as fixated if the required number of measurements have been taken
+            Fixated = true;
+            FixationMeasurementCounter = 0;
+        }
+
+        // Return the overall fixation state
+        return Fixated;
     }
 
     private IEnumerator WaitSeconds(float seconds, bool disableInput = false, Action callback = null)
