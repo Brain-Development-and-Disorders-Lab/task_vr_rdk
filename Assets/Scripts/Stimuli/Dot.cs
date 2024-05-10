@@ -110,6 +110,12 @@ namespace Stimuli
             }
         }
 
+        /// <summary>
+        /// Utility function to check the visibility of a dot with specific coordinates
+        /// </summary>
+        /// <param name="x">X coordinate</param>
+        /// <param name="y">Y coordinate</param>
+        /// <returns></returns>
         private bool IsVisible(float x, float y)
         {
             float halfWidth = ApertureWidth / 2.0f;
@@ -165,7 +171,8 @@ namespace Stimuli
                 }
                 else if (DotBehavior == "random" && !visibility)
                 {
-                    // Reset depending on which edge the dot reached
+                    // Reset depending on which edge the dot reached, adding a padding distance to ensure continued
+                    // dot visibility
                     if (updatedY > ApertureHeight / 2)
                     {
                         updatedY -= ApertureHeight;

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine.UI;
+using System.Linq;
 
 namespace Stimuli
 {
@@ -10,6 +11,8 @@ namespace Stimuli
     {
         [SerializeField]
         private GameObject stimulusAnchor;
+        [SerializeField]
+        private GameObject fixationAnchor;
 
         [SerializeField]
         private float ScalingFactor = 3.0f; // Adjust scaling of stimulus to be viewable
@@ -47,11 +50,13 @@ namespace Stimuli
         private Dictionary<string, List<GameObject>> Stimuli = new();
         private Dictionary<string, bool> StimuliVisibility = new();
 
+        private GameObject FixationCross;
+
         // Initialize StimulusManager
         void Start()
         {
-            // Run pre-component calculations to ensure consistent world sizing
-            CalculateValues();
+            CalculateValues(); // Run pre-component calculations to ensure consistent world sizing
+            FixationCross = CreateFixationCross();
 
             foreach (string stimuli in AllStimuli)
             {
@@ -68,7 +73,7 @@ namespace Stimuli
             ApertureWorldWidth = ArcWorldRadius * 2.0f;
             ApertureWorldHeight = ApertureWorldWidth * 2.0f;
             ArcWorldWidth = ArcWidth;
-            FixationWorldRadius = FixationDiameter;
+            FixationWorldRadius = FixationDiameter * 2.0f;
             DotWorldRadius = StimulusDistance * Mathf.Tan(ScalingFactor * DotDiameter / 2 * (Mathf.PI / 180.0f));
         }
 
@@ -80,15 +85,11 @@ namespace Stimuli
             {
                 // Generate aperture
                 StaticComponents.Add(CreateRectangle(ArcWorldRadius * 2.0f, ArcWorldRadius * 4.0f, new Vector2(0.0f, 0.0f), Color.white));
-                // Add fixation cross
-                StaticComponents.Add(CreateFixationCross());
             }
             else if (stimulus == "decision")
             {
                 // Generate aperture
                 StaticComponents.Add(CreateRectangle(ArcWorldRadius * 2.0f, ArcWorldRadius * 4.0f, new Vector2(0.0f, 0.0f), Color.white));
-                // Add fixation cross
-                StaticComponents.Add(CreateFixationCross());
                 // Add selection buttons
                 StaticComponents.Add(CreateDecisionButtons());
             }
@@ -98,22 +99,16 @@ namespace Stimuli
                 StaticComponents.Add(CreateRectangle(ArcWorldRadius * 2.0f, ArcWorldRadius * 4.0f, new Vector2(0.0f, 0.0f), Color.white));
                 // Add dots
                 CreateDots();
-                // Add fixation cross
-                StaticComponents.Add(CreateFixationCross());
             }
             else if (stimulus == "feedback_correct")
             {
                 // Generate aperture
                 StaticComponents.Add(CreateRectangle(ArcWorldRadius * 2.0f, ArcWorldRadius * 4.0f, new Vector2(0.0f, 0.0f), Color.white));
-                // Add green fixation cross
-                StaticComponents.Add(CreateFixationCross("green"));
             }
             else if (stimulus == "feedback_incorrect")
             {
                 // Generate aperture
                 StaticComponents.Add(CreateRectangle(ArcWorldRadius * 2.0f, ArcWorldRadius * 4.0f, new Vector2(0.0f, 0.0f), Color.white));
-                // Add red fixation cross
-                StaticComponents.Add(CreateFixationCross("red"));
             }
             else
             {
@@ -251,7 +246,7 @@ namespace Stimuli
             // Create base GameObject
             GameObject fixationObjectParent = new GameObject();
             fixationObjectParent.name = "rdk_fixation_object";
-            fixationObjectParent.transform.SetParent(stimulusAnchor.transform, false);
+            fixationObjectParent.transform.SetParent(fixationAnchor.transform, false);
             fixationObjectParent.SetActive(false);
 
             // Create horizontal component
@@ -268,8 +263,8 @@ namespace Stimuli
             horizontalLine.SetPosition(1, new Vector3(FixationWorldRadius, 0.0f, 0.0f));
             horizontalLine.material = new Material(Shader.Find("Sprites/Default"));
             horizontalLine.material.SetColor("_Color", CrossColor);
-            horizontalLine.startWidth = ArcWorldWidth * 0.4f;
-            horizontalLine.endWidth = ArcWorldWidth * 0.4f;
+            horizontalLine.startWidth = ArcWorldWidth;
+            horizontalLine.endWidth = ArcWorldWidth;
 
             // Create vertical component
             GameObject fixationObjectVertical = new GameObject();
@@ -285,10 +280,53 @@ namespace Stimuli
             verticalLine.SetPosition(1, new Vector3(0.0f, FixationWorldRadius, 0.0f));
             verticalLine.material = new Material(Shader.Find("Sprites/Default"));
             verticalLine.material.SetColor("_Color", CrossColor);
-            verticalLine.startWidth = ArcWorldWidth * 0.4f;
-            verticalLine.endWidth = ArcWorldWidth * 0.4f;
+            verticalLine.startWidth = ArcWorldWidth;
+            verticalLine.endWidth = ArcWorldWidth;
 
             return fixationObjectParent;
+        }
+
+        public void SetFixationCrossVisibility(bool isVisible)
+        {
+            FixationCross.SetActive(isVisible);
+        }
+
+        public void SetFixationCrossColor(string color)
+        {
+            LineRenderer[] renderers = FixationCross.GetComponentsInChildren<LineRenderer>();
+            foreach (LineRenderer renderer in renderers)
+            {
+                if (color == "white") {
+                    renderer.material.SetColor("_Color", Color.white);
+                }
+                else if (color == "red")
+                {
+                    renderer.material.SetColor("_Color", Color.red);
+                }
+                else if (color == "green")
+                {
+                    renderer.material.SetColor("_Color", Color.green);
+                }
+            }
+        }
+
+        public void UseCentralFixation()
+        {
+            GameObject gazeFixationObject = Stimuli["gaze"].First();
+            GameObject fixationObject = Stimuli["fixation"][1];
+            GameObject motionFixationObject = Stimuli["motion"][1];
+            // Adjust the position depending on CameraManager setup
+            CameraManager cameraManager = FindObjectOfType<CameraManager>();
+            float offsetValue = cameraManager.GetTotalOffset();
+            CameraManager.VisualField activeField = cameraManager.GetActiveField();
+            if (activeField == CameraManager.VisualField.Left)
+            {
+                gazeFixationObject.transform.localPosition = new Vector3(offsetValue, gazeFixationObject.transform.localPosition.y);
+            }
+            else if (activeField == CameraManager.VisualField.Right)
+            {
+                gazeFixationObject.transform.localPosition = new Vector3(-offsetValue, gazeFixationObject.transform.localPosition.y);
+            }
         }
 
         public void CreateDots()
@@ -394,6 +432,11 @@ namespace Stimuli
         public float GetStimulusRadius()
         {
             return ArcWorldRadius;
+        }
+
+        public GameObject GetAnchor()
+        {
+            return stimulusAnchor;
         }
 
         void Update()

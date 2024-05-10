@@ -63,6 +63,10 @@ public class ExperimentManager : MonoBehaviour
     CameraManager cameraManager;
     CalibrationManager calibrationManager;
 
+    // Store references to EyePositionTracker instances
+    public EyePositionTracker LeftEyeTracker;
+    public EyePositionTracker RightEyeTracker;
+
     // Input parameters
     bool InputEnabled = false;
     private bool InputReset = true;
@@ -346,6 +350,10 @@ public class ExperimentManager : MonoBehaviour
         }
         else if (stimuli == "tutorial")
         {
+            SetInputEnabled(false);
+            stimulusManager.SetFixationCrossVisibility(true);
+            yield return new WaitUntil(() => WaitForCentralFixation());
+
             // Store the displayed stimuli type
             Session.instance.CurrentTrial.result["name"] = stimuli;
 
@@ -361,6 +369,7 @@ public class ExperimentManager : MonoBehaviour
             Session.instance.CurrentTrial.result["motionDuration"] = TutorialMotionDuration;
             yield return StartCoroutine(WaitSeconds(TutorialMotionDuration, true));
             stimulusManager.SetVisible("motion", false);
+            stimulusManager.SetFixationCrossVisibility(false);
 
             // Decision (wait)
             Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
@@ -388,6 +397,10 @@ public class ExperimentManager : MonoBehaviour
         }
         else if (stimuli == "practice")
         {
+            SetInputEnabled(false);
+            stimulusManager.SetFixationCrossVisibility(true);
+            yield return new WaitUntil(() => WaitForCentralFixation());
+
             // Store the displayed stimuli type
             Session.instance.CurrentTrial.result["name"] = stimuli;
 
@@ -400,6 +413,7 @@ public class ExperimentManager : MonoBehaviour
             stimulusManager.SetVisible("motion", true);
             yield return StartCoroutine(WaitSeconds(1.5f, true));
             stimulusManager.SetVisible("motion", false);
+            stimulusManager.SetFixationCrossVisibility(false);
 
             // Decision (wait)
             Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
@@ -427,6 +441,10 @@ public class ExperimentManager : MonoBehaviour
         }
         else if (stimuli == "calibration")
         {
+            SetInputEnabled(false);
+            stimulusManager.SetFixationCrossVisibility(true);
+            yield return new WaitUntil(() => WaitForCentralFixation());
+
             // Store the displayed stimuli type
             Session.instance.CurrentTrial.result["name"] = stimuli;
 
@@ -439,6 +457,7 @@ public class ExperimentManager : MonoBehaviour
             stimulusManager.SetVisible("motion", true);
             yield return StartCoroutine(WaitSeconds(1.5f, true));
             stimulusManager.SetVisible("motion", false);
+            stimulusManager.SetFixationCrossVisibility(false);
 
             // Decision (wait)
             Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
@@ -448,6 +467,10 @@ public class ExperimentManager : MonoBehaviour
         }
         else if (stimuli == "main")
         {
+            SetInputEnabled(false);
+            stimulusManager.SetFixationCrossVisibility(true);
+            yield return new WaitUntil(() => WaitForCentralFixation());
+
             // Store the displayed stimuli type
             Session.instance.CurrentTrial.result["name"] = stimuli;
 
@@ -460,6 +483,7 @@ public class ExperimentManager : MonoBehaviour
             stimulusManager.SetVisible("motion", true);
             yield return StartCoroutine(WaitSeconds(1.5f, true));
             stimulusManager.SetVisible("motion", false);
+            stimulusManager.SetFixationCrossVisibility(false);
 
             // Decision (wait)
             Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
@@ -486,16 +510,24 @@ public class ExperimentManager : MonoBehaviour
         }
         else if (stimuli == "feedback_correct")
         {
+            stimulusManager.SetFixationCrossColor("green");
+            stimulusManager.SetFixationCrossVisibility(true);
             stimulusManager.SetVisible("feedback_correct", true);
             yield return StartCoroutine(WaitSeconds(1.0f, true));
             stimulusManager.SetVisible("feedback_correct", false);
+            stimulusManager.SetFixationCrossVisibility(false);
+            stimulusManager.SetFixationCrossColor("white");
             EndTrial();
         }
         else if (stimuli == "feedback_incorrect")
         {
+            stimulusManager.SetFixationCrossColor("red");
+            stimulusManager.SetFixationCrossVisibility(true);
             stimulusManager.SetVisible("feedback_incorrect", true);
             yield return StartCoroutine(WaitSeconds(1.0f, true));
             stimulusManager.SetVisible("feedback_incorrect", false);
+            stimulusManager.SetFixationCrossVisibility(false);
+            stimulusManager.SetFixationCrossColor("white");
             EndTrial();
         }
     }
@@ -638,6 +670,33 @@ public class ExperimentManager : MonoBehaviour
     private void SetInputEnabled(bool state)
     {
         InputEnabled = state;
+    }
+
+    /// <summary>
+    /// Wait for eye gaze to return to central fixation point prior to returning
+    /// </summary>
+    /// <returns></returns>
+    private bool WaitForCentralFixation()
+    {
+        return true;
+        Vector3 LeftGaze = LeftEyeTracker.GetGazeEstimate();
+        Vector3 RightGaze = RightEyeTracker.GetGazeEstimate();
+        Vector3 WorldPosition = stimulusManager.GetAnchor().transform.position;
+
+        // Calculate central gaze position and adjust world position
+        float GazeOffset = cameraManager.GetTotalOffset();
+        if (cameraManager.GetActiveField() == CameraManager.VisualField.Left)
+        {
+            WorldPosition.x += GazeOffset;
+        }
+        else if (cameraManager.GetActiveField() == CameraManager.VisualField.Right)
+        {
+            WorldPosition.x -= GazeOffset;
+        }
+
+        // To-Do: Correct gaze estimate based on average error on center
+
+        return Mathf.Abs(LeftGaze.x - WorldPosition.x) <= 0.5f && Mathf.Abs(RightGaze.x - WorldPosition.x) <= 0.5f && Mathf.Abs(LeftGaze.y - WorldPosition.y) <= 0.5f && Mathf.Abs(RightGaze.y - WorldPosition.y) <= 0.5f;
     }
 
     private IEnumerator WaitSeconds(float seconds, bool disableInput = false, Action callback = null)
