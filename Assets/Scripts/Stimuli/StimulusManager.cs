@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine.UI;
+using System.Linq;
 
 namespace Stimuli
 {
@@ -10,6 +11,8 @@ namespace Stimuli
     {
         [SerializeField]
         private GameObject stimulusAnchor;
+        [SerializeField]
+        private GameObject fixationAnchor;
 
         [SerializeField]
         private float ScalingFactor = 3.0f; // Adjust scaling of stimulus to be viewable
@@ -18,7 +21,9 @@ namespace Stimuli
         private float StimulusDistance;
         private readonly float ArcDiameter = 8.0f; // Specified in supplementary materials
         private float ArcWorldRadius;
-        private readonly float ArcWidth = 0.08f; // Specified in supplementary materials
+        private float ApertureWorldWidth;
+        private float ApertureWorldHeight;
+        private readonly float ArcWidth = 0.04f; // Specified in supplementary materials
         private float ArcWorldWidth;
         private readonly float FixationDiameter = 0.05f; // Specified in supplementary materials
         private float FixationWorldRadius;
@@ -45,11 +50,13 @@ namespace Stimuli
         private Dictionary<string, List<GameObject>> Stimuli = new();
         private Dictionary<string, bool> StimuliVisibility = new();
 
+        private GameObject FixationCross;
+
         // Initialize StimulusManager
         void Start()
         {
-            // Run pre-component calculations to ensure consistent world sizing
-            CalculateValues();
+            CalculateValues(); // Run pre-component calculations to ensure consistent world sizing
+            FixationCross = CreateFixationCross();
 
             foreach (string stimuli in AllStimuli)
             {
@@ -63,8 +70,10 @@ namespace Stimuli
         {
             StimulusDistance = Mathf.Abs(transform.position.z - stimulusAnchor.transform.position.z);
             ArcWorldRadius = StimulusDistance * Mathf.Tan(ScalingFactor * ArcDiameter / 2 * (Mathf.PI / 180.0f));
+            ApertureWorldWidth = ArcWorldRadius * 2.0f;
+            ApertureWorldHeight = ApertureWorldWidth * 2.0f;
             ArcWorldWidth = ArcWidth;
-            FixationWorldRadius = FixationDiameter;
+            FixationWorldRadius = FixationDiameter * 2.0f;
             DotWorldRadius = StimulusDistance * Mathf.Tan(ScalingFactor * DotDiameter / 2 * (Mathf.PI / 180.0f));
         }
 
@@ -75,46 +84,31 @@ namespace Stimuli
             if (stimulus == "fixation")
             {
                 // Generate aperture
-                StaticComponents.Add(CreateArc(ArcWorldRadius, 0.0f, 182.0f, 100, Color.white));
-                StaticComponents.Add(CreateArc(ArcWorldRadius, 180.0f, 362.0f, 100, Color.white));
-                // Add fixation cross
-                StaticComponents.Add(CreateFixationCross());
+                StaticComponents.Add(CreateRectangle(ArcWorldRadius * 2.0f, ArcWorldRadius * 4.0f, new Vector2(0.0f, 0.0f), Color.white));
             }
             else if (stimulus == "decision")
             {
                 // Generate aperture
-                StaticComponents.Add(CreateArc(ArcWorldRadius, 180.0f, 362.0f, 100, new Color32(0xd7, 0x80, 0x00, 0xff))); // Left
-                StaticComponents.Add(CreateArc(ArcWorldRadius, 0.0f, 182.0f, 100, new Color32(0x3e, 0xa3, 0xa3, 0xff))); // Right
-                // Add fixation cross
-                StaticComponents.Add(CreateFixationCross());
+                StaticComponents.Add(CreateRectangle(ArcWorldRadius * 2.0f, ArcWorldRadius * 4.0f, new Vector2(0.0f, 0.0f), Color.white));
                 // Add selection buttons
                 StaticComponents.Add(CreateDecisionButtons());
             }
             else if (stimulus == "motion")
             {
                 // Generate aperture
-                StaticComponents.Add(CreateArc(ArcWorldRadius, 0.0f, 182.0f, 100, Color.white));
-                StaticComponents.Add(CreateArc(ArcWorldRadius, 180.0f, 362.0f, 100, Color.white));
+                StaticComponents.Add(CreateRectangle(ArcWorldRadius * 2.0f, ArcWorldRadius * 4.0f, new Vector2(0.0f, 0.0f), Color.white));
                 // Add dots
                 CreateDots();
-                // Add fixation cross
-                StaticComponents.Add(CreateFixationCross());
             }
             else if (stimulus == "feedback_correct")
             {
                 // Generate aperture
-                StaticComponents.Add(CreateArc(ArcWorldRadius, 0.0f, 182.0f, 100, Color.white));
-                StaticComponents.Add(CreateArc(ArcWorldRadius, 180.0f, 362.0f, 100, Color.white));
-                // Add green fixation cross
-                StaticComponents.Add(CreateFixationCross("green"));
+                StaticComponents.Add(CreateRectangle(ArcWorldRadius * 2.0f, ArcWorldRadius * 4.0f, new Vector2(0.0f, 0.0f), Color.white));
             }
             else if (stimulus == "feedback_incorrect")
             {
                 // Generate aperture
-                StaticComponents.Add(CreateArc(ArcWorldRadius, 0.0f, 182.0f, 100, Color.white));
-                StaticComponents.Add(CreateArc(ArcWorldRadius, 180.0f, 362.0f, 100, Color.white));
-                // Add red fixation cross
-                StaticComponents.Add(CreateFixationCross("red"));
+                StaticComponents.Add(CreateRectangle(ArcWorldRadius * 2.0f, ArcWorldRadius * 4.0f, new Vector2(0.0f, 0.0f), Color.white));
             }
             else
             {
@@ -168,6 +162,38 @@ namespace Stimuli
             }
         }
 
+        public GameObject CreateRectangle(float width, float height, Vector2 position, Color color)
+        {
+            // Create base GameObject
+            GameObject rectangleObject = new GameObject();
+            rectangleObject.name = "rdk_rectangle_object";
+            rectangleObject.AddComponent<LineRenderer>();
+            rectangleObject.transform.SetParent(stimulusAnchor.transform, false);
+            rectangleObject.SetActive(false);
+
+            // Calculate fixed adjustments to center around `position` parameter
+            float xOffset = Mathf.Abs(width / 2);
+            float yOffset = Mathf.Abs(height / 2);
+
+            LineRenderer rectangleLine = rectangleObject.GetComponent<LineRenderer>();
+            rectangleLine.loop = true;
+            rectangleLine.useWorldSpace = false;
+            rectangleLine.positionCount = 4;
+            Vector3[] linePositions = {
+                new Vector3(position.x - xOffset, position.y - yOffset, 0.0f),
+                new Vector3(position.x - xOffset + width, position.y - yOffset, 0.0f),
+                new Vector3(position.x - xOffset + width, position.y - yOffset + height, 0.0f),
+                new Vector3(position.x - xOffset, position.y - yOffset + height, 0.0f)
+            };
+            rectangleLine.SetPositions(linePositions);
+            rectangleLine.material = new Material(Resources.Load<Material>("Materials/DefaultWhite"));
+            rectangleLine.material.SetColor("_Color", color);
+            rectangleLine.startWidth = ArcWorldWidth;
+            rectangleLine.endWidth = ArcWorldWidth;
+
+            return rectangleObject;
+        }
+
         public GameObject CreateArc(float radius, float startAngle, float endAngle, int segments, Color color)
         {
             // Create base GameObject
@@ -197,7 +223,7 @@ namespace Stimuli
             line.useWorldSpace = false;
             line.positionCount = arcPoints.Length;
             line.SetPositions(arcPoints);
-            line.material = new Material(Shader.Find("Sprites/Default"));
+            line.material = new Material(Resources.Load<Material>("Materials/DefaultWhite"));
             line.material.SetColor("_Color", color);
             line.startWidth = ArcWorldWidth;
             line.endWidth = ArcWorldWidth;
@@ -220,7 +246,7 @@ namespace Stimuli
             // Create base GameObject
             GameObject fixationObjectParent = new GameObject();
             fixationObjectParent.name = "rdk_fixation_object";
-            fixationObjectParent.transform.SetParent(stimulusAnchor.transform, false);
+            fixationObjectParent.transform.SetParent(fixationAnchor.transform, false);
             fixationObjectParent.SetActive(false);
 
             // Create horizontal component
@@ -235,10 +261,10 @@ namespace Stimuli
             horizontalLine.positionCount = 2;
             horizontalLine.SetPosition(0, new Vector3(-FixationWorldRadius, 0.0f, 0.0f));
             horizontalLine.SetPosition(1, new Vector3(FixationWorldRadius, 0.0f, 0.0f));
-            horizontalLine.material = new Material(Shader.Find("Sprites/Default"));
+            horizontalLine.material = new Material(Resources.Load<Material>("Materials/DefaultWhite"));
             horizontalLine.material.SetColor("_Color", CrossColor);
-            horizontalLine.startWidth = ArcWorldWidth * 0.4f;
-            horizontalLine.endWidth = ArcWorldWidth * 0.4f;
+            horizontalLine.startWidth = ArcWorldWidth;
+            horizontalLine.endWidth = ArcWorldWidth;
 
             // Create vertical component
             GameObject fixationObjectVertical = new GameObject();
@@ -252,26 +278,69 @@ namespace Stimuli
             verticalLine.positionCount = 2;
             verticalLine.SetPosition(0, new Vector3(0.0f, -FixationWorldRadius, 0.0f));
             verticalLine.SetPosition(1, new Vector3(0.0f, FixationWorldRadius, 0.0f));
-            verticalLine.material = new Material(Shader.Find("Sprites/Default"));
+            verticalLine.material = new Material(Resources.Load<Material>("Materials/DefaultWhite"));
             verticalLine.material.SetColor("_Color", CrossColor);
-            verticalLine.startWidth = ArcWorldWidth * 0.4f;
-            verticalLine.endWidth = ArcWorldWidth * 0.4f;
+            verticalLine.startWidth = ArcWorldWidth;
+            verticalLine.endWidth = ArcWorldWidth;
 
             return fixationObjectParent;
         }
 
+        public void SetFixationCrossVisibility(bool isVisible)
+        {
+            FixationCross.SetActive(isVisible);
+        }
+
+        public void SetFixationCrossColor(string color)
+        {
+            LineRenderer[] renderers = FixationCross.GetComponentsInChildren<LineRenderer>();
+            foreach (LineRenderer renderer in renderers)
+            {
+                if (color == "white") {
+                    renderer.material.SetColor("_Color", Color.white);
+                }
+                else if (color == "red")
+                {
+                    renderer.material.SetColor("_Color", Color.red);
+                }
+                else if (color == "green")
+                {
+                    renderer.material.SetColor("_Color", Color.green);
+                }
+            }
+        }
+
+        public void UseCentralFixation()
+        {
+            GameObject gazeFixationObject = Stimuli["gaze"].First();
+            GameObject fixationObject = Stimuli["fixation"][1];
+            GameObject motionFixationObject = Stimuli["motion"][1];
+            // Adjust the position depending on CameraManager setup
+            CameraManager cameraManager = FindObjectOfType<CameraManager>();
+            float offsetValue = cameraManager.GetTotalOffset();
+            CameraManager.VisualField activeField = cameraManager.GetActiveField();
+            if (activeField == CameraManager.VisualField.Left)
+            {
+                gazeFixationObject.transform.localPosition = new Vector3(offsetValue, gazeFixationObject.transform.localPosition.y);
+            }
+            else if (activeField == CameraManager.VisualField.Right)
+            {
+                gazeFixationObject.transform.localPosition = new Vector3(-offsetValue, gazeFixationObject.transform.localPosition.y);
+            }
+        }
+
         public void CreateDots()
         {
-            const int RowCount = 30;
-            for (int i = -RowCount / 2; i < RowCount / 2; i++)
+            float DotDensity = 16.0f;
+            int DotCount = (int)(ArcDiameter * (ArcDiameter * 2.0f) * DotDensity);
+            Debug.Log("Dots: " + DotCount.ToString());
+            for (int i = 0; i < DotCount; i++)
             {
-                for (int j = -RowCount / 2; j < RowCount / 2; j++)
-                {
-                    float x = (i * ArcWorldRadius * 2) / RowCount + (UnityEngine.Random.value * ArcWorldRadius * 2) / RowCount;
-                    float y = (j * ArcWorldRadius * 2) / RowCount + (UnityEngine.Random.value * ArcWorldRadius * 2) / RowCount;
-                    string dotBehavior = UnityEngine.Random.value > DotCoherence ? "random" : "reference";
-                    Dots.Add(new Dot(stimulusAnchor, DotWorldRadius, ArcWorldRadius, dotBehavior, x, y, false));
-                }
+                float x = UnityEngine.Random.Range(-ApertureWorldWidth / 2.0f, ApertureWorldWidth / 2.0f);
+                float y = UnityEngine.Random.Range(-ApertureWorldHeight / 2.0f, ApertureWorldHeight / 2.0f);
+
+                string dotBehavior = UnityEngine.Random.value > DotCoherence ? "random" : "reference";
+                Dots.Add(new Dot(stimulusAnchor, DotWorldRadius, ApertureWorldWidth, ApertureWorldHeight, dotBehavior, x, y, false));
             }
         }
 
@@ -298,7 +367,7 @@ namespace Stimuli
             TextMeshProUGUI LButtonText = LButton.GetComponentInChildren<TextMeshProUGUI>();
             LButtonText.fontStyle = FontStyles.Bold;
             LButtonText.fontSize = 4.0f;
-            LButtonText.text = "Left";
+            LButtonText.text = "Up";
 
             // Right button, typically "next" action
             GameObject RButton = TMP_DefaultControls.CreateButton(ButtonResources);
@@ -310,7 +379,7 @@ namespace Stimuli
             TextMeshProUGUI RButtonText = RButton.GetComponentInChildren<TextMeshProUGUI>();
             RButtonText.fontStyle = FontStyles.Bold;
             RButtonText.fontSize = 4.0f;
-            RButtonText.text = "Right";
+            RButtonText.text = "Down";
 
             return buttonDecisionObject;
         }
@@ -363,6 +432,11 @@ namespace Stimuli
         public float GetStimulusRadius()
         {
             return ArcWorldRadius;
+        }
+
+        public GameObject GetAnchor()
+        {
+            return stimulusAnchor;
         }
 
         void Update()

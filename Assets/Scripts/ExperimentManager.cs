@@ -57,11 +57,20 @@ public class ExperimentManager : MonoBehaviour
     private readonly int HIGH_INDEX = 1;
     private readonly int EYE_BLOCK_SIZE = 10; // Number of trials per eye
 
+    // Timing variables
+    private readonly float DISPLAY_DURATION = 0.180f; // 180 milliseconds
+
     // Store references to Manager classes
     StimulusManager stimulusManager;
     UIManager uiManager;
     CameraManager cameraManager;
     CalibrationManager calibrationManager;
+
+    // Store references to EyePositionTracker instances
+    public EyePositionTracker LeftEyeTracker;
+    public EyePositionTracker RightEyeTracker;
+    private int FixationMeasurementCounter = 0; // Counter for number of fixation measurements
+    private readonly int RequireFixationMeasurements = 48; // Required on-target fixation measurements
 
     // Input parameters
     bool InputEnabled = false;
@@ -246,9 +255,9 @@ public class ExperimentManager : MonoBehaviour
         Session.instance.CurrentTrial.result["rightCoherences"] = Coherences["right"][0] + "," + Coherences["right"][1];
 
         // Set the reference direction randomly
-        float dotDirection = UnityEngine.Random.value > 0.5f ? 0.0f : (float)Math.PI;
+        float dotDirection = UnityEngine.Random.value > 0.5f ? (float)Math.PI / 2 : (float)Math.PI * 3 / 2;
         stimulusManager.SetDirection(dotDirection);
-        Session.instance.CurrentTrial.result["referenceDirection"] = stimulusManager.GetDirection() == 0.0f ? "right" : "left";
+        Session.instance.CurrentTrial.result["referenceDirection"] = stimulusManager.GetDirection() == (float)Math.PI / 2 ? "up" : "down";
 
         // Store the standard motion duration value (1.5 seconds)
         Session.instance.CurrentTrial.result["motionDuration"] = 1.5f;
@@ -346,6 +355,10 @@ public class ExperimentManager : MonoBehaviour
         }
         else if (stimuli == "tutorial")
         {
+            SetInputEnabled(false);
+            stimulusManager.SetFixationCrossVisibility(true);
+            yield return new WaitUntil(() => WaitForCentralFixation());
+
             // Store the displayed stimuli type
             Session.instance.CurrentTrial.result["name"] = stimuli;
 
@@ -354,13 +367,11 @@ public class ExperimentManager : MonoBehaviour
             yield return StartCoroutine(WaitSeconds(1.0f, true));
             stimulusManager.SetVisible("fixation", false);
 
-            // Motion ([1.0, 5.0) seconds)
+            // Motion
             stimulusManager.SetVisible("motion", true);
-            // Override the standard motion duration
-            float TutorialMotionDuration = 1.0f + UnityEngine.Random.value * 4.0f;
-            Session.instance.CurrentTrial.result["motionDuration"] = TutorialMotionDuration;
-            yield return StartCoroutine(WaitSeconds(TutorialMotionDuration, true));
+            yield return StartCoroutine(WaitSeconds(DISPLAY_DURATION, true));
             stimulusManager.SetVisible("motion", false);
+            stimulusManager.SetFixationCrossVisibility(false);
 
             // Decision (wait)
             Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
@@ -388,6 +399,10 @@ public class ExperimentManager : MonoBehaviour
         }
         else if (stimuli == "practice")
         {
+            SetInputEnabled(false);
+            stimulusManager.SetFixationCrossVisibility(true);
+            yield return new WaitUntil(() => WaitForCentralFixation());
+
             // Store the displayed stimuli type
             Session.instance.CurrentTrial.result["name"] = stimuli;
 
@@ -398,8 +413,9 @@ public class ExperimentManager : MonoBehaviour
 
             // Motion (1.5 seconds)
             stimulusManager.SetVisible("motion", true);
-            yield return StartCoroutine(WaitSeconds(1.5f, true));
+            yield return StartCoroutine(WaitSeconds(DISPLAY_DURATION, true));
             stimulusManager.SetVisible("motion", false);
+            stimulusManager.SetFixationCrossVisibility(false);
 
             // Decision (wait)
             Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
@@ -427,6 +443,10 @@ public class ExperimentManager : MonoBehaviour
         }
         else if (stimuli == "calibration")
         {
+            SetInputEnabled(false);
+            stimulusManager.SetFixationCrossVisibility(true);
+            yield return new WaitUntil(() => WaitForCentralFixation());
+
             // Store the displayed stimuli type
             Session.instance.CurrentTrial.result["name"] = stimuli;
 
@@ -437,8 +457,9 @@ public class ExperimentManager : MonoBehaviour
 
             // Motion (1.5 seconds)
             stimulusManager.SetVisible("motion", true);
-            yield return StartCoroutine(WaitSeconds(1.5f, true));
+            yield return StartCoroutine(WaitSeconds(DISPLAY_DURATION, true));
             stimulusManager.SetVisible("motion", false);
+            stimulusManager.SetFixationCrossVisibility(false);
 
             // Decision (wait)
             Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
@@ -448,6 +469,10 @@ public class ExperimentManager : MonoBehaviour
         }
         else if (stimuli == "main")
         {
+            SetInputEnabled(false);
+            stimulusManager.SetFixationCrossVisibility(true);
+            yield return new WaitUntil(() => WaitForCentralFixation());
+
             // Store the displayed stimuli type
             Session.instance.CurrentTrial.result["name"] = stimuli;
 
@@ -458,8 +483,9 @@ public class ExperimentManager : MonoBehaviour
 
             // Motion (1.5 seconds)
             stimulusManager.SetVisible("motion", true);
-            yield return StartCoroutine(WaitSeconds(1.5f, true));
+            yield return StartCoroutine(WaitSeconds(DISPLAY_DURATION, true));
             stimulusManager.SetVisible("motion", false);
+            stimulusManager.SetFixationCrossVisibility(false);
 
             // Decision (wait)
             Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
@@ -486,16 +512,24 @@ public class ExperimentManager : MonoBehaviour
         }
         else if (stimuli == "feedback_correct")
         {
+            stimulusManager.SetFixationCrossColor("green");
+            stimulusManager.SetFixationCrossVisibility(true);
             stimulusManager.SetVisible("feedback_correct", true);
             yield return StartCoroutine(WaitSeconds(1.0f, true));
             stimulusManager.SetVisible("feedback_correct", false);
+            stimulusManager.SetFixationCrossVisibility(false);
+            stimulusManager.SetFixationCrossColor("white");
             EndTrial();
         }
         else if (stimuli == "feedback_incorrect")
         {
+            stimulusManager.SetFixationCrossColor("red");
+            stimulusManager.SetFixationCrossVisibility(true);
             stimulusManager.SetVisible("feedback_incorrect", true);
             yield return StartCoroutine(WaitSeconds(1.0f, true));
             stimulusManager.SetVisible("feedback_incorrect", false);
+            stimulusManager.SetFixationCrossVisibility(false);
+            stimulusManager.SetFixationCrossColor("white");
             EndTrial();
         }
     }
@@ -518,11 +552,11 @@ public class ExperimentManager : MonoBehaviour
 
             // Determine if a correct response was made
             Session.instance.CurrentTrial.result["selectedCorrectDirection"] = false;
-            if (selection == "left" && stimulusManager.GetDirection() == (float)Math.PI)
+            if (selection == "up" && stimulusManager.GetDirection() == (float)Math.PI / 2)
             {
                 Session.instance.CurrentTrial.result["selectedCorrectDirection"] = true;
             }
-            else if (selection == "right" && stimulusManager.GetDirection() == 0.0f)
+            else if (selection == "down" && stimulusManager.GetDirection() == (float)Math.PI * 3 / 2)
             {
                 Session.instance.CurrentTrial.result["selectedCorrectDirection"] = true;
             }
@@ -640,6 +674,47 @@ public class ExperimentManager : MonoBehaviour
         InputEnabled = state;
     }
 
+    /// <summary>
+    /// Wait for eye gaze to return to central fixation point prior to returning
+    /// </summary>
+    /// <returns></returns>
+    private bool WaitForCentralFixation()
+    {
+        // Get gaze estimates and the current world position
+        Vector3 LeftGaze = LeftEyeTracker.GetGazeEstimate();
+        Vector3 RightGaze = RightEyeTracker.GetGazeEstimate();
+        Vector3 WorldPosition = stimulusManager.GetAnchor().transform.position;
+
+        // Calculate central gaze position and adjust world position
+        float GazeOffset = cameraManager.GetTotalOffset();
+        if (cameraManager.GetActiveField() == CameraManager.VisualField.Left)
+        {
+            WorldPosition.x += GazeOffset;
+        }
+        else if (cameraManager.GetActiveField() == CameraManager.VisualField.Right)
+        {
+            WorldPosition.x -= GazeOffset;
+        }
+
+        float GazeThreshold = 0.5f; // Error threshold (world units)
+        bool Fixated = false; // Fixated state
+        if ((Mathf.Abs(LeftGaze.x - WorldPosition.x) <= GazeThreshold && Mathf.Abs(LeftGaze.y - WorldPosition.y) <= GazeThreshold) || (Mathf.Abs(RightGaze.x - WorldPosition.x) <= GazeThreshold && Mathf.Abs(RightGaze.y - WorldPosition.y) <= GazeThreshold))
+        {
+            // If the gaze is directed in fixation, increment the counter to signify a measurement
+            FixationMeasurementCounter += 1;
+        }
+
+        if (FixationMeasurementCounter >= RequireFixationMeasurements)
+        {
+            // Register as fixated if the required number of measurements have been taken
+            Fixated = true;
+            FixationMeasurementCounter = 0;
+        }
+
+        // Return the overall fixation state
+        return Fixated;
+    }
+
     private IEnumerator WaitSeconds(float seconds, bool disableInput = false, Action callback = null)
     {
         if (disableInput)
@@ -692,8 +767,8 @@ public class ExperimentManager : MonoBehaviour
                     // Trigger controller haptics
                     VRInput.SetHaptics(15.0f, 0.4f, 0.1f, true, false);
 
-                    // "Left" direction selected
-                    HandleExperimentInput("left");
+                    // "Up" direction selected
+                    HandleExperimentInput("up");
                 }
                 InputReset = false;
             }
@@ -755,8 +830,8 @@ public class ExperimentManager : MonoBehaviour
                     // Trigger controller haptics
                     VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
 
-                    // "Right" direction selected
-                    HandleExperimentInput("right");
+                    // "Down" direction selected
+                    HandleExperimentInput("down");
                 }
                 InputReset = false;
             }

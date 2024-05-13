@@ -19,6 +19,8 @@ public class CameraManager : MonoBehaviour
     [SerializeField]
     private GameObject UIAnchor;
     [SerializeField]
+    private GameObject FixationAnchor;
+    [SerializeField]
     private bool FollowHeadMovement;
 
     private float StimulusAnchorDistance;
@@ -57,6 +59,7 @@ public class CameraManager : MonoBehaviour
             // Set the anchor object for stimuli and UI as a child of the CameraRig
             StimulusAnchor.transform.SetParent(CameraRig.centerEyeAnchor.transform, false);
             UIAnchor.transform.SetParent(CameraRig.centerEyeAnchor.transform, false);
+            FixationAnchor.transform.SetParent(CameraRig.centerEyeAnchor.transform, false);
 
             CalculateOffset();
         }
@@ -145,5 +148,10 @@ public class CameraManager : MonoBehaviour
     public VisualField GetActiveField()
     {
         return activeField;
+    }
+
+    public float GetTotalOffset()
+    {
+        return TotalOffset;
     }
 }
