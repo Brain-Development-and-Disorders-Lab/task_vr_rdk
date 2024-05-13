@@ -186,7 +186,7 @@ namespace Stimuli
                 new Vector3(position.x - xOffset, position.y - yOffset + height, 0.0f)
             };
             rectangleLine.SetPositions(linePositions);
-            rectangleLine.material = new Material(Shader.Find("Sprites/Default"));
+            rectangleLine.material = new Material(Resources.Load<Material>("Materials/DefaultWhite"));
             rectangleLine.material.SetColor("_Color", color);
             rectangleLine.startWidth = ArcWorldWidth;
             rectangleLine.endWidth = ArcWorldWidth;
@@ -223,7 +223,7 @@ namespace Stimuli
             line.useWorldSpace = false;
             line.positionCount = arcPoints.Length;
             line.SetPositions(arcPoints);
-            line.material = new Material(Shader.Find("Sprites/Default"));
+            line.material = new Material(Resources.Load<Material>("Materials/DefaultWhite"));
             line.material.SetColor("_Color", color);
             line.startWidth = ArcWorldWidth;
             line.endWidth = ArcWorldWidth;
@@ -261,7 +261,7 @@ namespace Stimuli
             horizontalLine.positionCount = 2;
             horizontalLine.SetPosition(0, new Vector3(-FixationWorldRadius, 0.0f, 0.0f));
             horizontalLine.SetPosition(1, new Vector3(FixationWorldRadius, 0.0f, 0.0f));
-            horizontalLine.material = new Material(Shader.Find("Sprites/Default"));
+            horizontalLine.material = new Material(Resources.Load<Material>("Materials/DefaultWhite"));
             horizontalLine.material.SetColor("_Color", CrossColor);
             horizontalLine.startWidth = ArcWorldWidth;
             horizontalLine.endWidth = ArcWorldWidth;
@@ -278,7 +278,7 @@ namespace Stimuli
             verticalLine.positionCount = 2;
             verticalLine.SetPosition(0, new Vector3(0.0f, -FixationWorldRadius, 0.0f));
             verticalLine.SetPosition(1, new Vector3(0.0f, FixationWorldRadius, 0.0f));
-            verticalLine.material = new Material(Shader.Find("Sprites/Default"));
+            verticalLine.material = new Material(Resources.Load<Material>("Materials/DefaultWhite"));
             verticalLine.material.SetColor("_Color", CrossColor);
             verticalLine.startWidth = ArcWorldWidth;
             verticalLine.endWidth = ArcWorldWidth;

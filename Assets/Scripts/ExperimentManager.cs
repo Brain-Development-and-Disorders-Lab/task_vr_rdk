@@ -59,7 +59,6 @@ public class ExperimentManager : MonoBehaviour
 
     // Timing variables
     private readonly float DISPLAY_DURATION = 0.180f; // 180 milliseconds
-    private readonly float POST_FIXATION_DELAY = 0.01f; // 10 milliseconds
 
     // Store references to Manager classes
     StimulusManager stimulusManager;

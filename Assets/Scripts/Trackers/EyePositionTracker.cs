@@ -165,8 +165,9 @@ namespace UXF
                 // If a calibration procedure has taken place, show the adjusted gaze estimate
                 if (calibrationManager && calibrationManager.CalibrationStatus() == true)
                 {
-                    indicatorCalibrated.SetActive(true);
-                    ApplyDynamicGazeCorrection(GetGazeEstimate());
+                    // Note: Removed due to inaccuracy
+                    // indicatorCalibrated.SetActive(true);
+                    // ApplyDynamicGazeCorrection(GetGazeEstimate());
                 }
             }
 
