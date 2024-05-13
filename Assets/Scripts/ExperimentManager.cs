@@ -358,7 +358,6 @@ public class ExperimentManager : MonoBehaviour
             SetInputEnabled(false);
             stimulusManager.SetFixationCrossVisibility(true);
             yield return new WaitUntil(() => WaitForCentralFixation());
-            yield return StartCoroutine(WaitSeconds(POST_FIXATION_DELAY, true));
 
             // Store the displayed stimuli type
             Session.instance.CurrentTrial.result["name"] = stimuli;
@@ -370,11 +369,7 @@ public class ExperimentManager : MonoBehaviour
 
             // Motion
             stimulusManager.SetVisible("motion", true);
-            // Override the standard motion duration
-            // float TutorialMotionDuration = 1.0f + UnityEngine.Random.value * 4.0f;
-            // Session.instance.CurrentTrial.result["motionDuration"] = TutorialMotionDuration;
-            float TutorialMotionDuration = DISPLAY_DURATION;
-            yield return StartCoroutine(WaitSeconds(TutorialMotionDuration, true));
+            yield return StartCoroutine(WaitSeconds(DISPLAY_DURATION, true));
             stimulusManager.SetVisible("motion", false);
             stimulusManager.SetFixationCrossVisibility(false);
 
@@ -407,7 +402,6 @@ public class ExperimentManager : MonoBehaviour
             SetInputEnabled(false);
             stimulusManager.SetFixationCrossVisibility(true);
             yield return new WaitUntil(() => WaitForCentralFixation());
-            yield return StartCoroutine(WaitSeconds(POST_FIXATION_DELAY, true));
 
             // Store the displayed stimuli type
             Session.instance.CurrentTrial.result["name"] = stimuli;
@@ -452,7 +446,6 @@ public class ExperimentManager : MonoBehaviour
             SetInputEnabled(false);
             stimulusManager.SetFixationCrossVisibility(true);
             yield return new WaitUntil(() => WaitForCentralFixation());
-            yield return StartCoroutine(WaitSeconds(POST_FIXATION_DELAY, true));
 
             // Store the displayed stimuli type
             Session.instance.CurrentTrial.result["name"] = stimuli;
@@ -479,7 +472,6 @@ public class ExperimentManager : MonoBehaviour
             SetInputEnabled(false);
             stimulusManager.SetFixationCrossVisibility(true);
             yield return new WaitUntil(() => WaitForCentralFixation());
-            yield return StartCoroutine(WaitSeconds(POST_FIXATION_DELAY, true));
 
             // Store the displayed stimuli type
             Session.instance.CurrentTrial.result["name"] = stimuli;
