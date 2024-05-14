@@ -28,6 +28,7 @@ public class ExperimentManager : MonoBehaviour
         PreMain = 6,
         Calibration = 7,
         Main = 8,
+        PostMain = 9,
     };
 
     // Manage the number of trials within a specific block in the experiment timeline
@@ -41,6 +42,7 @@ public class ExperimentManager : MonoBehaviour
         PreMain = 1, // Main instructions
         Calibration = 120,
         Main = 200,
+        PostMain = 1,
     };
 
     // Define the experiment timeline using BlockType values
@@ -54,6 +56,7 @@ public class ExperimentManager : MonoBehaviour
         BlockType.PreMain,
         BlockType.Calibration,
         BlockType.Main,
+        BlockType.PostMain,
     };
 
     private BlockType ActiveBlock; // Store the currently active Block
@@ -71,6 +74,7 @@ public class ExperimentManager : MonoBehaviour
     private readonly int EYE_BLOCK_SIZE = 10; // Number of trials per eye
 
     // Timing variables
+    private readonly float PRE_DISPLAY_DURATION = 0.5f;
     private readonly float DISPLAY_DURATION = 0.180f; // 180 milliseconds
 
     // Store references to Manager classes
@@ -86,8 +90,9 @@ public class ExperimentManager : MonoBehaviour
     private readonly int RequireFixationMeasurements = 48; // Required on-target fixation measurements
 
     // Input parameters
-    bool InputEnabled = false;
-    private bool InputReset = true;
+    private bool InputEnabled = false; // Input is accepted
+    private bool InputReset = true; // Flag to prevent input being held down
+    public bool RequireFixation = true; // Require participant to be fixation on center before trial begins
 
     // Confidence parameters
     private readonly int CONFIDENCE_BLOCK_SIZE = 2; // Number of trials to run before asking for confidence
@@ -188,8 +193,15 @@ public class ExperimentManager : MonoBehaviour
         if (ActiveBlock == BlockType.Main && Session.instance.CurrentTrial.numberInBlock == 1)
         {
             // Calculate the coherences to be used in the actual trials, use median of last 20 calibration trials
-            List<Trial> CalibrationTrials = Session.instance.GetBlock((int)BlockType.Calibration).trials;
+            int CalibrationIndex = ExperimentTimeline.IndexOf(BlockType.Calibration) + 1; // Non-zero indexed
+            List<Trial> CalibrationTrials = Session.instance.GetBlock(CalibrationIndex).trials;
             CalibrationTrials.Reverse();
+
+            // Create a warning if less than 20 calibration trials are being used
+            if (CalibrationTrials.Count < 20)
+            {
+                Debug.LogWarning("Less than 20 calibration trials are being used to generate coherence.");
+            }
 
             // Calibration trials have the same coherence for low and high
             List<float> BothCoherenceValues = new();
@@ -336,6 +348,11 @@ public class ExperimentManager : MonoBehaviour
             SetupMotion();
             StartCoroutine(DisplayStimuli("main"));
         }
+        else if (ActiveBlock == BlockType.PostMain)
+        {
+            SetupMotion();
+            StartCoroutine(DisplayStimuli("postmain"));
+        }
     }
 
     private IEnumerator DisplayStimuli(string stimuli)
@@ -376,14 +393,15 @@ public class ExperimentManager : MonoBehaviour
         {
             SetInputEnabled(false);
             stimulusManager.SetFixationCrossVisibility(true);
-            yield return new WaitUntil(() => WaitForCentralFixation());
+            yield return new WaitUntil(() => IsFixated());
 
             // Store the displayed stimuli type
             Session.instance.CurrentTrial.result["name"] = stimuli;
 
-            // Fixation (1 second)
+            // Fixation
             stimulusManager.SetVisible("fixation", true);
-            yield return StartCoroutine(WaitSeconds(1.0f, true));
+            yield return StartCoroutine(WaitSeconds(PRE_DISPLAY_DURATION, true));
+            yield return new WaitUntil(() => IsFixated());
             stimulusManager.SetVisible("fixation", false);
 
             // Motion
@@ -420,17 +438,18 @@ public class ExperimentManager : MonoBehaviour
         {
             SetInputEnabled(false);
             stimulusManager.SetFixationCrossVisibility(true);
-            yield return new WaitUntil(() => WaitForCentralFixation());
+            yield return new WaitUntil(() => IsFixated());
 
             // Store the displayed stimuli type
             Session.instance.CurrentTrial.result["name"] = stimuli;
 
-            // Fixation (1 second)
+            // Fixation
             stimulusManager.SetVisible("fixation", true);
-            yield return StartCoroutine(WaitSeconds(1.0f, true));
+            yield return StartCoroutine(WaitSeconds(PRE_DISPLAY_DURATION, true));
+            yield return new WaitUntil(() => IsFixated());
             stimulusManager.SetVisible("fixation", false);
 
-            // Motion (1.5 seconds)
+            // Motion
             stimulusManager.SetVisible("motion", true);
             yield return StartCoroutine(WaitSeconds(DISPLAY_DURATION, true));
             stimulusManager.SetVisible("motion", false);
@@ -460,21 +479,40 @@ public class ExperimentManager : MonoBehaviour
             yield return StartCoroutine(WaitSeconds(0.15f, true));
             SetInputEnabled(true);
         }
-        else if (stimuli == "calibration")
+        else if (stimuli == "postmain")
         {
-            SetInputEnabled(false);
-            stimulusManager.SetFixationCrossVisibility(true);
-            yield return new WaitUntil(() => WaitForCentralFixation());
+            // Override and set the camera to display in both eyes
+            cameraManager.SetActiveField(CameraManager.VisualField.Both);
 
             // Store the displayed stimuli type
             Session.instance.CurrentTrial.result["name"] = stimuli;
 
-            // Fixation (1 second)
-            stimulusManager.SetVisible("fixation", true);
+            uiManager.SetVisible(true);
+            uiManager.SetHeader("Complete");
+            uiManager.SetBody("That concludes all the trials of this task. Please notify the experiment facilitator, and you can remove the headset carefully after releasing the rear adjustment wheel.");
+            uiManager.SetLeftButtonState(false, false, "Back");
+            uiManager.SetRightButtonState(true, true, "Finish");
+
+            // Input delay
             yield return StartCoroutine(WaitSeconds(1.0f, true));
+            SetInputEnabled(true);
+        }
+        else if (stimuli == "calibration")
+        {
+            SetInputEnabled(false);
+            stimulusManager.SetFixationCrossVisibility(true);
+            yield return new WaitUntil(() => IsFixated());
+
+            // Store the displayed stimuli type
+            Session.instance.CurrentTrial.result["name"] = stimuli;
+
+            // Fixation
+            stimulusManager.SetVisible("fixation", true);
+            yield return StartCoroutine(WaitSeconds(PRE_DISPLAY_DURATION, true));
+            yield return new WaitUntil(() => IsFixated());
             stimulusManager.SetVisible("fixation", false);
 
-            // Motion (1.5 seconds)
+            // Motion
             stimulusManager.SetVisible("motion", true);
             yield return StartCoroutine(WaitSeconds(DISPLAY_DURATION, true));
             stimulusManager.SetVisible("motion", false);
@@ -490,17 +528,18 @@ public class ExperimentManager : MonoBehaviour
         {
             SetInputEnabled(false);
             stimulusManager.SetFixationCrossVisibility(true);
-            yield return new WaitUntil(() => WaitForCentralFixation());
+            yield return new WaitUntil(() => IsFixated());
 
             // Store the displayed stimuli type
             Session.instance.CurrentTrial.result["name"] = stimuli;
 
-            // Fixation (1 second)
+            // Fixation
             stimulusManager.SetVisible("fixation", true);
-            yield return StartCoroutine(WaitSeconds(1.0f, true));
+            yield return StartCoroutine(WaitSeconds(PRE_DISPLAY_DURATION, true));
+            yield return new WaitUntil(() => IsFixated());
             stimulusManager.SetVisible("fixation", false);
 
-            // Motion (1.5 seconds)
+            // Motion
             stimulusManager.SetVisible("motion", true);
             yield return StartCoroutine(WaitSeconds(DISPLAY_DURATION, true));
             stimulusManager.SetVisible("motion", false);
@@ -697,8 +736,14 @@ public class ExperimentManager : MonoBehaviour
     /// Wait for eye gaze to return to central fixation point prior to returning
     /// </summary>
     /// <returns></returns>
-    private bool WaitForCentralFixation()
+    private bool IsFixated()
     {
+        if (!RequireFixation)
+        {
+            // If fixation is not required, return true in all cases
+            return true;
+        }
+
         // Get gaze estimates and the current world position
         Vector3 LeftGaze = LeftEyeTracker.GetGazeEstimate();
         Vector3 RightGaze = RightEyeTracker.GetGazeEstimate();
@@ -797,7 +842,8 @@ public class ExperimentManager : MonoBehaviour
             {
                 if (ActiveBlock == BlockType.Welcome ||
                     ActiveBlock == BlockType.PrePractice ||
-                    ActiveBlock == BlockType.PreMain)
+                    ActiveBlock == BlockType.PreMain ||
+                    ActiveBlock == BlockType.PostMain)
                 {
                     if (uiManager.HasNextPage())
                     {
