@@ -44,7 +44,8 @@ public class ExperimentManager : MonoBehaviour
     };
 
     // Define the experiment timeline using BlockType values
-    List<BlockType> ExperimentTimeline = new List<BlockType>() {
+    readonly List<BlockType> ExperimentTimeline = new() {
+        // Disable headset setup temporarily
         // BlockType.HeadsetSetup,
         BlockType.Welcome,
         BlockType.Tutorial,
@@ -65,8 +66,8 @@ public class ExperimentManager : MonoBehaviour
         { "right", new float[]{0.2f, 0.2f} },
     };
     private float[] ActiveCoherences;
-    private readonly int LOW_INDEX = 0;
-    private readonly int HIGH_INDEX = 1;
+    private readonly int LOW_INDEX = 0; // Index of low coherence value
+    private readonly int HIGH_INDEX = 1; // Index of high coherence value
     private readonly int EYE_BLOCK_SIZE = 10; // Number of trials per eye
 
     // Timing variables
