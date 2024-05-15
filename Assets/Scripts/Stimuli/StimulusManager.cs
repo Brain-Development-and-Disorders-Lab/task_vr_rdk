@@ -19,8 +19,7 @@ namespace Stimuli
 
         // Calculated dimensions of stimuli
         private float StimulusDistance;
-        private readonly float ArcDiameter = 8.0f; // Specified in supplementary materials
-        private float ArcWorldRadius;
+        private readonly float ApertureRadius = 6.0f; // Specified in supplementary materials
         private float ApertureWorldWidth;
         private float ApertureWorldHeight;
         private readonly float ArcWidth = 0.04f; // Specified in supplementary materials
@@ -69,8 +68,7 @@ namespace Stimuli
         private void CalculateValues()
         {
             StimulusDistance = Mathf.Abs(transform.position.z - stimulusAnchor.transform.position.z);
-            ArcWorldRadius = StimulusDistance * Mathf.Tan(ScalingFactor * ArcDiameter / 2 * (Mathf.PI / 180.0f));
-            ApertureWorldWidth = ArcWorldRadius * 2.0f;
+            ApertureWorldWidth = StimulusDistance * Mathf.Tan(ScalingFactor * ApertureRadius / 2 * (Mathf.PI / 180.0f)) * 2.0f;
             ApertureWorldHeight = ApertureWorldWidth * 2.0f;
             ArcWorldWidth = ArcWidth;
             FixationWorldRadius = FixationDiameter * 2.0f;
@@ -84,31 +82,31 @@ namespace Stimuli
             if (stimulus == "fixation")
             {
                 // Generate aperture
-                StaticComponents.Add(CreateRectangle(ArcWorldRadius * 2.0f, ArcWorldRadius * 4.0f, new Vector2(0.0f, 0.0f), Color.white));
+                StaticComponents.Add(CreateRectangle(ApertureWorldWidth, ApertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
             }
             else if (stimulus == "decision")
             {
                 // Generate aperture
-                StaticComponents.Add(CreateRectangle(ArcWorldRadius * 2.0f, ArcWorldRadius * 4.0f, new Vector2(0.0f, 0.0f), Color.white));
+                StaticComponents.Add(CreateRectangle(ApertureWorldWidth, ApertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
                 // Add selection buttons
                 StaticComponents.Add(CreateDecisionButtons());
             }
             else if (stimulus == "motion")
             {
                 // Generate aperture
-                StaticComponents.Add(CreateRectangle(ArcWorldRadius * 2.0f, ArcWorldRadius * 4.0f, new Vector2(0.0f, 0.0f), Color.white));
+                StaticComponents.Add(CreateRectangle(ApertureWorldWidth, ApertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
                 // Add dots
                 CreateDots();
             }
             else if (stimulus == "feedback_correct")
             {
                 // Generate aperture
-                StaticComponents.Add(CreateRectangle(ArcWorldRadius * 2.0f, ArcWorldRadius * 4.0f, new Vector2(0.0f, 0.0f), Color.white));
+                StaticComponents.Add(CreateRectangle(ApertureWorldWidth, ApertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
             }
             else if (stimulus == "feedback_incorrect")
             {
                 // Generate aperture
-                StaticComponents.Add(CreateRectangle(ArcWorldRadius * 2.0f, ArcWorldRadius * 4.0f, new Vector2(0.0f, 0.0f), Color.white));
+                StaticComponents.Add(CreateRectangle(ApertureWorldWidth, ApertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
             }
             else
             {
@@ -125,7 +123,7 @@ namespace Stimuli
                 foreach (Dot dot in Dots)
                 {
                     // Only set the dot to be visible if it is within the aperture
-                    if (visibility == true & Mathf.Sqrt(Mathf.Pow(dot.GetPosition().x, 2.0f) + Mathf.Pow(dot.GetPosition().y, 2.0f)) <= ArcWorldRadius)
+                    if (visibility == true & Mathf.Sqrt(Mathf.Pow(dot.GetPosition().x, 2.0f) + Mathf.Pow(dot.GetPosition().y, 2.0f)) <= ApertureWorldWidth / 2.0f)
                     {
                         dot.SetVisible(true);
                     }
@@ -332,7 +330,7 @@ namespace Stimuli
         public void CreateDots()
         {
             float DotDensity = 16.0f;
-            int DotCount = (int)(ArcDiameter * (ArcDiameter * 2.0f) * DotDensity);
+            int DotCount = (int)(ApertureWorldHeight * ApertureWorldWidth * DotDensity);
             Debug.Log("Dots: " + DotCount.ToString());
             for (int i = 0; i < DotCount; i++)
             {
@@ -425,13 +423,13 @@ namespace Stimuli
         }
 
         /// <summary>
-        /// Get the radius of the stimuli. Used for correct offset calculations for dioptic / dichoptic stimulus
-        /// presentation.
+        /// Get the width in world units of the stimuli. Used for correct offset calculations for dioptic / dichoptic
+        /// stimulus presentation.
         /// </summary>
-        /// <returns>Stimulus radius, measured in world units</returns>
-        public float GetStimulusRadius()
+        /// <returns>Stimulus width, measured in world units</returns>
+        public float GetApertureWidth()
         {
-            return ArcWorldRadius;
+            return ApertureWorldWidth;
         }
 
         public GameObject GetAnchor()

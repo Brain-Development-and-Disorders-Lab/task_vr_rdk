@@ -140,7 +140,7 @@ public class ExperimentManager : MonoBehaviour
         calibrationManager = GetComponent<CalibrationManager>();
 
         // Update the CameraManager value for the aperture offset to be the stimulus radius
-        cameraManager.SetStimulusRadius(stimulusManager.GetStimulusRadius());
+        cameraManager.SetStimulusRadius(stimulusManager.GetApertureWidth() / 2.0f);
     }
 
     /// <summary>
