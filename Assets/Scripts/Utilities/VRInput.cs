@@ -49,7 +49,7 @@ namespace Utilities
         /// <returns></returns>
         public static bool PollLeftTrigger(float threshold = 0.8f)
         {
-            return OVRInput.Get(OVRInput.Axis1D.PrimaryIndexTrigger) > threshold || Input.GetKeyDown(KeyCode.Alpha2);
+            return OVRInput.Get(OVRInput.Axis1D.PrimaryIndexTrigger) > threshold || Input.GetKey(KeyCode.Alpha2);
         }
 
         /// <summary>
@@ -59,15 +59,34 @@ namespace Utilities
         /// <returns></returns>
         public static bool PollRightTrigger(float threshold = 0.8f)
         {
-            return OVRInput.Get(OVRInput.Axis1D.SecondaryIndexTrigger) > threshold || Input.GetKeyDown(KeyCode.Alpha7);
+            return OVRInput.Get(OVRInput.Axis1D.SecondaryIndexTrigger) > threshold || Input.GetKey(KeyCode.Alpha7);
         }
 
-        public static bool PollAnyInput()
+        /// <summary>
+        /// Return a structure representing the current input state
+        /// </summary>
+        /// <returns></returns>
+        public static InputState PollAllInput()
         {
-            return OVRInput.Get(OVRInput.Axis1D.PrimaryIndexTrigger) > 0.0f ||
-                OVRInput.Get(OVRInput.Axis1D.SecondaryIndexTrigger) > 0.0f ||
-                Input.GetKeyDown(KeyCode.Alpha2) == true ||
-                Input.GetKeyDown(KeyCode.Alpha7) == true;
+            return new InputState(
+                OVRInput.Get(OVRInput.Axis1D.PrimaryIndexTrigger),
+                OVRInput.Get(OVRInput.RawButton.Y),
+                OVRInput.Get(OVRInput.RawButton.X) || Input.GetKey(KeyCode.Alpha2),
+                OVRInput.Get(OVRInput.Axis1D.SecondaryIndexTrigger),
+                OVRInput.Get(OVRInput.RawButton.B),
+                OVRInput.Get(OVRInput.RawButton.A) || Input.GetKey(KeyCode.Alpha7)
+            );
+        }
+
+        /// <summary>
+        /// Flag if any inputs are active at one time
+        /// </summary>
+        /// <returns></returns>
+        public static bool AnyInput()
+        {
+            InputState inputs = PollAllInput();
+            return inputs.L_T_State == 1.0f || inputs.Y_Pressed || inputs.X_Pressed ||
+                inputs.R_T_State == 1.0f || inputs.B_Pressed || inputs.A_Pressed;
         }
     }
 }

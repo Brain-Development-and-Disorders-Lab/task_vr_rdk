@@ -9,16 +9,16 @@ using UnityEngine.UI;
 /// </summary>
 public class ButtonSliderInput : MonoBehaviour
 {
-    GameObject ButtonSliderParent;
+    GameObject ButtonSlider;
     TextMeshProUGUI ButtonSliderText;
     Slider ButtonSliderComponent;
 
     void Start()
     {
         // Get references to all required components
-        ButtonSliderParent = gameObject;
-        ButtonSliderText = ButtonSliderParent.GetComponentInChildren<TextMeshProUGUI>();
-        ButtonSliderComponent = ButtonSliderParent.GetComponent<Slider>();
+        ButtonSlider = gameObject;
+        ButtonSliderText = ButtonSlider.GetComponentInChildren<TextMeshProUGUI>();
+        ButtonSliderComponent = ButtonSlider.GetComponent<Slider>();
     }
 
     /// <summary>

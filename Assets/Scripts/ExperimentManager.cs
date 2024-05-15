@@ -94,6 +94,11 @@ public class ExperimentManager : MonoBehaviour
     private bool InputReset = true; // Flag to prevent input being held down
     public bool RequireFixation = true; // Require participant to be fixation on center before trial begins
 
+    // Input button slider GameObjects and variables
+    private readonly float TriggerThreshold = 0.8f;
+    private readonly float ButtonSliderThreshold = 0.99f;
+    private readonly float ButtonHoldFactor = 2.0f;
+
     // Confidence parameters
     private readonly int CONFIDENCE_BLOCK_SIZE = 2; // Number of trials to run before asking for confidence
     private CameraManager.VisualField ActiveVisualField; // Variable to store the active visual field
@@ -797,14 +802,43 @@ public class ExperimentManager : MonoBehaviour
         callback?.Invoke();
     }
 
+    private bool IsWelcomeScreen()
+    {
+        return ActiveBlock == BlockType.Welcome;
+    }
+
+    private bool IsTextScreen()
+    {
+        return IsWelcomeScreen() ||
+                    ActiveBlock == BlockType.PrePractice ||
+                    ActiveBlock == BlockType.PreMain ||
+                    ActiveBlock == BlockType.PostMain;
+    }
+
+    private bool IsStimulusScreen()
+    {
+        return ActiveBlock == BlockType.Tutorial ||
+                    ActiveBlock == BlockType.Practice ||
+                    ActiveBlock == BlockType.Calibration ||
+                    ActiveBlock == BlockType.Main;
+    }
+
+    private bool IsSetupScreen()
+    {
+        return ActiveBlock == BlockType.HeadsetSetup;
+    }
+
     void Update()
     {
         if (InputEnabled && InputReset)
         {
+            // Get the current input state across both controllers
+            InputState inputs = VRInput.PollAllInput();
+
             // Left-side controls
-            if (VRInput.PollLeftTrigger())
+            if (inputs.X_Pressed)
             {
-                if (ActiveBlock == BlockType.Welcome)
+                if (IsWelcomeScreen())
                 {
                     if (uiManager.HasPreviousPage())
                     {
@@ -822,11 +856,7 @@ public class ExperimentManager : MonoBehaviour
                         }
                     }
                 }
-                else if (
-                    ActiveBlock == BlockType.Tutorial ||
-                    ActiveBlock == BlockType.Practice ||
-                    ActiveBlock == BlockType.Calibration ||
-                    ActiveBlock == BlockType.Main)
+                else if (IsStimulusScreen())
                 {
                     // Trigger controller haptics
                     VRInput.SetHaptics(15.0f, 0.4f, 0.1f, true, false);
@@ -838,12 +868,9 @@ public class ExperimentManager : MonoBehaviour
             }
 
             // Right-side controls
-            if (VRInput.PollRightTrigger())
+            if (inputs.A_Pressed)
             {
-                if (ActiveBlock == BlockType.Welcome ||
-                    ActiveBlock == BlockType.PrePractice ||
-                    ActiveBlock == BlockType.PreMain ||
-                    ActiveBlock == BlockType.PostMain)
+                if (IsTextScreen())
                 {
                     if (uiManager.HasNextPage())
                     {
@@ -868,7 +895,7 @@ public class ExperimentManager : MonoBehaviour
                         EndTrial();
                     }
                 }
-                else if (ActiveBlock == BlockType.HeadsetSetup)
+                else if (IsSetupScreen())
                 {
                     // Hide the UI
                     uiManager.SetVisible(false);
@@ -886,13 +913,8 @@ public class ExperimentManager : MonoBehaviour
                         EndTrial();
                     });
                 }
-                else if (
-                    ActiveBlock == BlockType.Tutorial ||
-                    ActiveBlock == BlockType.Practice ||
-                    ActiveBlock == BlockType.Calibration ||
-                    ActiveBlock == BlockType.Main)
+                else if (IsStimulusScreen())
                 {
-                    // Trigger controller haptics
                     VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
 
                     // "Down" direction selected
@@ -902,8 +924,11 @@ public class ExperimentManager : MonoBehaviour
             }
         }
 
+        // Run the cooldown process for buttons if no input is being provied
+        // ButtonCooldown();
+
         // Reset input state to prevent holding buttons to repeatedly select options
-        if (InputEnabled && InputReset == false && !VRInput.PollAnyInput())
+        if (InputEnabled && InputReset == false && !VRInput.AnyInput())
         {
             InputReset = true;
         }
