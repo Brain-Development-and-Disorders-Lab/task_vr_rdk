@@ -12,13 +12,15 @@ public class ButtonSliderInput : MonoBehaviour
     GameObject ButtonSlider;
     TextMeshProUGUI ButtonSliderText;
     Slider ButtonSliderComponent;
+    bool HasSetup = false;
 
-    void Start()
+    public void Setup()
     {
         // Get references to all required components
         ButtonSlider = gameObject;
-        ButtonSliderText = ButtonSlider.GetComponentInChildren<TextMeshProUGUI>();
         ButtonSliderComponent = ButtonSlider.GetComponent<Slider>();
+        ButtonSliderText = ButtonSlider.GetComponentInChildren<TextMeshProUGUI>();
+        HasSetup = true;
     }
 
     /// <summary>
@@ -27,12 +29,19 @@ public class ButtonSliderInput : MonoBehaviour
     /// <param name="buttonText">Button text</param>
     public void SetButtonText(string buttonText)
     {
-        ButtonSliderText.text = buttonText;
+        if (HasSetup)
+        {
+            ButtonSliderText.text = buttonText;
+        }
     }
 
     public float GetSliderValue()
     {
-        return ButtonSliderComponent.value;
+        if (HasSetup)
+        {
+            return ButtonSliderComponent.value;
+        }
+        return 0.0f;
     }
 
     /// <summary>
@@ -41,7 +50,7 @@ public class ButtonSliderInput : MonoBehaviour
     /// <param name="value">[0.0, 1.0]</param>
     public void SetSliderValue(float value)
     {
-        if (value >= 0.0f && value <= 1.0f)
+        if (HasSetup && value >= 0.0f && value <= 1.0f)
         {
             ButtonSliderComponent.value = value;
         }

@@ -836,7 +836,7 @@ public class ExperimentManager : MonoBehaviour
             InputState inputs = VRInput.PollAllInput();
 
             // Left-side controls
-            if (inputs.X_Pressed)
+            if (inputs.Y_Pressed || inputs.X_Pressed)
             {
                 if (IsWelcomeScreen())
                 {
@@ -868,7 +868,7 @@ public class ExperimentManager : MonoBehaviour
             }
 
             // Right-side controls
-            if (inputs.A_Pressed)
+            if (inputs.B_Pressed || inputs.A_Pressed)
             {
                 if (IsTextScreen())
                 {
