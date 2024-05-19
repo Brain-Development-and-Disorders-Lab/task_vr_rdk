@@ -33,6 +33,8 @@ namespace Stimuli
         private List<Dot> Dots = new();
         private float DotCoherence = 0.5f;
         private float DotDirection = (float)Math.PI; // "reference" dot type direction
+        private readonly float DotDensity = 64.0f;
+        private float DotWorldDensity;
 
         // Timer for preserving consistent update rates
         private float UpdateTimer = 0.0f;
@@ -77,6 +79,7 @@ namespace Stimuli
             ArcWorldWidth = ArcWidth;
             FixationWorldRadius = FixationDiameter * 2.0f;
             DotWorldRadius = StimulusDistance * Mathf.Tan(ScalingFactor * DotDiameter / 2 * (Mathf.PI / 180.0f));
+            DotWorldDensity = DotDensity * StimulusDistance * Mathf.Tan(ScalingFactor * 1.0f / 2.0f * (Mathf.PI / 180.0f)) * 2.0f;
         }
 
         public List<GameObject> CreateStimulus(string stimulus)
@@ -333,9 +336,7 @@ namespace Stimuli
 
         public void CreateDots()
         {
-            float DotDensity = 16.0f;
-            int DotCount = (int)(ApertureWorldHeight * ApertureWorldWidth * DotDensity);
-            Debug.Log("Dots: " + DotCount.ToString());
+            int DotCount = (int)(ApertureWorldHeight * ApertureWorldWidth * DotWorldDensity);
             for (int i = 0; i < DotCount; i++)
             {
                 float x = UnityEngine.Random.Range(-ApertureWorldWidth / 2.0f, ApertureWorldWidth / 2.0f);
@@ -355,28 +356,28 @@ namespace Stimuli
             buttonDecisionObject.SetActive(false);
 
             GameObject V_U_Button = Instantiate(ButtonPrefab, buttonDecisionObject.transform);
-            V_U_Button.transform.localPosition = new Vector3(-4.0f, 1.2f, 0.0f);
+            V_U_Button.transform.localPosition = new Vector3(0.0f, 3.3f, 0.0f);
             ButtonSliderInput V_U_Slider = V_U_Button.GetComponentInChildren<ButtonSliderInput>();
             V_U_Slider.Setup();
-            V_U_Slider.SetButtonText("Very Confident\n<b>Up</b>");
+            V_U_Slider.SetButtonText("<b>Up</b>\nVery Confident");
 
             GameObject S_U_Button = Instantiate(ButtonPrefab, buttonDecisionObject.transform);
-            S_U_Button.transform.localPosition = new Vector3(-3.4f, 0.2f, 0.0f);
+            S_U_Button.transform.localPosition = new Vector3(0.0f, 2.5f, 0.0f);
             ButtonSliderInput S_U_Slider = S_U_Button.GetComponentInChildren<ButtonSliderInput>();
             S_U_Slider.Setup();
-            S_U_Slider.SetButtonText("Somewhat Confident\n<b>Up</b>");
+            S_U_Slider.SetButtonText("<b>Up</b>\nSomewhat Confident");
 
             GameObject V_D_Button = Instantiate(ButtonPrefab, buttonDecisionObject.transform);
-            V_D_Button.transform.localPosition = new Vector3(4.0f, 1.2f, 0.0f);
+            V_D_Button.transform.localPosition = new Vector3(0.0f, -3.3f, 0.0f);
             ButtonSliderInput V_D_Slider = V_D_Button.GetComponentInChildren<ButtonSliderInput>();
             V_D_Slider.Setup();
-            V_D_Slider.SetButtonText("Very Confident\n<b>Down</b>");
+            V_D_Slider.SetButtonText("<b>Down</b>\nVery Confident");
 
             GameObject S_D_Button = Instantiate(ButtonPrefab, buttonDecisionObject.transform);
-            S_D_Button.transform.localPosition = new Vector3(3.4f, 0.2f, 0.0f);
+            S_D_Button.transform.localPosition = new Vector3(0.0f, -2.5f, 0.0f);
             ButtonSliderInput S_D_Slider = S_D_Button.GetComponentInChildren<ButtonSliderInput>();
             S_D_Slider.Setup();
-            S_D_Slider.SetButtonText("Somewhat Confident\n<b>Down</b>");
+            S_D_Slider.SetButtonText("<b>Down</b>\nSomewhat Confident");
 
             // Store the slider controllers
             ButtonSliders = new ButtonSliderInput[] {
