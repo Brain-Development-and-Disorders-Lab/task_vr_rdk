@@ -802,6 +802,7 @@ public class ExperimentManager : MonoBehaviour
         callback?.Invoke();
     }
 
+    // Functions to bulk-classify BlockType values
     private bool IsWelcomeScreen()
     {
         return ActiveBlock == BlockType.Welcome;
@@ -828,109 +829,178 @@ public class ExperimentManager : MonoBehaviour
         return ActiveBlock == BlockType.HeadsetSetup;
     }
 
+    private void ApplyInputs(InputState inputs)
+    {
+        ButtonSliderInput[] buttonControllers = stimulusManager.GetButtonControllers();
+
+        // Left controller inputs
+        if (inputs.Y_Pressed || inputs.X_Pressed)
+        {
+            if (inputs.Y_Pressed)
+            {
+                // Very confident up
+                buttonControllers[0].SetSliderValue(buttonControllers[0].GetSliderValue() + ButtonHoldFactor * Time.deltaTime);
+            }
+            else
+            {
+                // Somewhat confident up
+                buttonControllers[1].SetSliderValue(buttonControllers[1].GetSliderValue() + ButtonHoldFactor * Time.deltaTime);
+            }
+            if (buttonControllers[0].GetSliderValue() >= ButtonSliderThreshold || buttonControllers[1].GetSliderValue() >= ButtonSliderThreshold)
+            {
+                VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
+                // "Up" direction selected
+                // HandleExperimentInput("up");
+            }
+        }
+
+        // Right controller inputs
+        else if (inputs.B_Pressed || inputs.A_Pressed)
+        {
+            if (inputs.B_Pressed)
+            {
+                // Very confident down
+                buttonControllers[2].SetSliderValue(buttonControllers[2].GetSliderValue() + ButtonHoldFactor * Time.deltaTime);
+            }
+            else
+            {
+                // Somewhat confident down
+                buttonControllers[3].SetSliderValue(buttonControllers[3].GetSliderValue() + ButtonHoldFactor * Time.deltaTime);
+            }
+
+            if (buttonControllers[2].GetSliderValue() >= ButtonSliderThreshold || buttonControllers[3].GetSliderValue() >= ButtonSliderThreshold)
+            {
+                VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
+                // "Down" direction selected
+                // HandleExperimentInput("down");
+            }
+        }
+    }
+
+    private void ButtonCooldown()
+    {
+        // Collect references to all buttons
+        ButtonSliderInput[] ButtonControllers = stimulusManager.GetButtonControllers();
+        if (ButtonControllers.Length > 0)
+        {
+            // ButtonSliderInput UpButtonSliderInput = UpButtonSlider.GetComponentInChildren<ButtonSliderInput>();
+            if (!VRInput.AnyInput())
+            {
+                foreach (ButtonSliderInput button in ButtonControllers)
+                {
+                    button.SetSliderValue(button.GetSliderValue() - ButtonHoldFactor * Time.deltaTime);
+                }
+            }
+
+            foreach (ButtonSliderInput button in ButtonControllers)
+            {
+                if (InputReset == false)
+                {
+                    button.SetSliderValue(0.0f);
+                }
+            }
+        }
+    }
+
     void Update()
     {
-        if (InputEnabled && InputReset)
+        if (InputEnabled)
         {
             // Get the current input state across both controllers
             InputState inputs = VRInput.PollAllInput();
 
-            // Left-side controls
-            if (inputs.Y_Pressed || inputs.X_Pressed)
+            if (IsStimulusScreen())
             {
-                if (IsWelcomeScreen())
+                ApplyInputs(inputs);
+
+                if (!VRInput.AnyInput())
                 {
-                    if (uiManager.HasPreviousPage())
+                    // Run the cooldown process for buttons if no input is being provided
+                    ButtonCooldown();
+                }
+            }
+            else
+            {
+                // Left-side controls
+                if (inputs.Y_Pressed || inputs.X_Pressed)
+                {
+                    if (IsWelcomeScreen() && InputReset)
                     {
-                        // If pagination has previous page, go back
-                        uiManager.PreviousPage();
-                        SetInputEnabled(true);
+                        if (uiManager.HasPreviousPage())
+                        {
+                            // If pagination has previous page, go back
+                            uiManager.PreviousPage();
+                            SetInputEnabled(true);
 
-                        // Trigger controller haptics
-                        VRInput.SetHaptics(15.0f, 0.4f, 0.1f, true, false);
+                            // Trigger controller haptics
+                            VRInput.SetHaptics(15.0f, 0.4f, 0.1f, true, false);
 
-                        // Update the "Next" button if the last page
+                            // Update the "Next" button if the last page
+                            if (uiManager.HasNextPage())
+                            {
+                                uiManager.SetRightButtonState(true, true, "Next");
+                            }
+                        }
+                    }
+                    InputReset = false;
+                }
+
+                // Right-side controls
+                if (inputs.B_Pressed || inputs.A_Pressed)
+                {
+                    if (IsTextScreen() && InputReset)
+                    {
                         if (uiManager.HasNextPage())
                         {
-                            uiManager.SetRightButtonState(true, true, "Next");
+                            // If pagination has next page, advance
+                            uiManager.NextPage();
+                            SetInputEnabled(true);
+
+                            // Trigger controller haptics
+                            VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
+
+                            // Update the "Next" button if the last page
+                            if (!uiManager.HasNextPage())
+                            {
+                                uiManager.SetRightButtonState(true, true, "Continue");
+                            }
                         }
-                    }
-                }
-                else if (IsStimulusScreen())
-                {
-                    // Trigger controller haptics
-                    VRInput.SetHaptics(15.0f, 0.4f, 0.1f, true, false);
-
-                    // "Up" direction selected
-                    HandleExperimentInput("up");
-                }
-                InputReset = false;
-            }
-
-            // Right-side controls
-            if (inputs.B_Pressed || inputs.A_Pressed)
-            {
-                if (IsTextScreen())
-                {
-                    if (uiManager.HasNextPage())
-                    {
-                        // If pagination has next page, advance
-                        uiManager.NextPage();
-                        SetInputEnabled(true);
-
-                        // Trigger controller haptics
-                        VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
-
-                        // Update the "Next" button if the last page
-                        if (!uiManager.HasNextPage())
+                        else
                         {
-                            uiManager.SetRightButtonState(true, true, "Continue");
+                            // Trigger controller haptics
+                            VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
+
+                            EndTrial();
                         }
+                        InputReset = false;
                     }
-                    else
+                    else if (IsSetupScreen() && InputReset)
                     {
-                        // Trigger controller haptics
-                        VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
+                        // Hide the UI
+                        uiManager.SetVisible(false);
 
-                        EndTrial();
+                        // Only provide haptic feedback before calibration is run
+                        if (!calibrationManager.IsCalibrationActive() && !calibrationManager.CalibrationStatus())
+                        {
+                            // Trigger controller haptics
+                            VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
+                        }
+
+                        // Trigger eye-tracking calibration the end the trial
+                        calibrationManager.RunCalibration(() =>
+                        {
+                            EndTrial();
+                        });
+                        InputReset = false;
                     }
                 }
-                else if (IsSetupScreen())
+
+                // Reset input state to prevent holding buttons to repeatedly select options
+                if (InputEnabled && InputReset == false && !VRInput.AnyInput())
                 {
-                    // Hide the UI
-                    uiManager.SetVisible(false);
-
-                    // Only provide haptic feedback before calibration is run
-                    if (!calibrationManager.IsCalibrationActive() && !calibrationManager.CalibrationStatus())
-                    {
-                        // Trigger controller haptics
-                        VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
-                    }
-
-                    // Trigger eye-tracking calibration the end the trial
-                    calibrationManager.RunCalibration(() =>
-                    {
-                        EndTrial();
-                    });
+                    InputReset = true;
                 }
-                else if (IsStimulusScreen())
-                {
-                    VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
-
-                    // "Down" direction selected
-                    HandleExperimentInput("down");
-                }
-                InputReset = false;
             }
-        }
-
-        // Run the cooldown process for buttons if no input is being provied
-        // ButtonCooldown();
-
-        // Reset input state to prevent holding buttons to repeatedly select options
-        if (InputEnabled && InputReset == false && !VRInput.AnyInput())
-        {
-            InputReset = true;
         }
     }
 }

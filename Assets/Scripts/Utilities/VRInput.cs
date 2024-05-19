@@ -70,11 +70,11 @@ namespace Utilities
         {
             return new InputState(
                 OVRInput.Get(OVRInput.Axis1D.PrimaryIndexTrigger),
-                OVRInput.Get(OVRInput.RawButton.Y),
-                OVRInput.Get(OVRInput.RawButton.X) || Input.GetKey(KeyCode.Alpha2),
+                OVRInput.Get(OVRInput.RawButton.Y) || Input.GetKey(KeyCode.Alpha2),
+                OVRInput.Get(OVRInput.RawButton.X) || Input.GetKey(KeyCode.Alpha3),
                 OVRInput.Get(OVRInput.Axis1D.SecondaryIndexTrigger),
-                OVRInput.Get(OVRInput.RawButton.B),
-                OVRInput.Get(OVRInput.RawButton.A) || Input.GetKey(KeyCode.Alpha7)
+                OVRInput.Get(OVRInput.RawButton.B) || Input.GetKey(KeyCode.Alpha7),
+                OVRInput.Get(OVRInput.RawButton.A) || Input.GetKey(KeyCode.Alpha6)
             );
         }
 

@@ -53,6 +53,7 @@ namespace Stimuli
 
         // Slider-based button prefab
         public GameObject ButtonPrefab;
+        private ButtonSliderInput[] ButtonSliders = new ButtonSliderInput[4];
 
         // Initialize StimulusManager
         void Start()
@@ -377,7 +378,20 @@ namespace Stimuli
             S_D_Slider.Setup();
             S_D_Slider.SetButtonText("Somewhat Confident\n<b>Down</b>");
 
+            // Store the slider controllers
+            ButtonSliders = new ButtonSliderInput[] {
+                V_U_Slider,
+                S_U_Slider,
+                V_D_Slider,
+                S_D_Slider
+            };
+
             return buttonDecisionObject;
+        }
+
+        public ButtonSliderInput[] GetButtonControllers()
+        {
+            return ButtonSliders;
         }
 
         public float GetCoherence()
