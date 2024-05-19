@@ -409,7 +409,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2834388984357925155, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 34905
+      value: 38415
       objectReference: {fileID: 0}
     - target: {fileID: 2896031059644693069, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_IsActive
@@ -445,7 +445,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4267567203292169432, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 65280
+      value: 71760
       objectReference: {fileID: 0}
     - target: {fileID: 4612929069887686480, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_AnchorMax.y
@@ -762,7 +762,7 @@ MonoBehaviour:
   FollowHeadMovement: 1
   OffsetAngle: 3
   VerticalOffset: -1.1
-  UseCullingMask: 1
+  UseCullingMask: 0
 --- !u!114 &215276332
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -778,6 +778,7 @@ MonoBehaviour:
   stimulusAnchor: {fileID: 1762882801}
   fixationAnchor: {fileID: 223726298}
   ScalingFactor: 2
+  ButtonPrefab: {fileID: 8522343874815329266, guid: e6126560ae55a4523a666cf82bc38f1e, type: 3}
 --- !u!114 &215276333
 MonoBehaviour:
   m_ObjectHideFlags: 0
