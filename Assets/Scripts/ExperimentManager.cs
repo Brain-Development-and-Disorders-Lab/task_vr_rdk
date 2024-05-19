@@ -615,11 +615,11 @@ public class ExperimentManager : MonoBehaviour
 
             // Determine if a correct response was made
             Session.instance.CurrentTrial.result["selectedCorrectDirection"] = false;
-            if (selection == "up" && stimulusManager.GetDirection() == (float)Math.PI / 2)
+            if ((selection == "vc_u" || selection == "sc_u") && stimulusManager.GetDirection() == (float)Math.PI / 2)
             {
                 Session.instance.CurrentTrial.result["selectedCorrectDirection"] = true;
             }
-            else if (selection == "down" && stimulusManager.GetDirection() == (float)Math.PI * 3 / 2)
+            else if ((selection == "vc_d" || selection == "sc_d") && stimulusManager.GetDirection() == (float)Math.PI * 3 / 2)
             {
                 Session.instance.CurrentTrial.result["selectedCorrectDirection"] = true;
             }
@@ -687,11 +687,6 @@ public class ExperimentManager : MonoBehaviour
                 {
                     StartCoroutine(DisplayStimuli("feedback_incorrect"));
                 }
-            }
-            else if ((ActiveBlock == BlockType.Tutorial || ActiveBlock == BlockType.Calibration || ActiveBlock == BlockType.Main) &&
-                Session.instance.CurrentTrial.numberInBlock % CONFIDENCE_BLOCK_SIZE == 0)
-            {
-                StartCoroutine(DisplayStimuli("confidence"));
             }
             else
             {
@@ -846,11 +841,26 @@ public class ExperimentManager : MonoBehaviour
                 // Somewhat confident up
                 buttonControllers[1].SetSliderValue(buttonControllers[1].GetSliderValue() + ButtonHoldFactor * Time.deltaTime);
             }
+
+            // Check if a button has been completely held down, and continue if so
             if (buttonControllers[0].GetSliderValue() >= ButtonSliderThreshold || buttonControllers[1].GetSliderValue() >= ButtonSliderThreshold)
             {
+                // Provide haptic feedback
                 VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
-                // "Up" direction selected
-                // HandleExperimentInput("up");
+
+                // Store appropriate response
+                if (buttonControllers[0].GetSliderValue() >= ButtonSliderThreshold)
+                {
+                    // "Very Confident Up" selected
+                    HandleExperimentInput("vc_u");
+                    buttonControllers[0].SetSliderValue(0.0f);
+                }
+                else if (buttonControllers[1].GetSliderValue() >= ButtonSliderThreshold)
+                {
+                    // "Somewhat Confident Up" selected
+                    HandleExperimentInput("sc_u");
+                    buttonControllers[1].SetSliderValue(0.0f);
+                }
             }
         }
 
@@ -871,8 +881,20 @@ public class ExperimentManager : MonoBehaviour
             if (buttonControllers[2].GetSliderValue() >= ButtonSliderThreshold || buttonControllers[3].GetSliderValue() >= ButtonSliderThreshold)
             {
                 VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
-                // "Down" direction selected
-                // HandleExperimentInput("down");
+
+                // Store appropriate response
+                if (buttonControllers[2].GetSliderValue() >= ButtonSliderThreshold)
+                {
+                    // "Very Confident Down" selected
+                    HandleExperimentInput("vc_d");
+                    buttonControllers[2].SetSliderValue(0.0f);
+                }
+                else if (buttonControllers[3].GetSliderValue() >= ButtonSliderThreshold)
+                {
+                    // "Somewhat Confident Down" selected
+                    HandleExperimentInput("sc_d");
+                    buttonControllers[3].SetSliderValue(0.0f);
+                }
             }
         }
     }
