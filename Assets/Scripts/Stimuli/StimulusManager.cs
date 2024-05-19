@@ -19,8 +19,7 @@ namespace Stimuli
 
         // Calculated dimensions of stimuli
         private float StimulusDistance;
-        private readonly float ArcDiameter = 8.0f; // Specified in supplementary materials
-        private float ArcWorldRadius;
+        private readonly float ApertureRadius = 6.0f; // Specified in supplementary materials
         private float ApertureWorldWidth;
         private float ApertureWorldHeight;
         private readonly float ArcWidth = 0.04f; // Specified in supplementary materials
@@ -34,6 +33,8 @@ namespace Stimuli
         private List<Dot> Dots = new();
         private float DotCoherence = 0.5f;
         private float DotDirection = (float)Math.PI; // "reference" dot type direction
+        private readonly float DotDensity = 64.0f;
+        private float DotWorldDensity;
 
         // Timer for preserving consistent update rates
         private float UpdateTimer = 0.0f;
@@ -52,6 +53,10 @@ namespace Stimuli
 
         private GameObject FixationCross;
 
+        // Slider-based button prefab
+        public GameObject ButtonPrefab;
+        private ButtonSliderInput[] ButtonSliders = new ButtonSliderInput[4];
+
         // Initialize StimulusManager
         void Start()
         {
@@ -69,12 +74,12 @@ namespace Stimuli
         private void CalculateValues()
         {
             StimulusDistance = Mathf.Abs(transform.position.z - stimulusAnchor.transform.position.z);
-            ArcWorldRadius = StimulusDistance * Mathf.Tan(ScalingFactor * ArcDiameter / 2 * (Mathf.PI / 180.0f));
-            ApertureWorldWidth = ArcWorldRadius * 2.0f;
+            ApertureWorldWidth = StimulusDistance * Mathf.Tan(ScalingFactor * ApertureRadius / 2 * (Mathf.PI / 180.0f)) * 2.0f;
             ApertureWorldHeight = ApertureWorldWidth * 2.0f;
             ArcWorldWidth = ArcWidth;
             FixationWorldRadius = FixationDiameter * 2.0f;
             DotWorldRadius = StimulusDistance * Mathf.Tan(ScalingFactor * DotDiameter / 2 * (Mathf.PI / 180.0f));
+            DotWorldDensity = DotDensity * StimulusDistance * Mathf.Tan(ScalingFactor * 1.0f / 2.0f * (Mathf.PI / 180.0f)) * 2.0f;
         }
 
         public List<GameObject> CreateStimulus(string stimulus)
@@ -84,31 +89,31 @@ namespace Stimuli
             if (stimulus == "fixation")
             {
                 // Generate aperture
-                StaticComponents.Add(CreateRectangle(ArcWorldRadius * 2.0f, ArcWorldRadius * 4.0f, new Vector2(0.0f, 0.0f), Color.white));
+                StaticComponents.Add(CreateRectangle(ApertureWorldWidth, ApertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
             }
             else if (stimulus == "decision")
             {
                 // Generate aperture
-                StaticComponents.Add(CreateRectangle(ArcWorldRadius * 2.0f, ArcWorldRadius * 4.0f, new Vector2(0.0f, 0.0f), Color.white));
+                StaticComponents.Add(CreateRectangle(ApertureWorldWidth, ApertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
                 // Add selection buttons
                 StaticComponents.Add(CreateDecisionButtons());
             }
             else if (stimulus == "motion")
             {
                 // Generate aperture
-                StaticComponents.Add(CreateRectangle(ArcWorldRadius * 2.0f, ArcWorldRadius * 4.0f, new Vector2(0.0f, 0.0f), Color.white));
+                StaticComponents.Add(CreateRectangle(ApertureWorldWidth, ApertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
                 // Add dots
                 CreateDots();
             }
             else if (stimulus == "feedback_correct")
             {
                 // Generate aperture
-                StaticComponents.Add(CreateRectangle(ArcWorldRadius * 2.0f, ArcWorldRadius * 4.0f, new Vector2(0.0f, 0.0f), Color.white));
+                StaticComponents.Add(CreateRectangle(ApertureWorldWidth, ApertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
             }
             else if (stimulus == "feedback_incorrect")
             {
                 // Generate aperture
-                StaticComponents.Add(CreateRectangle(ArcWorldRadius * 2.0f, ArcWorldRadius * 4.0f, new Vector2(0.0f, 0.0f), Color.white));
+                StaticComponents.Add(CreateRectangle(ApertureWorldWidth, ApertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
             }
             else
             {
@@ -125,7 +130,7 @@ namespace Stimuli
                 foreach (Dot dot in Dots)
                 {
                     // Only set the dot to be visible if it is within the aperture
-                    if (visibility == true & Mathf.Sqrt(Mathf.Pow(dot.GetPosition().x, 2.0f) + Mathf.Pow(dot.GetPosition().y, 2.0f)) <= ArcWorldRadius)
+                    if (visibility == true & Mathf.Sqrt(Mathf.Pow(dot.GetPosition().x, 2.0f) + Mathf.Pow(dot.GetPosition().y, 2.0f)) <= ApertureWorldWidth / 2.0f)
                     {
                         dot.SetVisible(true);
                     }
@@ -331,9 +336,7 @@ namespace Stimuli
 
         public void CreateDots()
         {
-            float DotDensity = 16.0f;
-            int DotCount = (int)(ArcDiameter * (ArcDiameter * 2.0f) * DotDensity);
-            Debug.Log("Dots: " + DotCount.ToString());
+            int DotCount = (int)(ApertureWorldHeight * ApertureWorldWidth * DotWorldDensity);
             for (int i = 0; i < DotCount; i++)
             {
                 float x = UnityEngine.Random.Range(-ApertureWorldWidth / 2.0f, ApertureWorldWidth / 2.0f);
@@ -350,38 +353,46 @@ namespace Stimuli
             buttonDecisionObject.name = "rdk_button_decision_object";
             buttonDecisionObject.transform.SetParent(stimulusAnchor.transform, false);
             buttonDecisionObject.transform.localPosition = new Vector3(0.0f, 0.0f, 0.0f);
-            buttonDecisionObject.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
-            buttonDecisionObject.AddComponent<Canvas>();
-            buttonDecisionObject.AddComponent<GraphicRaycaster>();
             buttonDecisionObject.SetActive(false);
 
-            TMP_DefaultControls.Resources ButtonResources = new TMP_DefaultControls.Resources();
+            GameObject V_U_Button = Instantiate(ButtonPrefab, buttonDecisionObject.transform);
+            V_U_Button.transform.localPosition = new Vector3(0.0f, 3.3f, 0.0f);
+            ButtonSliderInput V_U_Slider = V_U_Button.GetComponentInChildren<ButtonSliderInput>();
+            V_U_Slider.Setup();
+            V_U_Slider.SetButtonText("<b>Up</b>\nVery Confident");
 
-            // Left button, typically "back" action
-            GameObject LButton = TMP_DefaultControls.CreateButton(ButtonResources);
-            LButton.transform.SetParent(buttonDecisionObject.transform, false);
-            LButton.transform.localPosition = new Vector3(-42.5f, 0.0f, 0.0f);
-            LButton.GetComponent<RectTransform>().sizeDelta = new Vector2(20.0f, 10.0f);
-            LButton.GetComponent<Image>().sprite = Resources.Load<Sprite>("Sprites/Button");
-            LButton.GetComponent<Image>().color = new Color32(0xd7, 0x80, 0x00, 0xff);
-            TextMeshProUGUI LButtonText = LButton.GetComponentInChildren<TextMeshProUGUI>();
-            LButtonText.fontStyle = FontStyles.Bold;
-            LButtonText.fontSize = 4.0f;
-            LButtonText.text = "Up";
+            GameObject S_U_Button = Instantiate(ButtonPrefab, buttonDecisionObject.transform);
+            S_U_Button.transform.localPosition = new Vector3(0.0f, 2.5f, 0.0f);
+            ButtonSliderInput S_U_Slider = S_U_Button.GetComponentInChildren<ButtonSliderInput>();
+            S_U_Slider.Setup();
+            S_U_Slider.SetButtonText("<b>Up</b>\nSomewhat Confident");
 
-            // Right button, typically "next" action
-            GameObject RButton = TMP_DefaultControls.CreateButton(ButtonResources);
-            RButton.transform.SetParent(buttonDecisionObject.transform, false);
-            RButton.transform.localPosition = new Vector3(42.5f, 0.0f, 0.0f);
-            RButton.GetComponent<RectTransform>().sizeDelta = new Vector2(20.0f, 10.0f);
-            RButton.GetComponent<Image>().sprite = Resources.Load<Sprite>("Sprites/Button");
-            RButton.GetComponent<Image>().color = new Color32(0x3e, 0xa3, 0xa3, 0xff);
-            TextMeshProUGUI RButtonText = RButton.GetComponentInChildren<TextMeshProUGUI>();
-            RButtonText.fontStyle = FontStyles.Bold;
-            RButtonText.fontSize = 4.0f;
-            RButtonText.text = "Down";
+            GameObject V_D_Button = Instantiate(ButtonPrefab, buttonDecisionObject.transform);
+            V_D_Button.transform.localPosition = new Vector3(0.0f, -3.3f, 0.0f);
+            ButtonSliderInput V_D_Slider = V_D_Button.GetComponentInChildren<ButtonSliderInput>();
+            V_D_Slider.Setup();
+            V_D_Slider.SetButtonText("<b>Down</b>\nVery Confident");
+
+            GameObject S_D_Button = Instantiate(ButtonPrefab, buttonDecisionObject.transform);
+            S_D_Button.transform.localPosition = new Vector3(0.0f, -2.5f, 0.0f);
+            ButtonSliderInput S_D_Slider = S_D_Button.GetComponentInChildren<ButtonSliderInput>();
+            S_D_Slider.Setup();
+            S_D_Slider.SetButtonText("<b>Down</b>\nSomewhat Confident");
+
+            // Store the slider controllers
+            ButtonSliders = new ButtonSliderInput[] {
+                V_U_Slider,
+                S_U_Slider,
+                V_D_Slider,
+                S_D_Slider
+            };
 
             return buttonDecisionObject;
+        }
+
+        public ButtonSliderInput[] GetButtonControllers()
+        {
+            return ButtonSliders;
         }
 
         public float GetCoherence()
@@ -425,13 +436,13 @@ namespace Stimuli
         }
 
         /// <summary>
-        /// Get the radius of the stimuli. Used for correct offset calculations for dioptic / dichoptic stimulus
-        /// presentation.
+        /// Get the width in world units of the stimuli. Used for correct offset calculations for dioptic / dichoptic
+        /// stimulus presentation.
         /// </summary>
-        /// <returns>Stimulus radius, measured in world units</returns>
-        public float GetStimulusRadius()
+        /// <returns>Stimulus width, measured in world units</returns>
+        public float GetApertureWidth()
         {
-            return ArcWorldRadius;
+            return ApertureWorldWidth;
         }
 
         public GameObject GetAnchor()

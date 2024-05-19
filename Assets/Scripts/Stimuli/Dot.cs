@@ -138,7 +138,7 @@ namespace Stimuli
                 float updatedX = originalPosition.x;
                 float updatedY = originalPosition.y;
 
-                // Update visibility
+                // Get and apply visibility state
                 bool visibility = IsVisible(updatedX, updatedY);
                 DotObject.GetComponent<SpriteRenderer>().enabled = visibility;
 
@@ -169,7 +169,7 @@ namespace Stimuli
                         updatedY += ApertureHeight;
                     }
                 }
-                else if (DotBehavior == "random" && !visibility)
+                else if (DotBehavior == "random")
                 {
                     // Reset depending on which edge the dot reached, adding a padding distance to ensure continued
                     // dot visibility
