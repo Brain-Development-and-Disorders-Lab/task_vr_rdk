@@ -3,6 +3,9 @@ using System.Collections;
 using System.Threading.Tasks;
 using System;
 
+// Custom namespaces
+using Utilities;
+
 namespace Utilities
 {
     public static class VRInput

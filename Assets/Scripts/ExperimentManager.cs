@@ -20,9 +20,9 @@ public class ExperimentManager : MonoBehaviour
     // Manage the index of specific blocks occuring in the experiment timeline
     enum BlockType
     {
-        HeadsetSetup = 1,
-        Welcome = 2,
-        Tutorial = 3,
+        Setup = 1,
+        Instructions_Introduction = 2,
+        Trials_Both = 3,
         PrePractice = 4,
         Practice = 5,
         PreMain = 6,
@@ -34,9 +34,9 @@ public class ExperimentManager : MonoBehaviour
     // Manage the number of trials within a specific block in the experiment timeline
     enum BlockLength
     {
-        HeadsetSetup = 1,
-        Welcome = 1, // Welcome instructions, includes tutorial instructions
-        Tutorial = 20, // Tutorial trials
+        Setup = 1,
+        Instructions_Introduction = 1, // Welcome instructions, includes tutorial instructions
+        Trials_Both = 20, // Training trials, central presentation to both eyes
         PrePractice = 1, // Practice instructions
         Practice = 20, // Practice trials
         PreMain = 1, // Main instructions
@@ -47,10 +47,9 @@ public class ExperimentManager : MonoBehaviour
 
     // Define the experiment timeline using BlockType values
     readonly List<BlockType> ExperimentTimeline = new() {
-        // Disable headset setup temporarily
-        // BlockType.HeadsetSetup,
-        BlockType.Welcome,
-        BlockType.Tutorial,
+        // BlockType.Setup,
+        BlockType.Instructions_Introduction,
+        BlockType.Trials_Both,
         BlockType.PrePractice,
         BlockType.Practice,
         BlockType.PreMain,
@@ -60,6 +59,7 @@ public class ExperimentManager : MonoBehaviour
     };
 
     private BlockType ActiveBlock; // Store the currently active Block
+    private CameraManager.VisualField ActiveVisualField; // Variable to store the active visual field
 
     // Coherence data structure
     private Dictionary<string, float[]> Coherences = new()
@@ -101,7 +101,6 @@ public class ExperimentManager : MonoBehaviour
 
     // Confidence parameters
     private readonly int CONFIDENCE_BLOCK_SIZE = 2; // Number of trials to run before asking for confidence
-    private CameraManager.VisualField ActiveVisualField; // Variable to store the active visual field
 
     /// <summary>
     /// Generate the experiment flow
@@ -180,8 +179,11 @@ public class ExperimentManager : MonoBehaviour
         // Setup the UI manager with instructions
         uiManager.EnablePagination(true);
         List<string> Instructions = new List<string>{
-            "You are about to start the task. Before you start, please let the facilitator know if the headset feels uncomfortable or you cannot read this text.\n\nWhen you are ready and comfortable, press the right controller trigger to select <b>Next</b> and continue.",
-            "These practice trials are similar to the actual trials, except the moving dots will be displayed a few seconds longer.\n\nPractice watching the dots and observing the appearance of the task.\n\nUse the triggers on the left and right controllers to interact with the task."
+            "Before continuing, ensure you are able to read this text easily.\n\nIf not, go ahead and adjust the headset placement. The rear of the headset should sit higher than the front of the headset, and the front pad above the lenses should be resting on your forehead.\n\n\nPress <b>(B)</b> on the right controller to select <b>Next</b> and continue.",
+            "During the task, a small cross will be visible in the center of the screen.\n\nYou must maintain focus on this cross whenever it is visible.\n\n\nPress <b>(B)</b> on the right controller to select <b>Next</b> and continue, or press <b>(Y)</b> on the left controller to select <b>Back</b>.",
+            "While focusing on the cross, a field of moving dots will appear very briefly around the cross.\n\nSome of the dots will move only up or only down, and the rest of the dots will move randomly as a distraction.\n\n\nPress <b>(B)</b> on the right controller to select <b>Next</b> and continue, or press <b>(Y)</b> on the left controller to select <b>Back</b>.",
+            "After viewing the dots, you will be asked if you thought the dots moving together moved up or down.\n\nYou will have four options to choose from:\n<b>(Y) Up - Very Confident</b>\n<b>(X) Up - Somewhat Confident</b>\n<b>(A) Down - Somewhat Confident</b>\n<b>(B) Down - Very Confident</b>\n\nPress <b>(B)</b> on the right controller to select <b>Next</b> and continue, or press <b>(Y)</b> on the left controller to select <b>Back</b>.",
+            "You <b>must</b> select one of the four options, the one which best represents your decision and how confident you were in your decision. You will need to hold the button for an option approximately 1 second to select it.\n\nYou are about to start the task.\n\n\nWhen you are ready and comfortable, press <b>(B)</b> on the right controller to select <b>Continue</b> and begin."
         };
         uiManager.SetPages(Instructions);
 
@@ -316,16 +318,16 @@ public class ExperimentManager : MonoBehaviour
         ActiveBlock = ExperimentTimeline[trial.block.number - 1];
 
         // Based on the active block, run any required setup operations and present the required stimuli
-        if (ActiveBlock == BlockType.Welcome)
+        if (ActiveBlock == BlockType.Instructions_Introduction)
         {
             SetupWelcome();
             StartCoroutine(DisplayStimuli("welcome"));
         }
-        else if (ActiveBlock == BlockType.HeadsetSetup)
+        else if (ActiveBlock == BlockType.Setup)
         {
             StartCoroutine(DisplayStimuli("eyetracking"));
         }
-        else if (ActiveBlock == BlockType.Tutorial)
+        else if (ActiveBlock == BlockType.Trials_Both)
         {
             SetupMotion();
             StartCoroutine(DisplayStimuli("tutorial"));
@@ -372,7 +374,7 @@ public class ExperimentManager : MonoBehaviour
             Session.instance.CurrentTrial.result["name"] = stimuli;
 
             uiManager.SetVisible(true);
-            uiManager.SetHeader("Welcome");
+            uiManager.SetHeader("Instructions");
             uiManager.SetLeftButtonState(false, true, "Back");
             uiManager.SetRightButtonState(true, true, "Next");
 
@@ -798,14 +800,14 @@ public class ExperimentManager : MonoBehaviour
     }
 
     // Functions to bulk-classify BlockType values
-    private bool IsWelcomeScreen()
+    private bool IsIntroductionScreen()
     {
-        return ActiveBlock == BlockType.Welcome;
+        return ActiveBlock == BlockType.Instructions_Introduction;
     }
 
     private bool IsTextScreen()
     {
-        return IsWelcomeScreen() ||
+        return IsIntroductionScreen() ||
                     ActiveBlock == BlockType.PrePractice ||
                     ActiveBlock == BlockType.PreMain ||
                     ActiveBlock == BlockType.PostMain;
@@ -813,7 +815,7 @@ public class ExperimentManager : MonoBehaviour
 
     private bool IsStimulusScreen()
     {
-        return ActiveBlock == BlockType.Tutorial ||
+        return ActiveBlock == BlockType.Trials_Both ||
                     ActiveBlock == BlockType.Practice ||
                     ActiveBlock == BlockType.Calibration ||
                     ActiveBlock == BlockType.Main;
@@ -821,7 +823,7 @@ public class ExperimentManager : MonoBehaviour
 
     private bool IsSetupScreen()
     {
-        return ActiveBlock == BlockType.HeadsetSetup;
+        return ActiveBlock == BlockType.Setup;
     }
 
     private void ApplyInputs(InputState inputs)
@@ -946,7 +948,7 @@ public class ExperimentManager : MonoBehaviour
                 // Left-side controls
                 if (inputs.Y_Pressed || inputs.X_Pressed)
                 {
-                    if (IsWelcomeScreen() && InputReset)
+                    if (IsIntroductionScreen() && InputReset)
                     {
                         if (uiManager.HasPreviousPage())
                         {
