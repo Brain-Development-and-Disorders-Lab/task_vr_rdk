@@ -766,7 +766,7 @@ public class ExperimentManager : MonoBehaviour
             if (buttonControllers[0].GetSliderValue() >= ButtonSliderThreshold || buttonControllers[1].GetSliderValue() >= ButtonSliderThreshold)
             {
                 // Provide haptic feedback
-                VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
+                VRInput.SetHaptics(15.0f, 0.4f, 0.1f, true, false);
 
                 // Store appropriate response
                 if (buttonControllers[0].GetSliderValue() >= ButtonSliderThreshold)
