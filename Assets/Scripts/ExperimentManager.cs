@@ -534,12 +534,13 @@ public class ExperimentManager : MonoBehaviour
                 // If in the calibration stage, adjust the coherence value
                 if ((bool)Session.instance.CurrentTrial.result["selectedCorrectDirection"] == true)
                 {
-                    // Adjust coherence if two consecutive correct "calibration" trials
+                    // Adjust coherence if two consecutive correct "calibration"-type trials
                     if (Session.instance.CurrentTrial.numberInBlock > 1)
                     {
                         Trial PreviousTrial = Session.instance.CurrentBlock.GetRelativeTrial(Session.instance.CurrentTrial.numberInBlock - 1);
                         if ((bool)Session.instance.CurrentTrial.result["selectedCorrectDirection"] == true &&
-                            (bool)PreviousTrial.result["selectedCorrectDirection"] == true)
+                            (bool)PreviousTrial.result["selectedCorrectDirection"] == true &&
+                            (string)PreviousTrial.result["combinedCoherences"] == Coherences["both_eyes"][0] + "," + Coherences["both_eyes"][1])
                         {
                             // Modify "both_eyes", grouped coherence
                             Coherences["both_eyes"][LOW_INDEX] -= 0.01f;
