@@ -99,9 +99,6 @@ public class ExperimentManager : MonoBehaviour
     private readonly float ButtonSliderThreshold = 0.99f;
     private readonly float ButtonHoldFactor = 2.0f;
 
-    // Confidence parameters
-    private readonly int CONFIDENCE_BLOCK_SIZE = 2; // Number of trials to run before asking for confidence
-
     /// <summary>
     /// Generate the experiment flow
     /// </summary>
@@ -656,15 +653,18 @@ public class ExperimentManager : MonoBehaviour
         Vector3 RightGaze = RightEyeTracker.GetGazeEstimate();
         Vector3 WorldPosition = stimulusManager.GetAnchor().transform.position;
 
-        // Calculate central gaze position and adjust world position
+        // Calculate central gaze position and adjust world position if a lateralized trial
         float GazeOffset = cameraManager.GetTotalOffset();
-        if (cameraManager.GetActiveField() == CameraManager.VisualField.Left)
+        if (ActiveBlock == BlockType.Training_Trials_Lateralized || ActiveBlock == BlockType.Main_Trials_Lateralized)
         {
-            WorldPosition.x += GazeOffset;
-        }
-        else if (cameraManager.GetActiveField() == CameraManager.VisualField.Right)
-        {
-            WorldPosition.x -= GazeOffset;
+            if (cameraManager.GetActiveField() == CameraManager.VisualField.Left)
+            {
+                WorldPosition.x += GazeOffset;
+            }
+            else if (cameraManager.GetActiveField() == CameraManager.VisualField.Right)
+            {
+                WorldPosition.x -= GazeOffset;
+            }
         }
 
         float GazeThreshold = 0.5f; // Error threshold (world units)
