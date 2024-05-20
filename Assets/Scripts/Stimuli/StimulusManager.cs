@@ -315,25 +315,6 @@ namespace Stimuli
             }
         }
 
-        public void UseCentralFixation()
-        {
-            GameObject gazeFixationObject = Stimuli["gaze"].First();
-            GameObject fixationObject = Stimuli["fixation"][1];
-            GameObject motionFixationObject = Stimuli["motion"][1];
-            // Adjust the position depending on CameraManager setup
-            CameraManager cameraManager = FindObjectOfType<CameraManager>();
-            float offsetValue = cameraManager.GetTotalOffset();
-            CameraManager.VisualField activeField = cameraManager.GetActiveField();
-            if (activeField == CameraManager.VisualField.Left)
-            {
-                gazeFixationObject.transform.localPosition = new Vector3(offsetValue, gazeFixationObject.transform.localPosition.y);
-            }
-            else if (activeField == CameraManager.VisualField.Right)
-            {
-                gazeFixationObject.transform.localPosition = new Vector3(-offsetValue, gazeFixationObject.transform.localPosition.y);
-            }
-        }
-
         public void CreateDots()
         {
             int DotCount = (int)(ApertureWorldHeight * ApertureWorldWidth * DotWorldDensity);

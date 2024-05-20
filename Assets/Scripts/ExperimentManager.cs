@@ -172,9 +172,9 @@ public class ExperimentManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Setup the "Welcome" screen presented to participants after any headset calibration operations.
+    /// Setup the "Instructions" screen presented to participants after any headset calibration operations.
     /// </summary>
-    private void SetupWelcome()
+    private void SetupInstructions()
     {
         // Setup the UI manager with instructions
         uiManager.EnablePagination(true);
@@ -320,17 +320,17 @@ public class ExperimentManager : MonoBehaviour
         // Based on the active block, run any required setup operations and present the required stimuli
         if (ActiveBlock == BlockType.Instructions_Introduction)
         {
-            SetupWelcome();
-            StartCoroutine(DisplayStimuli("welcome"));
+            SetupInstructions();
+            StartCoroutine(DisplayStimuli("instructions_introduction"));
         }
         else if (ActiveBlock == BlockType.Setup)
         {
-            StartCoroutine(DisplayStimuli("eyetracking"));
+            StartCoroutine(DisplayStimuli("setup"));
         }
         else if (ActiveBlock == BlockType.Trials_Both)
         {
             SetupMotion();
-            StartCoroutine(DisplayStimuli("tutorial"));
+            StartCoroutine(DisplayStimuli("trials_both"));
         }
         else if (ActiveBlock == BlockType.PrePractice)
         {
@@ -368,7 +368,7 @@ public class ExperimentManager : MonoBehaviour
         stimulusManager.SetVisibleAll(false);
         uiManager.SetVisible(false);
 
-        if (stimuli == "welcome")
+        if (stimuli == "instructions_introduction")
         {
             // Store the displayed stimuli type
             Session.instance.CurrentTrial.result["name"] = stimuli;
@@ -381,13 +381,13 @@ public class ExperimentManager : MonoBehaviour
             // Input delay
             yield return StartCoroutine(WaitSeconds(0.25f, true));
         }
-        else if (stimuli == "eyetracking")
+        else if (stimuli == "setup")
         {
             // Store the displayed stimuli type
             Session.instance.CurrentTrial.result["name"] = stimuli;
 
             uiManager.SetVisible(true);
-            uiManager.SetHeader("Headset Calibration");
+            uiManager.SetHeader("Eye-Tracking Setup");
             uiManager.SetBody("You will be shown a red dot in front of you. Follow the dot movement with your eyes. After a brief series of movements, the calibration will automatically end and you will be shown the task instructions.\n\nPress the right controller trigger to select <b>Start</b>.");
             uiManager.SetLeftButtonState(false, false, "");
             uiManager.SetRightButtonState(true, true, "Start");
@@ -396,8 +396,11 @@ public class ExperimentManager : MonoBehaviour
             yield return StartCoroutine(WaitSeconds(0.25f, true));
             SetInputEnabled(true);
         }
-        else if (stimuli == "tutorial")
+        else if (stimuli == "trials_both")
         {
+            // Override and set the camera to display in both eyes
+            cameraManager.SetActiveField(CameraManager.VisualField.Both, false);
+
             SetInputEnabled(false);
             stimulusManager.SetFixationCrossVisibility(true);
             yield return new WaitUntil(() => IsFixated());
