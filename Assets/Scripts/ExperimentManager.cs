@@ -297,21 +297,21 @@ public class ExperimentManager : MonoBehaviour
             // Both eye presentation
             Session.instance.CurrentTrial.result["cameraLayout"] = 2;
         }
-        int SelectedCoherence = UnityEngine.Random.value > 0.5f ? 0 : 1;
+        int SelectedCoherence = UnityEngine.Random.value > 0.5f ? LOW_INDEX : HIGH_INDEX;
         stimulusManager.SetCoherence(ActiveCoherences[SelectedCoherence]);
 
         // Clone and store coherence values as a string, separated by "," token
-        Session.instance.CurrentTrial.result["combinedCoherences"] = Coherences["both_eyes"][0] + "," + Coherences["both_eyes"][1];
-        Session.instance.CurrentTrial.result["leftCoherences"] = Coherences["left_eye"][0] + "," + Coherences["left_eye"][1];
-        Session.instance.CurrentTrial.result["rightCoherences"] = Coherences["right_eye"][0] + "," + Coherences["right_eye"][1];
+        Session.instance.CurrentTrial.result["combinedCoherences"] = Coherences["both_eyes"][LOW_INDEX] + "," + Coherences["both_eyes"][HIGH_INDEX];
+        Session.instance.CurrentTrial.result["leftCoherences"] = Coherences["left_eye"][LOW_INDEX] + "," + Coherences["left_eye"][HIGH_INDEX];
+        Session.instance.CurrentTrial.result["rightCoherences"] = Coherences["right_eye"][LOW_INDEX] + "," + Coherences["right_eye"][HIGH_INDEX];
 
         // Set the reference direction randomly
         float dotDirection = UnityEngine.Random.value > 0.5f ? (float)Math.PI / 2 : (float)Math.PI * 3 / 2;
         stimulusManager.SetDirection(dotDirection);
         Session.instance.CurrentTrial.result["referenceDirection"] = stimulusManager.GetDirection() == (float)Math.PI / 2 ? "up" : "down";
 
-        // Store the standard motion duration value (1.5 seconds)
-        Session.instance.CurrentTrial.result["motionDuration"] = 1.5f;
+        // Store the standard motion duration value
+        Session.instance.CurrentTrial.result["motionDuration"] = DISPLAY_DURATION;
 
         // Setup the UI
         uiManager.EnablePagination(false);
@@ -337,7 +337,12 @@ public class ExperimentManager : MonoBehaviour
         {
             SetupInstructions();
         }
-        else if (ActiveBlock == BlockType.Training_Trials_Binocular || ActiveBlock == BlockType.Training_Trials_Monocular || ActiveBlock == BlockType.Training_Trials_Lateralized)
+        else if (ActiveBlock == BlockType.Training_Trials_Binocular ||
+            ActiveBlock == BlockType.Training_Trials_Monocular ||
+            ActiveBlock == BlockType.Training_Trials_Lateralized ||
+            ActiveBlock == BlockType.Main_Trials_Binocular ||
+            ActiveBlock == BlockType.Main_Trials_Monocular ||
+            ActiveBlock == BlockType.Main_Trials_Lateralized)
         {
             SetupMotion();
         }
@@ -359,7 +364,6 @@ public class ExperimentManager : MonoBehaviour
 
         // Store the displayed stimuli type if not a "feedback_"-type stimulus
         Session.instance.CurrentTrial.result["name"] = Enum.GetName(typeof(BlockType), block);
-        Debug.Log("Current block: " + Session.instance.CurrentTrial.result["name"]);
 
         if (block == BlockType.Instructions_Introduction)
         {
@@ -397,6 +401,21 @@ public class ExperimentManager : MonoBehaviour
         {
             yield return StartCoroutine(DisplayMotion());
         }
+        else if (block == BlockType.PostMain)
+        {
+            // Override and set the camera to display in both eyes
+            cameraManager.SetActiveField(CameraManager.VisualField.Both);
+
+            uiManager.SetVisible(true);
+            uiManager.SetHeader("Complete");
+            uiManager.SetBody("That concludes all the trials of this task. Please notify the experiment facilitator, and you can remove the headset carefully after releasing the rear adjustment wheel.");
+            uiManager.SetLeftButtonState(false, false, "Back");
+            uiManager.SetRightButtonState(true, true, "Finish");
+
+            // Input delay
+            yield return StartCoroutine(WaitSeconds(1.0f, true));
+            SetInputEnabled(true);
+        }
         // else if (stimuli == "prepractice")
         // {
         //     // Override and set the camera to display in both eyes
@@ -425,21 +444,6 @@ public class ExperimentManager : MonoBehaviour
 
         //     // Input delay
         //     yield return StartCoroutine(WaitSeconds(0.15f, true));
-        //     SetInputEnabled(true);
-        // }
-        // else if (stimuli == "postmain")
-        // {
-        //     // Override and set the camera to display in both eyes
-        //     cameraManager.SetActiveField(CameraManager.VisualField.Both);
-
-        //     uiManager.SetVisible(true);
-        //     uiManager.SetHeader("Complete");
-        //     uiManager.SetBody("That concludes all the trials of this task. Please notify the experiment facilitator, and you can remove the headset carefully after releasing the rear adjustment wheel.");
-        //     uiManager.SetLeftButtonState(false, false, "Back");
-        //     uiManager.SetRightButtonState(true, true, "Finish");
-
-        //     // Input delay
-        //     yield return StartCoroutine(WaitSeconds(1.0f, true));
         //     SetInputEnabled(true);
         // }
     }
@@ -527,6 +531,7 @@ public class ExperimentManager : MonoBehaviour
                 Session.instance.CurrentTrial.result["selectedCorrectDirection"] = true;
             }
 
+            // Staircase calibration procedure
             if (ActiveBlock == BlockType.Training_Trials_Binocular ||
                 ActiveBlock == BlockType.Training_Trials_Monocular ||
                 ActiveBlock == BlockType.Training_Trials_Lateralized)
@@ -542,41 +547,44 @@ public class ExperimentManager : MonoBehaviour
                             (bool)PreviousTrial.result["selectedCorrectDirection"] == true &&
                             (string)PreviousTrial.result["combinedCoherences"] == Coherences["both_eyes"][0] + "," + Coherences["both_eyes"][1])
                         {
+                            // Note: A "low" and "high" coherence value does not exist, rather an initial value is being adjusted
+                            // Note: "low" and "high" coherences only exist at the completion of the staircasing calibration
                             // Modify "both_eyes", grouped coherence
                             Coherences["both_eyes"][LOW_INDEX] -= 0.01f;
-                            Coherences["both_eyes"][HIGH_INDEX] -= 0.01f;
+                            Coherences["both_eyes"][HIGH_INDEX] = Coherences["both_eyes"][LOW_INDEX];
 
                             // Modify individual coherences depending on active visual field
                             if (cameraManager.GetActiveField() == CameraManager.VisualField.Left)
                             {
                                 Coherences["left_eye"][LOW_INDEX] -= 0.01f;
-                                Coherences["left_eye"][HIGH_INDEX] -= 0.01f;
+                                Coherences["left_eye"][HIGH_INDEX] = Coherences["left_eye"][LOW_INDEX];
                             }
                             else if (cameraManager.GetActiveField() == CameraManager.VisualField.Right)
                             {
                                 Coherences["right_eye"][LOW_INDEX] -= 0.01f;
-                                Coherences["right_eye"][HIGH_INDEX] -= 0.01f;
+                                Coherences["right_eye"][HIGH_INDEX] = Coherences["right_eye"][LOW_INDEX];
                             }
                         }
                     }
                 }
                 else
                 {
-                    // Adjust coherence
+                    // Note: A "low" and "high" coherence value does not exist, rather an initial value is being adjusted
+                    // Note: "low" and "high" coherences only exist at the completion of the staircasing calibration
                     // Modify "both_eyes", grouped coherence
                     Coherences["both_eyes"][LOW_INDEX] += 0.01f;
-                    Coherences["both_eyes"][HIGH_INDEX] += 0.01f;
+                    Coherences["both_eyes"][HIGH_INDEX] = Coherences["both_eyes"][LOW_INDEX];
 
                     // Modify individual coherences depending on active visual field
                     if (cameraManager.GetActiveField() == CameraManager.VisualField.Left)
                     {
                         Coherences["left_eye"][LOW_INDEX] += 0.01f;
-                        Coherences["left_eye"][HIGH_INDEX] += 0.01f;
+                        Coherences["left_eye"][HIGH_INDEX] = Coherences["left_eye"][LOW_INDEX];
                     }
                     else if (cameraManager.GetActiveField() == CameraManager.VisualField.Right)
                     {
                         Coherences["right_eye"][LOW_INDEX] += 0.01f;
-                        Coherences["right_eye"][HIGH_INDEX] += 0.01f;
+                        Coherences["right_eye"][HIGH_INDEX] = Coherences["right_eye"][LOW_INDEX];
                     }
                 }
 
