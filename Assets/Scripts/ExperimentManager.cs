@@ -36,12 +36,12 @@ public class ExperimentManager : MonoBehaviour
     {
         Setup = 1,
         Instructions_Introduction = 1, // Welcome instructions, includes tutorial instructions
-        Training_Trials_Binocular = 4, // Training trials, central presentation to both eyes
-        Main_Trials_Binocular = 4,
-        Training_Trials_Monocular = 4, // Training trials, central presentation to one eye
-        Main_Trials_Monocular = 4,
-        Training_Trials_Lateralized = 4, // Training trials, lateralized presentation to one eye
-        Main_Trials_Lateralized = 4,
+        Training_Trials_Binocular = 30, // Training trials, central presentation to both eyes
+        Main_Trials_Binocular = 50,
+        Training_Trials_Monocular = 30, // Training trials, central presentation to one eye
+        Main_Trials_Monocular = 50,
+        Training_Trials_Lateralized = 120, // Training trials, lateralized presentation to one eye
+        Main_Trials_Lateralized = 200,
         PostMain = 1,
     };
 
