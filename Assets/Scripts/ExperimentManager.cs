@@ -74,6 +74,7 @@ public class ExperimentManager : MonoBehaviour
     private readonly int EYE_BLOCK_SIZE = 10; // Number of trials per eye
 
     // Timing variables
+    private readonly float FIXATION_DURATION = 0.5f;
     private readonly float PRE_DISPLAY_DURATION = 0.5f;
     private readonly float DISPLAY_DURATION = 0.180f; // 180 milliseconds
 
@@ -93,6 +94,7 @@ public class ExperimentManager : MonoBehaviour
     private bool InputEnabled = false; // Input is accepted
     private bool InputReset = true; // Flag to prevent input being held down
     public bool RequireFixation = true; // Require participant to be fixation on center before trial begins
+    private InputState LastInputState; // Prior frame input state
 
     // Input button slider GameObjects and variables
     private readonly float TriggerThreshold = 0.8f;
@@ -179,7 +181,7 @@ public class ExperimentManager : MonoBehaviour
             "Before continuing, ensure you are able to read this text easily.\n\nIf not, go ahead and adjust the headset placement. The rear of the headset should sit higher than the front of the headset, and the front pad above the lenses should be resting on your forehead.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue.",
             "During the task, a small cross will be visible in the center of the screen.\n\nYou must maintain focus on this cross whenever it is visible.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue, or press <b>Left Trigger</b> to select <b>Back</b>.",
             "While focusing on the cross, a field of moving dots will appear very briefly around the cross.\n\nSome of the dots will move only up or only down, and the rest of the dots will move randomly as a distraction.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue, or press <b>Left Trigger</b> to select <b>Back</b>.",
-            "After viewing the dots, you will be asked if you thought the dots moving together moved up or down.\n\nYou will have four options to choose from:\n<b>(Left Trigger) Up - Very Confident</b>\n<b>(X) Up - Somewhat Confident</b>\n<b>(A) Down - Somewhat Confident</b>\n<b>(Right Trigger) Down - Very Confident</b>\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue, or press <b>Left Trigger</b> to select <b>Back</b>.",
+            "After viewing the dots, you will be asked if you thought the dots moving together moved up or down.\n\nYou will have four options to choose from:\n<b>Up - Very Confident (Left Trigger)</b>\n<b>Up - Somewhat Confident (X)</b>\n<b>Down - Somewhat Confident (A)</b>\n<b>Down - Very Confident (Right Trigger)</b>\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue, or press <b>Left Trigger</b> to select <b>Back</b>.",
             "You <b>must</b> select one of the four options, the one which best represents your decision and how confident you were in your decision. You will need to hold the button for an option approximately 1 second to select it.\n\nYou are about to start the task.\n\n\nWhen you are ready and comfortable, press <b>Right Trigger</b> to select <b>Continue</b> and begin."
         };
         uiManager.SetPages(Instructions);
@@ -295,21 +297,21 @@ public class ExperimentManager : MonoBehaviour
             // Both eye presentation
             Session.instance.CurrentTrial.result["cameraLayout"] = 2;
         }
-        int SelectedCoherence = UnityEngine.Random.value > 0.5f ? 0 : 1;
+        int SelectedCoherence = UnityEngine.Random.value > 0.5f ? LOW_INDEX : HIGH_INDEX;
         stimulusManager.SetCoherence(ActiveCoherences[SelectedCoherence]);
 
         // Clone and store coherence values as a string, separated by "," token
-        Session.instance.CurrentTrial.result["combinedCoherences"] = Coherences["both_eyes"][0] + "," + Coherences["both_eyes"][1];
-        Session.instance.CurrentTrial.result["leftCoherences"] = Coherences["left_eye"][0] + "," + Coherences["left_eye"][1];
-        Session.instance.CurrentTrial.result["rightCoherences"] = Coherences["right_eye"][0] + "," + Coherences["right_eye"][1];
+        Session.instance.CurrentTrial.result["combinedCoherences"] = Coherences["both_eyes"][LOW_INDEX] + "," + Coherences["both_eyes"][HIGH_INDEX];
+        Session.instance.CurrentTrial.result["leftCoherences"] = Coherences["left_eye"][LOW_INDEX] + "," + Coherences["left_eye"][HIGH_INDEX];
+        Session.instance.CurrentTrial.result["rightCoherences"] = Coherences["right_eye"][LOW_INDEX] + "," + Coherences["right_eye"][HIGH_INDEX];
 
         // Set the reference direction randomly
         float dotDirection = UnityEngine.Random.value > 0.5f ? (float)Math.PI / 2 : (float)Math.PI * 3 / 2;
         stimulusManager.SetDirection(dotDirection);
         Session.instance.CurrentTrial.result["referenceDirection"] = stimulusManager.GetDirection() == (float)Math.PI / 2 ? "up" : "down";
 
-        // Store the standard motion duration value (1.5 seconds)
-        Session.instance.CurrentTrial.result["motionDuration"] = 1.5f;
+        // Store the standard motion duration value
+        Session.instance.CurrentTrial.result["motionDuration"] = DISPLAY_DURATION;
 
         // Setup the UI
         uiManager.EnablePagination(false);
@@ -335,7 +337,12 @@ public class ExperimentManager : MonoBehaviour
         {
             SetupInstructions();
         }
-        else if (ActiveBlock == BlockType.Training_Trials_Binocular || ActiveBlock == BlockType.Training_Trials_Monocular || ActiveBlock == BlockType.Training_Trials_Lateralized)
+        else if (ActiveBlock == BlockType.Training_Trials_Binocular ||
+            ActiveBlock == BlockType.Training_Trials_Monocular ||
+            ActiveBlock == BlockType.Training_Trials_Lateralized ||
+            ActiveBlock == BlockType.Main_Trials_Binocular ||
+            ActiveBlock == BlockType.Main_Trials_Monocular ||
+            ActiveBlock == BlockType.Main_Trials_Lateralized)
         {
             SetupMotion();
         }
@@ -357,7 +364,6 @@ public class ExperimentManager : MonoBehaviour
 
         // Store the displayed stimuli type if not a "feedback_"-type stimulus
         Session.instance.CurrentTrial.result["name"] = Enum.GetName(typeof(BlockType), block);
-        Debug.Log("Current block: " + Session.instance.CurrentTrial.result["name"]);
 
         if (block == BlockType.Instructions_Introduction)
         {
@@ -395,6 +401,21 @@ public class ExperimentManager : MonoBehaviour
         {
             yield return StartCoroutine(DisplayMotion());
         }
+        else if (block == BlockType.PostMain)
+        {
+            // Override and set the camera to display in both eyes
+            cameraManager.SetActiveField(CameraManager.VisualField.Both);
+
+            uiManager.SetVisible(true);
+            uiManager.SetHeader("Complete");
+            uiManager.SetBody("That concludes all the trials of this task. Please notify the experiment facilitator, and you can remove the headset carefully after releasing the rear adjustment wheel.");
+            uiManager.SetLeftButtonState(false, false, "Back");
+            uiManager.SetRightButtonState(true, true, "Finish");
+
+            // Input delay
+            yield return StartCoroutine(WaitSeconds(1.0f, true));
+            SetInputEnabled(true);
+        }
         // else if (stimuli == "prepractice")
         // {
         //     // Override and set the camera to display in both eyes
@@ -425,21 +446,6 @@ public class ExperimentManager : MonoBehaviour
         //     yield return StartCoroutine(WaitSeconds(0.15f, true));
         //     SetInputEnabled(true);
         // }
-        // else if (stimuli == "postmain")
-        // {
-        //     // Override and set the camera to display in both eyes
-        //     cameraManager.SetActiveField(CameraManager.VisualField.Both);
-
-        //     uiManager.SetVisible(true);
-        //     uiManager.SetHeader("Complete");
-        //     uiManager.SetBody("That concludes all the trials of this task. Please notify the experiment facilitator, and you can remove the headset carefully after releasing the rear adjustment wheel.");
-        //     uiManager.SetLeftButtonState(false, false, "Back");
-        //     uiManager.SetRightButtonState(true, true, "Finish");
-
-        //     // Input delay
-        //     yield return StartCoroutine(WaitSeconds(1.0f, true));
-        //     SetInputEnabled(true);
-        // }
     }
 
     /// <summary>
@@ -466,12 +472,23 @@ public class ExperimentManager : MonoBehaviour
     {
         SetInputEnabled(false);
         stimulusManager.SetFixationCrossVisibility(true);
-        yield return new WaitUntil(() => IsFixated());
+        if (RequireFixation)
+        {
+            yield return new WaitUntil(() => IsFixated());
+        }
 
         // Fixation
         stimulusManager.SetVisible(StimulusType.Fixation, true);
         yield return StartCoroutine(WaitSeconds(PRE_DISPLAY_DURATION, true));
-        yield return new WaitUntil(() => IsFixated());
+        // Wait either for fixation or a fixed duration if fixation not required
+        if (RequireFixation)
+        {
+            yield return new WaitUntil(() => IsFixated());
+        }
+        else
+        {
+            yield return StartCoroutine(WaitSeconds(FIXATION_DURATION, true));
+        }
         stimulusManager.SetVisible(StimulusType.Fixation, false);
 
         // Motion
@@ -514,6 +531,7 @@ public class ExperimentManager : MonoBehaviour
                 Session.instance.CurrentTrial.result["selectedCorrectDirection"] = true;
             }
 
+            // Staircase calibration procedure
             if (ActiveBlock == BlockType.Training_Trials_Binocular ||
                 ActiveBlock == BlockType.Training_Trials_Monocular ||
                 ActiveBlock == BlockType.Training_Trials_Lateralized)
@@ -521,48 +539,52 @@ public class ExperimentManager : MonoBehaviour
                 // If in the calibration stage, adjust the coherence value
                 if ((bool)Session.instance.CurrentTrial.result["selectedCorrectDirection"] == true)
                 {
-                    // Adjust coherence if two consecutive correct "calibration" trials
+                    // Adjust coherence if two consecutive correct "calibration"-type trials
                     if (Session.instance.CurrentTrial.numberInBlock > 1)
                     {
                         Trial PreviousTrial = Session.instance.CurrentBlock.GetRelativeTrial(Session.instance.CurrentTrial.numberInBlock - 1);
                         if ((bool)Session.instance.CurrentTrial.result["selectedCorrectDirection"] == true &&
-                            (bool)PreviousTrial.result["selectedCorrectDirection"] == true)
+                            (bool)PreviousTrial.result["selectedCorrectDirection"] == true &&
+                            (string)PreviousTrial.result["combinedCoherences"] == Coherences["both_eyes"][0] + "," + Coherences["both_eyes"][1])
                         {
+                            // Note: A "low" and "high" coherence value does not exist, rather an initial value is being adjusted
+                            // Note: "low" and "high" coherences only exist at the completion of the staircasing calibration
                             // Modify "both_eyes", grouped coherence
                             Coherences["both_eyes"][LOW_INDEX] -= 0.01f;
-                            Coherences["both_eyes"][HIGH_INDEX] -= 0.01f;
+                            Coherences["both_eyes"][HIGH_INDEX] = Coherences["both_eyes"][LOW_INDEX];
 
                             // Modify individual coherences depending on active visual field
                             if (cameraManager.GetActiveField() == CameraManager.VisualField.Left)
                             {
                                 Coherences["left_eye"][LOW_INDEX] -= 0.01f;
-                                Coherences["left_eye"][HIGH_INDEX] -= 0.01f;
+                                Coherences["left_eye"][HIGH_INDEX] = Coherences["left_eye"][LOW_INDEX];
                             }
                             else if (cameraManager.GetActiveField() == CameraManager.VisualField.Right)
                             {
                                 Coherences["right_eye"][LOW_INDEX] -= 0.01f;
-                                Coherences["right_eye"][HIGH_INDEX] -= 0.01f;
+                                Coherences["right_eye"][HIGH_INDEX] = Coherences["right_eye"][LOW_INDEX];
                             }
                         }
                     }
                 }
                 else
                 {
-                    // Adjust coherence
+                    // Note: A "low" and "high" coherence value does not exist, rather an initial value is being adjusted
+                    // Note: "low" and "high" coherences only exist at the completion of the staircasing calibration
                     // Modify "both_eyes", grouped coherence
                     Coherences["both_eyes"][LOW_INDEX] += 0.01f;
-                    Coherences["both_eyes"][HIGH_INDEX] += 0.01f;
+                    Coherences["both_eyes"][HIGH_INDEX] = Coherences["both_eyes"][LOW_INDEX];
 
                     // Modify individual coherences depending on active visual field
                     if (cameraManager.GetActiveField() == CameraManager.VisualField.Left)
                     {
                         Coherences["left_eye"][LOW_INDEX] += 0.01f;
-                        Coherences["left_eye"][HIGH_INDEX] += 0.01f;
+                        Coherences["left_eye"][HIGH_INDEX] = Coherences["left_eye"][LOW_INDEX];
                     }
                     else if (cameraManager.GetActiveField() == CameraManager.VisualField.Right)
                     {
                         Coherences["right_eye"][LOW_INDEX] += 0.01f;
-                        Coherences["right_eye"][HIGH_INDEX] += 0.01f;
+                        Coherences["right_eye"][HIGH_INDEX] = Coherences["right_eye"][LOW_INDEX];
                     }
                 }
 
@@ -642,12 +664,6 @@ public class ExperimentManager : MonoBehaviour
     /// <returns></returns>
     private bool IsFixated()
     {
-        if (!RequireFixation)
-        {
-            // If fixation is not required, return true in all cases
-            return true;
-        }
-
         // Get gaze estimates and the current world position
         Vector3 LeftGaze = LeftEyeTracker.GetGazeEstimate();
         Vector3 RightGaze = RightEyeTracker.GetGazeEstimate();
@@ -748,17 +764,25 @@ public class ExperimentManager : MonoBehaviour
         ButtonSliderInput[] buttonControllers = stimulusManager.GetButtonControllers();
 
         // Left controller inputs
-        if (inputs.L_T_State > TriggerThreshold || inputs.X_Pressed)
+        if (inputs.L_T_State >= TriggerThreshold || inputs.X_Pressed)
         {
-            if (inputs.L_T_State > TriggerThreshold)
+            if (inputs.L_T_State >= TriggerThreshold)
             {
                 // Very confident up
                 buttonControllers[0].SetSliderValue(buttonControllers[0].GetSliderValue() + ButtonHoldFactor * Time.deltaTime);
+                if (LastInputState.L_T_State < TriggerThreshold)
+                {
+                    Session.instance.CurrentTrial.result["lastKeypressStart"] = Time.time;
+                }
             }
             else
             {
                 // Somewhat confident up
                 buttonControllers[1].SetSliderValue(buttonControllers[1].GetSliderValue() + ButtonHoldFactor * Time.deltaTime);
+                if (LastInputState.X_Pressed == false)
+                {
+                    Session.instance.CurrentTrial.result["lastKeypressStart"] = Time.time;
+                }
             }
 
             // Check if a button has been completely held down, and continue if so
@@ -766,6 +790,7 @@ public class ExperimentManager : MonoBehaviour
             {
                 // Provide haptic feedback
                 VRInput.SetHaptics(15.0f, 0.4f, 0.1f, true, false);
+                Session.instance.CurrentTrial.result["lastKeypressEnd"] = Time.time;
 
                 // Store appropriate response
                 if (buttonControllers[0].GetSliderValue() >= ButtonSliderThreshold)
@@ -784,22 +809,31 @@ public class ExperimentManager : MonoBehaviour
         }
 
         // Right controller inputs
-        else if (inputs.R_T_State > TriggerThreshold || inputs.A_Pressed)
+        else if (inputs.R_T_State >= TriggerThreshold || inputs.A_Pressed)
         {
-            if (inputs.R_T_State > TriggerThreshold)
+            if (inputs.R_T_State >= TriggerThreshold)
             {
                 // Very confident down
                 buttonControllers[2].SetSliderValue(buttonControllers[2].GetSliderValue() + ButtonHoldFactor * Time.deltaTime);
+                if (inputs.R_T_State < TriggerThreshold)
+                {
+                    Session.instance.CurrentTrial.result["lastKeypressStart"] = Time.time;
+                }
             }
             else
             {
                 // Somewhat confident down
                 buttonControllers[3].SetSliderValue(buttonControllers[3].GetSliderValue() + ButtonHoldFactor * Time.deltaTime);
+                if (LastInputState.A_Pressed == false)
+                {
+                    Session.instance.CurrentTrial.result["lastKeypressStart"] = Time.time;
+                }
             }
 
             if (buttonControllers[2].GetSliderValue() >= ButtonSliderThreshold || buttonControllers[3].GetSliderValue() >= ButtonSliderThreshold)
             {
                 VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
+                Session.instance.CurrentTrial.result["lastKeypressEnd"] = Time.time;
 
                 // Store appropriate response
                 if (buttonControllers[2].GetSliderValue() >= ButtonSliderThreshold)
@@ -816,6 +850,9 @@ public class ExperimentManager : MonoBehaviour
                 }
             }
         }
+
+        // Update the prior input state
+        LastInputState = inputs;
     }
 
     /// <summary>
