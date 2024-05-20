@@ -17,7 +17,7 @@ public class ExperimentManager : MonoBehaviour
     // Loading screen object, parent object that contains all loading screen components
     public GameObject LoadingScreen;
 
-    // Manage the index of specific blocks occuring in the experiment timeline
+    // Define the types of blocks that occur during the experiment timeline
     enum BlockType
     {
         Setup = 1,
@@ -31,7 +31,7 @@ public class ExperimentManager : MonoBehaviour
         PostMain = 9,
     };
 
-    // Manage the number of trials within a specific block in the experiment timeline
+    // Set the number of trials within a specific block in the experiment timeline
     enum BlockLength
     {
         Setup = 1,
@@ -176,11 +176,11 @@ public class ExperimentManager : MonoBehaviour
         // Setup the UI manager with instructions
         uiManager.EnablePagination(true);
         List<string> Instructions = new List<string>{
-            "Before continuing, ensure you are able to read this text easily.\n\nIf not, go ahead and adjust the headset placement. The rear of the headset should sit higher than the front of the headset, and the front pad above the lenses should be resting on your forehead.\n\n\nPress <b>(B)</b> on the right controller to select <b>Next</b> and continue.",
-            "During the task, a small cross will be visible in the center of the screen.\n\nYou must maintain focus on this cross whenever it is visible.\n\n\nPress <b>(B)</b> on the right controller to select <b>Next</b> and continue, or press <b>(Y)</b> on the left controller to select <b>Back</b>.",
-            "While focusing on the cross, a field of moving dots will appear very briefly around the cross.\n\nSome of the dots will move only up or only down, and the rest of the dots will move randomly as a distraction.\n\n\nPress <b>(B)</b> on the right controller to select <b>Next</b> and continue, or press <b>(Y)</b> on the left controller to select <b>Back</b>.",
-            "After viewing the dots, you will be asked if you thought the dots moving together moved up or down.\n\nYou will have four options to choose from:\n<b>(Y) Up - Very Confident</b>\n<b>(X) Up - Somewhat Confident</b>\n<b>(A) Down - Somewhat Confident</b>\n<b>(B) Down - Very Confident</b>\n\nPress <b>(B)</b> on the right controller to select <b>Next</b> and continue, or press <b>(Y)</b> on the left controller to select <b>Back</b>.",
-            "You <b>must</b> select one of the four options, the one which best represents your decision and how confident you were in your decision. You will need to hold the button for an option approximately 1 second to select it.\n\nYou are about to start the task.\n\n\nWhen you are ready and comfortable, press <b>(B)</b> on the right controller to select <b>Continue</b> and begin."
+            "Before continuing, ensure you are able to read this text easily.\n\nIf not, go ahead and adjust the headset placement. The rear of the headset should sit higher than the front of the headset, and the front pad above the lenses should be resting on your forehead.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue.",
+            "During the task, a small cross will be visible in the center of the screen.\n\nYou must maintain focus on this cross whenever it is visible.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue, or press <b>Left Trigger</b> to select <b>Back</b>.",
+            "While focusing on the cross, a field of moving dots will appear very briefly around the cross.\n\nSome of the dots will move only up or only down, and the rest of the dots will move randomly as a distraction.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue, or press <b>Left Trigger</b> to select <b>Back</b>.",
+            "After viewing the dots, you will be asked if you thought the dots moving together moved up or down.\n\nYou will have four options to choose from:\n<b>(Left Trigger) Up - Very Confident</b>\n<b>(X) Up - Somewhat Confident</b>\n<b>(A) Down - Somewhat Confident</b>\n<b>(Right Trigger) Down - Very Confident</b>\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue, or press <b>Left Trigger</b> to select <b>Back</b>.",
+            "You <b>must</b> select one of the four options, the one which best represents your decision and how confident you were in your decision. You will need to hold the button for an option approximately 1 second to select it.\n\nYou are about to start the task.\n\n\nWhen you are ready and comfortable, press <b>Right Trigger</b> to select <b>Continue</b> and begin."
         };
         uiManager.SetPages(Instructions);
 
@@ -745,7 +745,6 @@ public class ExperimentManager : MonoBehaviour
     /// <param name="inputs">`InputState` object</param>
     private void ApplyInputs(InputState inputs)
     {
-        // To-Do: Store reaction time for first button pressed that is held to complete the trial
         ButtonSliderInput[] buttonControllers = stimulusManager.GetButtonControllers();
 
         // Left controller inputs
