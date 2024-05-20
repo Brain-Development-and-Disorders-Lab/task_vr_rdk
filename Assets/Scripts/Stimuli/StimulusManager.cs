@@ -7,6 +7,18 @@ using System.Linq;
 
 namespace Stimuli
 {
+    /// <summary>
+    /// Enum to define known stimuli types within the task
+    /// </summary>
+    public enum StimulusType
+    {
+        Fixation = 0,
+        Decision = 1,
+        Motion = 2,
+        Feedback_Correct = 3,
+        Feedback_Incorrect = 4
+    }
+
     public class StimulusManager : MonoBehaviour
     {
         [SerializeField]
@@ -41,15 +53,8 @@ namespace Stimuli
         private readonly int REFRESH_RATE = 90; // hertz
 
         // Stimuli groups, assembled from individual components
-        private readonly List<string> AllStimuli = new() {
-            "fixation",
-            "decision",
-            "motion",
-            "feedback_correct",
-            "feedback_incorrect"
-        };
-        private Dictionary<string, List<GameObject>> Stimuli = new();
-        private Dictionary<string, bool> StimuliVisibility = new();
+        private Dictionary<StimulusType, List<GameObject>> Stimuli = new();
+        private Dictionary<StimulusType, bool> StimuliVisibility = new();
 
         private GameObject FixationCross;
 
@@ -63,7 +68,7 @@ namespace Stimuli
             CalculateValues(); // Run pre-component calculations to ensure consistent world sizing
             FixationCross = CreateFixationCross();
 
-            foreach (string stimuli in AllStimuli)
+            foreach (StimulusType stimuli in Enum.GetValues(typeof(StimulusType)))
             {
                 // Create the named set of components and store
                 Stimuli.Add(stimuli, CreateStimulus(stimuli));
@@ -82,35 +87,35 @@ namespace Stimuli
             DotWorldDensity = DotDensity * StimulusDistance * Mathf.Tan(ScalingFactor * 1.0f / 2.0f * (Mathf.PI / 180.0f)) * 2.0f;
         }
 
-        public List<GameObject> CreateStimulus(string stimulus)
+        public List<GameObject> CreateStimulus(StimulusType stimulus)
         {
             List<GameObject> StaticComponents = new();
             // "Fixation" stimulus
-            if (stimulus == "fixation")
+            if (stimulus == StimulusType.Fixation)
             {
                 // Generate aperture
                 StaticComponents.Add(CreateRectangle(ApertureWorldWidth, ApertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
             }
-            else if (stimulus == "decision")
+            else if (stimulus == StimulusType.Decision)
             {
                 // Generate aperture
                 StaticComponents.Add(CreateRectangle(ApertureWorldWidth, ApertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
                 // Add selection buttons
                 StaticComponents.Add(CreateDecisionButtons());
             }
-            else if (stimulus == "motion")
+            else if (stimulus == StimulusType.Motion)
             {
                 // Generate aperture
                 StaticComponents.Add(CreateRectangle(ApertureWorldWidth, ApertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
                 // Add dots
                 CreateDots();
             }
-            else if (stimulus == "feedback_correct")
+            else if (stimulus == StimulusType.Feedback_Correct)
             {
                 // Generate aperture
                 StaticComponents.Add(CreateRectangle(ApertureWorldWidth, ApertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
             }
-            else if (stimulus == "feedback_incorrect")
+            else if (stimulus == StimulusType.Feedback_Incorrect)
             {
                 // Generate aperture
                 StaticComponents.Add(CreateRectangle(ApertureWorldWidth, ApertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
@@ -122,10 +127,10 @@ namespace Stimuli
             return StaticComponents;
         }
 
-        public void SetVisible(string stimulus, bool visibility)
+        public void SetVisible(StimulusType stimulus, bool visibility)
         {
             // Apply visibility to Dots separately, if this is a stimulus that uses Dots
-            if (stimulus == "motion")
+            if (stimulus == StimulusType.Motion)
             {
                 foreach (Dot dot in Dots)
                 {
@@ -161,7 +166,7 @@ namespace Stimuli
 
         public void SetVisibleAll(bool visibility)
         {
-            foreach (string Key in Stimuli.Keys)
+            foreach (StimulusType Key in Stimuli.Keys)
             {
                 SetVisible(Key, visibility);
             }
@@ -438,7 +443,7 @@ namespace Stimuli
             // Apply updates at the frequency of the desired refresh rate
             if (UpdateTimer >= 1.0f / REFRESH_RATE)
             {
-                if (StimuliVisibility["motion"] == true)
+                if (StimuliVisibility[StimulusType.Motion] == true)
                 {
                     foreach (Dot dot in Dots)
                     {

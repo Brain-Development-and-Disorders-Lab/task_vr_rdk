@@ -330,70 +330,60 @@ public class ExperimentManager : MonoBehaviour
         if (ActiveBlock == BlockType.Instructions_Introduction)
         {
             SetupInstructions();
-            StartCoroutine(DisplayStimuli("instructions_introduction"));
         }
-        else if (ActiveBlock == BlockType.Setup)
-        {
-            StartCoroutine(DisplayStimuli("setup"));
-        }
-        else if (ActiveBlock == BlockType.Practice_Trials_Binocular)
+        else if (ActiveBlock == BlockType.Practice_Trials_Binocular || ActiveBlock == BlockType.Practice_Trials_Monocular || ActiveBlock == BlockType.Practice_Trials_Lateralized)
         {
             SetupMotion();
-            StartCoroutine(DisplayStimuli("practice_trials_binocular"));
         }
-        else if (ActiveBlock == BlockType.Practice_Trials_Monocular)
-        {
-            SetupMotion();
-            StartCoroutine(DisplayStimuli("practice_trials_monocular"));
-        }
-        else if (ActiveBlock == BlockType.Practice_Trials_Lateralized)
-        {
-            SetupMotion();
-            StartCoroutine(DisplayStimuli("practice_trials_lateralized"));
-        }
-        else if (ActiveBlock == BlockType.PrePractice)
-        {
-            StartCoroutine(DisplayStimuli("prepractice"));
-        }
-        else if (ActiveBlock == BlockType.Practice)
-        {
-            SetupMotion();
-            StartCoroutine(DisplayStimuli("practice"));
-        }
-        else if (ActiveBlock == BlockType.PreMain)
-        {
-            StartCoroutine(DisplayStimuli("premain"));
-        }
-        else if (ActiveBlock == BlockType.Calibration)
-        {
-            SetupMotion();
-            StartCoroutine(DisplayStimuli("calibration"));
-        }
-        else if (ActiveBlock == BlockType.Main)
-        {
-            SetupMotion();
-            StartCoroutine(DisplayStimuli("main"));
-        }
-        else if (ActiveBlock == BlockType.PostMain)
-        {
-            SetupMotion();
-            StartCoroutine(DisplayStimuli("postmain"));
-        }
+
+        // Display the active block
+        StartCoroutine(DisplayBlock(ActiveBlock));
+
+        // else if (ActiveBlock == BlockType.PrePractice)
+        // {
+        //     StartCoroutine(DisplayBlock("prepractice"));
+        // }
+        // else if (ActiveBlock == BlockType.Practice)
+        // {
+        //     SetupMotion();
+        //     StartCoroutine(DisplayBlock("practice"));
+        // }
+        // else if (ActiveBlock == BlockType.PreMain)
+        // {
+        //     StartCoroutine(DisplayBlock("premain"));
+        // }
+        // else if (ActiveBlock == BlockType.Calibration)
+        // {
+        //     SetupMotion();
+        //     StartCoroutine(DisplayBlock("calibration"));
+        // }
+        // else if (ActiveBlock == BlockType.Main)
+        // {
+        //     SetupMotion();
+        //     StartCoroutine(DisplayBlock("main"));
+        // }
+        // else if (ActiveBlock == BlockType.PostMain)
+        // {
+        //     SetupMotion();
+        //     StartCoroutine(DisplayBlock("postmain"));
+        // }
     }
 
-    private IEnumerator DisplayStimuli(string stimuli)
+    /// <summary>
+    /// Switch-like function presenting a specified stimulus
+    /// </summary>
+    /// <param name="stimuli">A valid stimulus type, specified as a string</param>
+    /// <returns></returns>
+    private IEnumerator DisplayBlock(BlockType block)
     {
         // Reset all displayed stimuli and UI
         stimulusManager.SetVisibleAll(false);
         uiManager.SetVisible(false);
 
         // Store the displayed stimuli type if not a "feedback_"-type stimulus
-        if (!stimuli.StartsWith("feedback_"))
-        {
-            Session.instance.CurrentTrial.result["name"] = stimuli;
-        }
+        Session.instance.CurrentTrial.result["name"] = Enum.GetName(typeof(BlockType), block);
 
-        if (stimuli == "instructions_introduction")
+        if (block == BlockType.Instructions_Introduction)
         {
             uiManager.SetVisible(true);
             uiManager.SetHeader("Instructions");
@@ -403,7 +393,7 @@ public class ExperimentManager : MonoBehaviour
             // Input delay
             yield return StartCoroutine(WaitSeconds(0.25f, true));
         }
-        else if (stimuli == "setup")
+        else if (block == BlockType.Setup)
         {
             uiManager.SetVisible(true);
             uiManager.SetHeader("Eye-Tracking Setup");
@@ -415,86 +405,84 @@ public class ExperimentManager : MonoBehaviour
             yield return StartCoroutine(WaitSeconds(0.25f, true));
             SetInputEnabled(true);
         }
-        else if (stimuli == "practice_trials_binocular" || stimuli == "main_trials_binocular")
+        else if (block == BlockType.Practice_Trials_Binocular)
         {
             // Override and set the camera to display in both eyes
             cameraManager.SetActiveField(CameraManager.VisualField.Both, false);
 
             yield return StartCoroutine(DisplayMotion());
         }
-        else if (stimuli == "main" || stimuli == "practice_trials_monocular" || stimuli == "practice_trials_lateralized")
+        else if (block == BlockType.Practice_Trials_Monocular || block == BlockType.Practice_Trials_Lateralized)
         {
             yield return StartCoroutine(DisplayMotion());
         }
-        else if (stimuli == "prepractice")
-        {
-            // Override and set the camera to display in both eyes
-            cameraManager.SetActiveField(CameraManager.VisualField.Both);
+        // else if (stimuli == "prepractice")
+        // {
+        //     // Override and set the camera to display in both eyes
+        //     cameraManager.SetActiveField(CameraManager.VisualField.Both);
 
-            uiManager.SetVisible(true);
-            uiManager.SetHeader("Practice Trials");
-            uiManager.SetBody("You will now complete another " + (int)BlockLength.Practice + " practice trials. After selecting a direction, the cross in the center of the circular area will briefly change color if your answer was correct or not. Green is a correct answer, red is an incorrect answer.\n\nWhen you are ready and comfortable, press the right controller trigger to select <b>Next</b> and continue.");
-            uiManager.SetLeftButtonState(false, true, "Back");
-            uiManager.SetRightButtonState(true, true, "Next");
+        //     uiManager.SetVisible(true);
+        //     uiManager.SetHeader("Practice Trials");
+        //     uiManager.SetBody("You will now complete another " + (int)BlockLength.Practice + " practice trials. After selecting a direction, the cross in the center of the circular area will briefly change color if your answer was correct or not. Green is a correct answer, red is an incorrect answer.\n\nWhen you are ready and comfortable, press the right controller trigger to select <b>Next</b> and continue.");
+        //     uiManager.SetLeftButtonState(false, true, "Back");
+        //     uiManager.SetRightButtonState(true, true, "Next");
 
-            // Input delay
-            yield return StartCoroutine(WaitSeconds(0.15f, true));
-            SetInputEnabled(true);
-        }
-        else if (stimuli == "premain")
-        {
-            // Override and set the camera to display in both eyes
-            cameraManager.SetActiveField(CameraManager.VisualField.Both);
+        //     // Input delay
+        //     yield return StartCoroutine(WaitSeconds(0.15f, true));
+        //     SetInputEnabled(true);
+        // }
+        // else if (stimuli == "premain")
+        // {
+        //     // Override and set the camera to display in both eyes
+        //     cameraManager.SetActiveField(CameraManager.VisualField.Both);
 
-            uiManager.SetVisible(true);
-            uiManager.SetHeader("Main Trials");
-            uiManager.SetBody("That concludes the practice trials. You will now play " + ((int)BlockLength.Calibration + (int)BlockLength.Main) + " main trials.\n\nYou will not be shown if you answered correctly or not, but sometimes you will be asked whether you were more confident in that trial than in the previous trial.\n\nWhen you are ready and comfortable, press the right controller trigger to select <b>Next</b> and continue.");
-            uiManager.SetLeftButtonState(false, true, "Back");
-            uiManager.SetRightButtonState(true, true, "Next");
+        //     uiManager.SetVisible(true);
+        //     uiManager.SetHeader("Main Trials");
+        //     uiManager.SetBody("That concludes the practice trials. You will now play " + ((int)BlockLength.Calibration + (int)BlockLength.Main) + " main trials.\n\nYou will not be shown if you answered correctly or not, but sometimes you will be asked whether you were more confident in that trial than in the previous trial.\n\nWhen you are ready and comfortable, press the right controller trigger to select <b>Next</b> and continue.");
+        //     uiManager.SetLeftButtonState(false, true, "Back");
+        //     uiManager.SetRightButtonState(true, true, "Next");
 
-            // Input delay
-            yield return StartCoroutine(WaitSeconds(0.15f, true));
-            SetInputEnabled(true);
-        }
-        else if (stimuli == "postmain")
-        {
-            // Override and set the camera to display in both eyes
-            cameraManager.SetActiveField(CameraManager.VisualField.Both);
+        //     // Input delay
+        //     yield return StartCoroutine(WaitSeconds(0.15f, true));
+        //     SetInputEnabled(true);
+        // }
+        // else if (stimuli == "postmain")
+        // {
+        //     // Override and set the camera to display in both eyes
+        //     cameraManager.SetActiveField(CameraManager.VisualField.Both);
 
-            uiManager.SetVisible(true);
-            uiManager.SetHeader("Complete");
-            uiManager.SetBody("That concludes all the trials of this task. Please notify the experiment facilitator, and you can remove the headset carefully after releasing the rear adjustment wheel.");
-            uiManager.SetLeftButtonState(false, false, "Back");
-            uiManager.SetRightButtonState(true, true, "Finish");
+        //     uiManager.SetVisible(true);
+        //     uiManager.SetHeader("Complete");
+        //     uiManager.SetBody("That concludes all the trials of this task. Please notify the experiment facilitator, and you can remove the headset carefully after releasing the rear adjustment wheel.");
+        //     uiManager.SetLeftButtonState(false, false, "Back");
+        //     uiManager.SetRightButtonState(true, true, "Finish");
 
-            // Input delay
-            yield return StartCoroutine(WaitSeconds(1.0f, true));
-            SetInputEnabled(true);
-        }
-        else if (stimuli == "feedback_correct")
-        {
-            stimulusManager.SetFixationCrossColor("green");
-            stimulusManager.SetFixationCrossVisibility(true);
-            stimulusManager.SetVisible("feedback_correct", true);
-            yield return StartCoroutine(WaitSeconds(1.0f, true));
-            stimulusManager.SetVisible("feedback_correct", false);
-            stimulusManager.SetFixationCrossVisibility(false);
-            stimulusManager.SetFixationCrossColor("white");
-            EndTrial();
-        }
-        else if (stimuli == "feedback_incorrect")
-        {
-            stimulusManager.SetFixationCrossColor("red");
-            stimulusManager.SetFixationCrossVisibility(true);
-            stimulusManager.SetVisible("feedback_incorrect", true);
-            yield return StartCoroutine(WaitSeconds(1.0f, true));
-            stimulusManager.SetVisible("feedback_incorrect", false);
-            stimulusManager.SetFixationCrossVisibility(false);
-            stimulusManager.SetFixationCrossColor("white");
-            EndTrial();
-        }
+        //     // Input delay
+        //     yield return StartCoroutine(WaitSeconds(1.0f, true));
+        //     SetInputEnabled(true);
+        // }
     }
 
+    /// <summary>
+    /// Utility function to display "Feedback_"-type stimuli
+    /// </summary>
+    /// <param name="correct">`true` to display green cross, `false` to display red cross</param>
+    private IEnumerator DisplayFeedback(bool correct)
+    {
+        stimulusManager.SetFixationCrossColor(correct ? "green" : "red");
+        stimulusManager.SetFixationCrossVisibility(true);
+        stimulusManager.SetVisible(correct ? StimulusType.Feedback_Correct : StimulusType.Feedback_Incorrect, true);
+        yield return StartCoroutine(WaitSeconds(1.0f, true));
+        stimulusManager.SetVisible(correct ? StimulusType.Feedback_Correct : StimulusType.Feedback_Incorrect, false);
+        stimulusManager.SetFixationCrossVisibility(false);
+        stimulusManager.SetFixationCrossColor("white");
+        EndTrial();
+    }
+
+    /// <summary>
+    /// Utility function to display the dot motion stimulus and wait for a response, used in all trial types
+    /// </summary>
+    /// <returns></returns>
     private IEnumerator DisplayMotion()
     {
         SetInputEnabled(false);
@@ -502,20 +490,20 @@ public class ExperimentManager : MonoBehaviour
         yield return new WaitUntil(() => IsFixated());
 
         // Fixation
-        stimulusManager.SetVisible("fixation", true);
+        stimulusManager.SetVisible(StimulusType.Fixation, true);
         yield return StartCoroutine(WaitSeconds(PRE_DISPLAY_DURATION, true));
         yield return new WaitUntil(() => IsFixated());
-        stimulusManager.SetVisible("fixation", false);
+        stimulusManager.SetVisible(StimulusType.Fixation, false);
 
         // Motion
-        stimulusManager.SetVisible("motion", true);
+        stimulusManager.SetVisible(StimulusType.Motion, true);
         yield return StartCoroutine(WaitSeconds(DISPLAY_DURATION, true));
-        stimulusManager.SetVisible("motion", false);
+        stimulusManager.SetVisible(StimulusType.Motion, false);
         stimulusManager.SetFixationCrossVisibility(false);
 
         // Decision (wait)
         Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
-        stimulusManager.SetVisible("decision", true);
+        stimulusManager.SetVisible(StimulusType.Decision, true);
         yield return StartCoroutine(WaitSeconds(0.15f, true));
         SetInputEnabled(true);
     }
@@ -547,6 +535,7 @@ public class ExperimentManager : MonoBehaviour
                 Session.instance.CurrentTrial.result["selectedCorrectDirection"] = true;
             }
 
+            // To-Do: Implement staircase procedure for the relevant trials
             if (ActiveBlock == BlockType.Calibration)
             {
                 // If in the calibration stage, adjust the coherence value
@@ -604,11 +593,11 @@ public class ExperimentManager : MonoBehaviour
                 // Display feedback during the practice trials
                 if ((bool)Session.instance.CurrentTrial.result["selectedCorrectDirection"] == true)
                 {
-                    StartCoroutine(DisplayStimuli("feedback_correct"));
+                    StartCoroutine(DisplayFeedback(true));
                 }
                 else
                 {
-                    StartCoroutine(DisplayStimuli("feedback_incorrect"));
+                    StartCoroutine(DisplayFeedback(false));
                 }
             }
             else
@@ -650,6 +639,10 @@ public class ExperimentManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Set the input state, `true` allows input, `false` ignores input
+    /// </summary>
+    /// <param name="state">Input state</param>
     private void SetInputEnabled(bool state)
     {
         InputEnabled = state;
@@ -702,6 +695,13 @@ public class ExperimentManager : MonoBehaviour
         return Fixated;
     }
 
+    /// <summary>
+    /// Utility function to block further execution until a duration has elapsed
+    /// </summary>
+    /// <param name="seconds">Duration to wait, measured in seconds</param>
+    /// <param name="disableInput">Flag to disable input when `true`</param>
+    /// <param name="callback">Function to execute at the end of the duration</param>
+    /// <returns></returns>
     private IEnumerator WaitSeconds(float seconds, bool disableInput = false, Action callback = null)
     {
         if (disableInput)
@@ -749,6 +749,11 @@ public class ExperimentManager : MonoBehaviour
         return ActiveBlock == BlockType.Setup;
     }
 
+    /// <summary>
+    /// Input function to handle `InputState` object and update button presentation or take action depending on
+    /// the active `BlockType`
+    /// </summary>
+    /// <param name="inputs">`InputState` object</param>
     private void ApplyInputs(InputState inputs)
     {
         ButtonSliderInput[] buttonControllers = stimulusManager.GetButtonControllers();
@@ -824,6 +829,9 @@ public class ExperimentManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Cooldown function to reduce the value of all active `ButtonSliderInput` instances back to `0.0f` when inactive.
+    /// </summary>
     private void ButtonCooldown()
     {
         // Collect references to all buttons
@@ -841,7 +849,7 @@ public class ExperimentManager : MonoBehaviour
 
             foreach (ButtonSliderInput button in ButtonControllers)
             {
-                if (InputReset == false)
+                if (InputReset == true)
                 {
                     button.SetSliderValue(0.0f);
                 }
