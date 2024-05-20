@@ -31,12 +31,12 @@ namespace Stimuli
 
         // Calculated dimensions of stimuli
         private float StimulusDistance;
-        private readonly float ApertureRadius = 6.0f; // Specified in supplementary materials
-        private float ApertureWorldWidth;
-        private float ApertureWorldHeight;
-        private readonly float ArcWidth = 0.04f; // Specified in supplementary materials
-        private float ArcWorldWidth;
-        private readonly float FixationDiameter = 0.05f; // Specified in supplementary materials
+        private readonly float ApertureWidth = 2.8f; // Degrees
+        private float ApertureWorldWidth; // Calculated from degrees into world units
+        private float ApertureWorldHeight; // Calculated from degrees into world units
+        private readonly float LineWidth = 0.04f; // Specified in supplementary materials
+        private float LineWorldWidth;
+        private readonly float FixationDiameter = 0.04f; // Specified in supplementary materials
         private float FixationWorldRadius;
 
         // Dot parameters
@@ -76,17 +76,25 @@ namespace Stimuli
             }
         }
 
+        /// <summary>
+        /// Setup function resposible for calculations to convert all degree-based sizes into world units
+        /// </summary>
         private void CalculateValues()
         {
             StimulusDistance = Mathf.Abs(transform.position.z - stimulusAnchor.transform.position.z);
-            ApertureWorldWidth = StimulusDistance * Mathf.Tan(ScalingFactor * ApertureRadius / 2 * (Mathf.PI / 180.0f)) * 2.0f;
+            ApertureWorldWidth = StimulusDistance * Mathf.Tan(ScalingFactor * ApertureWidth * (Mathf.PI / 180.0f)) * 2.0f;
             ApertureWorldHeight = ApertureWorldWidth * 2.0f;
-            ArcWorldWidth = ArcWidth;
+            LineWorldWidth = LineWidth;
             FixationWorldRadius = FixationDiameter * 2.0f;
             DotWorldRadius = StimulusDistance * Mathf.Tan(ScalingFactor * DotDiameter / 2 * (Mathf.PI / 180.0f));
             DotWorldDensity = DotDensity * StimulusDistance * Mathf.Tan(ScalingFactor * 1.0f / 2.0f * (Mathf.PI / 180.0f)) * 2.0f;
         }
 
+        /// <summary>
+        /// Switch-like function that takes a `StimulusType` and returns a `GameObject` containing that stimulus
+        /// </summary>
+        /// <param name="stimulus">A `StimulusType` value</param>
+        /// <returns>Stimulus encased in a `GameObject`</returns>
         public List<GameObject> CreateStimulus(StimulusType stimulus)
         {
             List<GameObject> StaticComponents = new();
@@ -127,6 +135,11 @@ namespace Stimuli
             return StaticComponents;
         }
 
+        /// <summary>
+        /// Update the visibility status of a stimulus
+        /// </summary>
+        /// <param name="stimulus">Exact `StimulusType`</param>
+        /// <param name="visibility">Visibility state, `true` is visible, `false` is not</param>
         public void SetVisible(StimulusType stimulus, bool visibility)
         {
             // Apply visibility to Dots separately, if this is a stimulus that uses Dots
@@ -164,6 +177,10 @@ namespace Stimuli
             }
         }
 
+        /// <summary>
+        /// Utility function to either hide or show all stimuli at once
+        /// </summary>
+        /// <param name="visibility">Visibility state of all stimuli, `true` shows all, `false` hides all</param>
         public void SetVisibleAll(bool visibility)
         {
             foreach (StimulusType Key in Stimuli.Keys)
@@ -172,6 +189,14 @@ namespace Stimuli
             }
         }
 
+        /// <summary>
+        /// Utility function to create a 2D rectangle with an outline and no fill
+        /// </summary>
+        /// <param name="width">Width in world units</param>
+        /// <param name="height">Height in world units</param>
+        /// <param name="position">`Vector2` position of the rectangle center</param>
+        /// <param name="color">Color of the rectangle outline</param>
+        /// <returns>A `GameObject` containing the rectangle</returns>
         public GameObject CreateRectangle(float width, float height, Vector2 position, Color color)
         {
             // Create base GameObject
@@ -198,47 +223,10 @@ namespace Stimuli
             rectangleLine.SetPositions(linePositions);
             rectangleLine.material = new Material(Resources.Load<Material>("Materials/DefaultWhite"));
             rectangleLine.material.SetColor("_Color", color);
-            rectangleLine.startWidth = ArcWorldWidth;
-            rectangleLine.endWidth = ArcWorldWidth;
+            rectangleLine.startWidth = LineWorldWidth;
+            rectangleLine.endWidth = LineWorldWidth;
 
             return rectangleObject;
-        }
-
-        public GameObject CreateArc(float radius, float startAngle, float endAngle, int segments, Color color)
-        {
-            // Create base GameObject
-            GameObject arcObject = new GameObject();
-            arcObject.name = "rdk_arc_object";
-            arcObject.AddComponent<LineRenderer>();
-            arcObject.transform.SetParent(stimulusAnchor.transform, false);
-            arcObject.SetActive(false);
-
-            // Generate points to form the arc
-            Vector3[] arcPoints = new Vector3[segments];
-            float angle = startAngle;
-            float arcLength = endAngle - startAngle;
-
-            for (int i = 0; i < segments; i++)
-            {
-                float x = Mathf.Sin(Mathf.Deg2Rad * angle) * radius;
-                float y = Mathf.Cos(Mathf.Deg2Rad * angle) * radius;
-
-                arcPoints[i] = new Vector3(x, y, 0.0f);
-
-                angle += arcLength / segments;
-            }
-
-            // Create the LineRenderer
-            LineRenderer line = arcObject.GetComponent<LineRenderer>();
-            line.useWorldSpace = false;
-            line.positionCount = arcPoints.Length;
-            line.SetPositions(arcPoints);
-            line.material = new Material(Resources.Load<Material>("Materials/DefaultWhite"));
-            line.material.SetColor("_Color", color);
-            line.startWidth = ArcWorldWidth;
-            line.endWidth = ArcWorldWidth;
-
-            return arcObject;
         }
 
         public GameObject CreateFixationCross(string color = "white")
@@ -273,8 +261,8 @@ namespace Stimuli
             horizontalLine.SetPosition(1, new Vector3(FixationWorldRadius, 0.0f, 0.0f));
             horizontalLine.material = new Material(Resources.Load<Material>("Materials/DefaultWhite"));
             horizontalLine.material.SetColor("_Color", CrossColor);
-            horizontalLine.startWidth = ArcWorldWidth;
-            horizontalLine.endWidth = ArcWorldWidth;
+            horizontalLine.startWidth = LineWorldWidth;
+            horizontalLine.endWidth = LineWorldWidth;
 
             // Create vertical component
             GameObject fixationObjectVertical = new GameObject();
@@ -290,8 +278,8 @@ namespace Stimuli
             verticalLine.SetPosition(1, new Vector3(0.0f, FixationWorldRadius, 0.0f));
             verticalLine.material = new Material(Resources.Load<Material>("Materials/DefaultWhite"));
             verticalLine.material.SetColor("_Color", CrossColor);
-            verticalLine.startWidth = ArcWorldWidth;
-            verticalLine.endWidth = ArcWorldWidth;
+            verticalLine.startWidth = LineWorldWidth;
+            verticalLine.endWidth = LineWorldWidth;
 
             return fixationObjectParent;
         }
@@ -342,28 +330,36 @@ namespace Stimuli
             buttonDecisionObject.SetActive(false);
 
             GameObject V_U_Button = Instantiate(ButtonPrefab, buttonDecisionObject.transform);
-            V_U_Button.transform.localPosition = new Vector3(0.0f, 3.3f, 0.0f);
+            V_U_Button.transform.localPosition = new Vector3(0.0f, 2.95f, 0.0f);
             ButtonSliderInput V_U_Slider = V_U_Button.GetComponentInChildren<ButtonSliderInput>();
             V_U_Slider.Setup();
             V_U_Slider.SetButtonText("<b>Up</b>\nVery Confident");
+            V_U_Slider.SetBackgroundColor(new Color(240f/255f, 185f/255f, 55f/255f));
+            V_U_Slider.SetFillColor(new Color(245f/255f, 190f/255f, 62f/255f));
 
             GameObject S_U_Button = Instantiate(ButtonPrefab, buttonDecisionObject.transform);
-            S_U_Button.transform.localPosition = new Vector3(0.0f, 2.5f, 0.0f);
+            S_U_Button.transform.localPosition = new Vector3(0.0f, 2.25f, 0.0f);
             ButtonSliderInput S_U_Slider = S_U_Button.GetComponentInChildren<ButtonSliderInput>();
             S_U_Slider.Setup();
             S_U_Slider.SetButtonText("<b>Up</b>\nSomewhat Confident");
+            S_U_Slider.SetBackgroundColor(new Color(240f/255f, 185f/255f, 55f/255f));
+            S_U_Slider.SetFillColor(new Color(245f/255f, 190f/255f, 62f/255f));
 
             GameObject V_D_Button = Instantiate(ButtonPrefab, buttonDecisionObject.transform);
-            V_D_Button.transform.localPosition = new Vector3(0.0f, -3.3f, 0.0f);
+            V_D_Button.transform.localPosition = new Vector3(0.0f, -2.95f, 0.0f);
             ButtonSliderInput V_D_Slider = V_D_Button.GetComponentInChildren<ButtonSliderInput>();
             V_D_Slider.Setup();
             V_D_Slider.SetButtonText("<b>Down</b>\nVery Confident");
+            V_D_Slider.SetBackgroundColor(new Color(61f/255f, 162f/255f, 241f/255f));
+            V_D_Slider.SetFillColor(new Color(81f/255f, 178f/255f, 252f/255f));
 
             GameObject S_D_Button = Instantiate(ButtonPrefab, buttonDecisionObject.transform);
-            S_D_Button.transform.localPosition = new Vector3(0.0f, -2.5f, 0.0f);
+            S_D_Button.transform.localPosition = new Vector3(0.0f, -2.25f, 0.0f);
             ButtonSliderInput S_D_Slider = S_D_Button.GetComponentInChildren<ButtonSliderInput>();
             S_D_Slider.Setup();
             S_D_Slider.SetButtonText("<b>Down</b>\nSomewhat Confident");
+            S_D_Slider.SetBackgroundColor(new Color(61f/255f, 162f/255f, 241f/255f));
+            S_D_Slider.SetFillColor(new Color(81f/255f, 178f/255f, 252f/255f));
 
             // Store the slider controllers
             ButtonSliders = new ButtonSliderInput[] {
