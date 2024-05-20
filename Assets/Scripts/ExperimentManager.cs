@@ -22,16 +22,13 @@ public class ExperimentManager : MonoBehaviour
     {
         Setup = 1,
         Instructions_Introduction = 2,
-        // "Practice_"-type trial blocks
-        Practice_Trials_Binocular = 3,
-        Practice_Trials_Monocular = 4,
-        Practice_Trials_Lateralized = 5,
-        PrePractice = 6, // Instruction break before "Main_"-type trial blocks
-        Practice = 7,
-        PreMain = 8,
-        Calibration = 9,
-        Main = 10,
-        PostMain = 11,
+        Training_Trials_Binocular = 3,
+        Main_Trials_Binocular = 4,
+        Training_Trials_Monocular = 5,
+        Main_Trials_Monocular = 6,
+        Training_Trials_Lateralized = 7,
+        Main_Trials_Lateralized = 8,
+        PostMain = 9,
     };
 
     // Manage the number of trials within a specific block in the experiment timeline
@@ -39,14 +36,12 @@ public class ExperimentManager : MonoBehaviour
     {
         Setup = 1,
         Instructions_Introduction = 1, // Welcome instructions, includes tutorial instructions
-        Practice_Trials_Binocular = 4, // Training trials, central presentation to both eyes
-        Practice_Trials_Monocular = 4, // Training trials, central presentation to one eye
-        Practice_Trials_Lateralized = 4, // Training trials, lateralized presentation to one eye
-        PrePractice = 1, // Practice instructions
-        Practice = 20, // Practice trials
-        PreMain = 1, // Main instructions
-        Calibration = 120,
-        Main = 200,
+        Training_Trials_Binocular = 4, // Training trials, central presentation to both eyes
+        Main_Trials_Binocular = 4,
+        Training_Trials_Monocular = 4, // Training trials, central presentation to one eye
+        Main_Trials_Monocular = 4,
+        Training_Trials_Lateralized = 4, // Training trials, lateralized presentation to one eye
+        Main_Trials_Lateralized = 4,
         PostMain = 1,
     };
 
@@ -54,14 +49,12 @@ public class ExperimentManager : MonoBehaviour
     readonly List<BlockType> ExperimentTimeline = new() {
         // BlockType.Setup,
         BlockType.Instructions_Introduction,
-        BlockType.Practice_Trials_Binocular,
-        BlockType.Practice_Trials_Monocular,
-        BlockType.Practice_Trials_Lateralized,
-        BlockType.PrePractice,
-        BlockType.Practice,
-        BlockType.PreMain,
-        BlockType.Calibration,
-        BlockType.Main,
+        BlockType.Training_Trials_Binocular,
+        BlockType.Main_Trials_Binocular,
+        BlockType.Training_Trials_Monocular,
+        BlockType.Main_Trials_Monocular,
+        BlockType.Training_Trials_Lateralized,
+        BlockType.Main_Trials_Lateralized,
         BlockType.PostMain,
     };
 
@@ -71,9 +64,9 @@ public class ExperimentManager : MonoBehaviour
     // Coherence data structure
     private Dictionary<string, float[]> Coherences = new()
     {
-        { "both", new float[]{0.2f, 0.2f} },
-        { "left", new float[]{0.2f, 0.2f} },
-        { "right", new float[]{0.2f, 0.2f} },
+        { "both_eyes", new float[]{0.2f, 0.2f} },
+        { "left_eye", new float[]{0.2f, 0.2f} },
+        { "right_eye", new float[]{0.2f, 0.2f} },
     };
     private float[] ActiveCoherences;
     private readonly int LOW_INDEX = 0; // Index of low coherence value
@@ -203,12 +196,27 @@ public class ExperimentManager : MonoBehaviour
     /// </summary>
     private void SetupMotion()
     {
-        // Setup performed at the start of the first "main" type trial
-        if (ActiveBlock == BlockType.Main && Session.instance.CurrentTrial.numberInBlock == 1)
+        // Setup performed at the start of each "Main_" type trial
+        if ((ActiveBlock == BlockType.Main_Trials_Binocular ||
+            ActiveBlock == BlockType.Main_Trials_Monocular ||
+            ActiveBlock == BlockType.Main_Trials_Lateralized) && Session.instance.CurrentTrial.numberInBlock == 1)
         {
             // Calculate the coherences to be used in the actual trials, use median of last 20 calibration trials
-            int CalibrationIndex = ExperimentTimeline.IndexOf(BlockType.Calibration) + 1; // Non-zero indexed
-            List<Trial> CalibrationTrials = Session.instance.GetBlock(CalibrationIndex).trials;
+            int CalibrationBlockIndex = 1; // Non-zero indexed
+            // Get the block of trials containing the staircase results
+            if (ActiveBlock == BlockType.Main_Trials_Binocular)
+            {
+                CalibrationBlockIndex += ExperimentTimeline.IndexOf(BlockType.Training_Trials_Binocular);
+            }
+            else if (ActiveBlock == BlockType.Main_Trials_Monocular)
+            {
+                CalibrationBlockIndex += ExperimentTimeline.IndexOf(BlockType.Training_Trials_Monocular);
+            }
+            else if (ActiveBlock == BlockType.Main_Trials_Lateralized)
+            {
+                CalibrationBlockIndex += ExperimentTimeline.IndexOf(BlockType.Training_Trials_Lateralized);
+            }
+            List<Trial> CalibrationTrials = Session.instance.GetBlock(CalibrationBlockIndex).trials;
             CalibrationTrials.Reverse();
 
             // Create a warning if less than 20 calibration trials are being used
@@ -233,24 +241,23 @@ public class ExperimentManager : MonoBehaviour
             float kMedBoth = BothCoherenceValues.Take(20).Median();
             float kMedBothLow = 0.5f * kMedBoth < 0.12 ? 0.12f : 0.5f * kMedBoth;
             float kMedBothHigh = 2.0f * kMedBoth > 0.5 ? 0.5f : 2.0f * kMedBoth;
-            Coherences["both"] = new float[] { kMedBothLow, kMedBothHigh };
+            Coherences["both_eyes"] = new float[] { kMedBothLow, kMedBothHigh };
 
             float kMedLeft = LeftCoherenceValues.Take(20).Median();
             float kMedLeftLow = 0.5f * kMedLeft < 0.12 ? 0.12f : 0.5f * kMedLeft;
             float kMedLeftHigh = 2.0f * kMedLeft > 0.5 ? 0.5f : 2.0f * kMedLeft;
-            Coherences["left"] = new float[] { kMedLeftLow, kMedLeftHigh };
+            Coherences["left_eye"] = new float[] { kMedLeftLow, kMedLeftHigh };
 
             float kMedRight = RightCoherenceValues.Take(20).Median();
             float kMedRightLow = 0.5f * kMedRight < 0.12 ? 0.12f : 0.5f * kMedRight;
             float kMedRightHigh = 2.0f * kMedRight > 0.5 ? 0.5f : 2.0f * kMedRight;
-            Coherences["right"] = new float[] { kMedRightLow, kMedRightHigh };
+            Coherences["right_eye"] = new float[] { kMedRightLow, kMedRightHigh };
         }
 
         // Switch the active eye every fixed number of trials
         if ((Session.instance.CurrentTrial.numberInBlock - 1) % EYE_BLOCK_SIZE == 0)
         {
-            // To-Do: Lateralized presentation disabled for specific trial type
-            bool LateralizedState = ActiveBlock != BlockType.Practice_Trials_Monocular;
+            bool LateralizedState = ActiveBlock != BlockType.Training_Trials_Monocular;
             if (cameraManager.GetActiveField() == CameraManager.VisualField.Left)
             {
                 // Switch from left to right
@@ -272,18 +279,18 @@ public class ExperimentManager : MonoBehaviour
         }
 
         // Select the coherence value depending on active camera and difficulty
-        ActiveCoherences = Coherences["both"];
+        ActiveCoherences = Coherences["both_eyes"];
         CameraManager.VisualField activeField = cameraManager.GetActiveField();
         if (activeField == CameraManager.VisualField.Left)
         {
             // Left eye presentation
-            ActiveCoherences = Coherences["left"];
+            ActiveCoherences = Coherences["left_eye"];
             Session.instance.CurrentTrial.result["cameraLayout"] = 0;
         }
         else if (activeField == CameraManager.VisualField.Right)
         {
             // Right eye presentation
-            ActiveCoherences = Coherences["right"];
+            ActiveCoherences = Coherences["right_eye"];
             Session.instance.CurrentTrial.result["cameraLayout"] = 1;
         }
         else
@@ -295,9 +302,9 @@ public class ExperimentManager : MonoBehaviour
         stimulusManager.SetCoherence(ActiveCoherences[SelectedCoherence]);
 
         // Clone and store coherence values as a string, separated by "," token
-        Session.instance.CurrentTrial.result["combinedCoherences"] = Coherences["both"][0] + "," + Coherences["both"][1];
-        Session.instance.CurrentTrial.result["leftCoherences"] = Coherences["left"][0] + "," + Coherences["left"][1];
-        Session.instance.CurrentTrial.result["rightCoherences"] = Coherences["right"][0] + "," + Coherences["right"][1];
+        Session.instance.CurrentTrial.result["combinedCoherences"] = Coherences["both_eyes"][0] + "," + Coherences["both_eyes"][1];
+        Session.instance.CurrentTrial.result["leftCoherences"] = Coherences["left_eye"][0] + "," + Coherences["left_eye"][1];
+        Session.instance.CurrentTrial.result["rightCoherences"] = Coherences["right_eye"][0] + "," + Coherences["right_eye"][1];
 
         // Set the reference direction randomly
         float dotDirection = UnityEngine.Random.value > 0.5f ? (float)Math.PI / 2 : (float)Math.PI * 3 / 2;
@@ -331,42 +338,13 @@ public class ExperimentManager : MonoBehaviour
         {
             SetupInstructions();
         }
-        else if (ActiveBlock == BlockType.Practice_Trials_Binocular || ActiveBlock == BlockType.Practice_Trials_Monocular || ActiveBlock == BlockType.Practice_Trials_Lateralized)
+        else if (ActiveBlock == BlockType.Training_Trials_Binocular || ActiveBlock == BlockType.Training_Trials_Monocular || ActiveBlock == BlockType.Training_Trials_Lateralized)
         {
             SetupMotion();
         }
 
         // Display the active block
         StartCoroutine(DisplayBlock(ActiveBlock));
-
-        // else if (ActiveBlock == BlockType.PrePractice)
-        // {
-        //     StartCoroutine(DisplayBlock("prepractice"));
-        // }
-        // else if (ActiveBlock == BlockType.Practice)
-        // {
-        //     SetupMotion();
-        //     StartCoroutine(DisplayBlock("practice"));
-        // }
-        // else if (ActiveBlock == BlockType.PreMain)
-        // {
-        //     StartCoroutine(DisplayBlock("premain"));
-        // }
-        // else if (ActiveBlock == BlockType.Calibration)
-        // {
-        //     SetupMotion();
-        //     StartCoroutine(DisplayBlock("calibration"));
-        // }
-        // else if (ActiveBlock == BlockType.Main)
-        // {
-        //     SetupMotion();
-        //     StartCoroutine(DisplayBlock("main"));
-        // }
-        // else if (ActiveBlock == BlockType.PostMain)
-        // {
-        //     SetupMotion();
-        //     StartCoroutine(DisplayBlock("postmain"));
-        // }
     }
 
     /// <summary>
@@ -382,6 +360,7 @@ public class ExperimentManager : MonoBehaviour
 
         // Store the displayed stimuli type if not a "feedback_"-type stimulus
         Session.instance.CurrentTrial.result["name"] = Enum.GetName(typeof(BlockType), block);
+        Debug.Log("Current block: " + Session.instance.CurrentTrial.result["name"]);
 
         if (block == BlockType.Instructions_Introduction)
         {
@@ -405,14 +384,17 @@ public class ExperimentManager : MonoBehaviour
             yield return StartCoroutine(WaitSeconds(0.25f, true));
             SetInputEnabled(true);
         }
-        else if (block == BlockType.Practice_Trials_Binocular)
+        else if (block == BlockType.Training_Trials_Binocular || block == BlockType.Main_Trials_Binocular)
         {
             // Override and set the camera to display in both eyes
             cameraManager.SetActiveField(CameraManager.VisualField.Both, false);
 
             yield return StartCoroutine(DisplayMotion());
         }
-        else if (block == BlockType.Practice_Trials_Monocular || block == BlockType.Practice_Trials_Lateralized)
+        else if (block == BlockType.Training_Trials_Monocular ||
+            block == BlockType.Training_Trials_Lateralized ||
+            block == BlockType.Main_Trials_Monocular ||
+            block == BlockType.Main_Trials_Lateralized)
         {
             yield return StartCoroutine(DisplayMotion());
         }
@@ -535,8 +517,9 @@ public class ExperimentManager : MonoBehaviour
                 Session.instance.CurrentTrial.result["selectedCorrectDirection"] = true;
             }
 
-            // To-Do: Implement staircase procedure for the relevant trials
-            if (ActiveBlock == BlockType.Calibration)
+            if (ActiveBlock == BlockType.Training_Trials_Binocular ||
+                ActiveBlock == BlockType.Training_Trials_Monocular ||
+                ActiveBlock == BlockType.Training_Trials_Lateralized)
             {
                 // If in the calibration stage, adjust the coherence value
                 if ((bool)Session.instance.CurrentTrial.result["selectedCorrectDirection"] == true)
@@ -548,20 +531,20 @@ public class ExperimentManager : MonoBehaviour
                         if ((bool)Session.instance.CurrentTrial.result["selectedCorrectDirection"] == true &&
                             (bool)PreviousTrial.result["selectedCorrectDirection"] == true)
                         {
-                            // Modify "both", grouped coherence
-                            Coherences["both"][LOW_INDEX] -= 0.01f;
-                            Coherences["both"][HIGH_INDEX] -= 0.01f;
+                            // Modify "both_eyes", grouped coherence
+                            Coherences["both_eyes"][LOW_INDEX] -= 0.01f;
+                            Coherences["both_eyes"][HIGH_INDEX] -= 0.01f;
 
                             // Modify individual coherences depending on active visual field
                             if (cameraManager.GetActiveField() == CameraManager.VisualField.Left)
                             {
-                                Coherences["left"][LOW_INDEX] -= 0.01f;
-                                Coherences["left"][HIGH_INDEX] -= 0.01f;
+                                Coherences["left_eye"][LOW_INDEX] -= 0.01f;
+                                Coherences["left_eye"][HIGH_INDEX] -= 0.01f;
                             }
                             else if (cameraManager.GetActiveField() == CameraManager.VisualField.Right)
                             {
-                                Coherences["right"][LOW_INDEX] -= 0.01f;
-                                Coherences["right"][HIGH_INDEX] -= 0.01f;
+                                Coherences["right_eye"][LOW_INDEX] -= 0.01f;
+                                Coherences["right_eye"][HIGH_INDEX] -= 0.01f;
                             }
                         }
                     }
@@ -569,26 +552,32 @@ public class ExperimentManager : MonoBehaviour
                 else
                 {
                     // Adjust coherence
-                    // Modify "both", grouped coherence
-                    Coherences["both"][LOW_INDEX] += 0.01f;
-                    Coherences["both"][HIGH_INDEX] += 0.01f;
+                    // Modify "both_eyes", grouped coherence
+                    Coherences["both_eyes"][LOW_INDEX] += 0.01f;
+                    Coherences["both_eyes"][HIGH_INDEX] += 0.01f;
 
                     // Modify individual coherences depending on active visual field
                     if (cameraManager.GetActiveField() == CameraManager.VisualField.Left)
                     {
-                        Coherences["left"][LOW_INDEX] += 0.01f;
-                        Coherences["left"][HIGH_INDEX] += 0.01f;
+                        Coherences["left_eye"][LOW_INDEX] += 0.01f;
+                        Coherences["left_eye"][HIGH_INDEX] += 0.01f;
                     }
                     else if (cameraManager.GetActiveField() == CameraManager.VisualField.Right)
                     {
-                        Coherences["right"][LOW_INDEX] += 0.01f;
-                        Coherences["right"][HIGH_INDEX] += 0.01f;
+                        Coherences["right_eye"][LOW_INDEX] += 0.01f;
+                        Coherences["right_eye"][HIGH_INDEX] += 0.01f;
                     }
                 }
+
+                // Likely that "both_eyes" coherence values could reach 0.0f or 1.0f, keep coherence within [0.0f, 1.0f]
+                if (Coherences["both_eyes"][LOW_INDEX] < 0.0f) Coherences["both_eyes"][LOW_INDEX] = 0.0f;
+                if (Coherences["both_eyes"][LOW_INDEX] > 1.0f) Coherences["both_eyes"][LOW_INDEX] = 1.0f;
+                if (Coherences["both_eyes"][HIGH_INDEX] < 0.0f) Coherences["both_eyes"][HIGH_INDEX] = 0.0f;
+                if (Coherences["both_eyes"][HIGH_INDEX] > 1.0f) Coherences["both_eyes"][HIGH_INDEX] = 1.0f;
             }
 
             // Some trials display additional components, otherwise end the trial
-            if (ActiveBlock == BlockType.Practice)
+            if (ActiveBlock == BlockType.Training_Trials_Monocular)
             {
                 // Display feedback during the practice trials
                 if ((bool)Session.instance.CurrentTrial.result["selectedCorrectDirection"] == true)
@@ -602,6 +591,7 @@ public class ExperimentManager : MonoBehaviour
             }
             else
             {
+                ResetButtons();
                 EndTrial();
             }
         }
@@ -618,6 +608,7 @@ public class ExperimentManager : MonoBehaviour
             // Reset the active camera
             cameraManager.SetActiveField(ActiveVisualField);
 
+            ResetButtons();
             EndTrial();
         }
     }
@@ -729,19 +720,17 @@ public class ExperimentManager : MonoBehaviour
     private bool IsTextScreen()
     {
         return IsIntroductionScreen() ||
-                    ActiveBlock == BlockType.PrePractice ||
-                    ActiveBlock == BlockType.PreMain ||
-                    ActiveBlock == BlockType.PostMain;
+                ActiveBlock == BlockType.PostMain;
     }
 
     private bool IsStimulusScreen()
     {
-        return ActiveBlock == BlockType.Practice_Trials_Binocular ||
-                ActiveBlock == BlockType.Practice_Trials_Monocular ||
-                ActiveBlock == BlockType.Practice_Trials_Lateralized ||
-                ActiveBlock == BlockType.Practice ||
-                ActiveBlock == BlockType.Calibration ||
-                ActiveBlock == BlockType.Main;
+        return ActiveBlock == BlockType.Training_Trials_Binocular ||
+                ActiveBlock == BlockType.Training_Trials_Monocular ||
+                ActiveBlock == BlockType.Training_Trials_Lateralized ||
+                ActiveBlock == BlockType.Main_Trials_Binocular ||
+                ActiveBlock == BlockType.Main_Trials_Monocular ||
+                ActiveBlock == BlockType.Main_Trials_Lateralized;
     }
 
     private bool IsSetupScreen()
@@ -756,6 +745,7 @@ public class ExperimentManager : MonoBehaviour
     /// <param name="inputs">`InputState` object</param>
     private void ApplyInputs(InputState inputs)
     {
+        // To-Do: Store reaction time for first button pressed that is held to complete the trial
         ButtonSliderInput[] buttonControllers = stimulusManager.GetButtonControllers();
 
         // Left controller inputs
@@ -830,30 +820,24 @@ public class ExperimentManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Cooldown function to reduce the value of all active `ButtonSliderInput` instances back to `0.0f` when inactive.
+    /// Utility function to reduce the value of all active `ButtonSliderInput` instances back to `0.0f` when inactive.
     /// </summary>
     private void ButtonCooldown()
     {
-        // Collect references to all buttons
-        ButtonSliderInput[] ButtonControllers = stimulusManager.GetButtonControllers();
-        if (ButtonControllers.Length > 0)
+        foreach (ButtonSliderInput button in stimulusManager.GetButtonControllers())
         {
-            // ButtonSliderInput UpButtonSliderInput = UpButtonSlider.GetComponentInChildren<ButtonSliderInput>();
-            if (!VRInput.AnyInput())
-            {
-                foreach (ButtonSliderInput button in ButtonControllers)
-                {
-                    button.SetSliderValue(button.GetSliderValue() - ButtonHoldFactor * Time.deltaTime);
-                }
-            }
+            button.SetSliderValue(button.GetSliderValue() - ButtonHoldFactor / 3.0f * Time.deltaTime);
+        }
+    }
 
-            foreach (ButtonSliderInput button in ButtonControllers)
-            {
-                if (InputReset == true)
-                {
-                    button.SetSliderValue(0.0f);
-                }
-            }
+    /// <summary>
+    /// Utility function to reset the state of all `ButtonSliderFill` buttons
+    /// </summary>
+    private void ResetButtons()
+    {
+        foreach (ButtonSliderInput button in stimulusManager.GetButtonControllers())
+        {
+            button.SetSliderValue(0.0f);
         }
     }
 
@@ -866,13 +850,11 @@ public class ExperimentManager : MonoBehaviour
 
             if (IsStimulusScreen())
             {
-                ApplyInputs(inputs);
+                // Run the cooldown function for buttons
+                ButtonCooldown();
 
-                if (!VRInput.AnyInput())
-                {
-                    // Run the cooldown process for buttons if no input is being provided
-                    ButtonCooldown();
-                }
+                // Take action as specified by the inputs
+                ApplyInputs(inputs);
             }
             else
             {
