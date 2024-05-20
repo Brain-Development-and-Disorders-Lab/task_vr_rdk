@@ -33,8 +33,8 @@ public class CameraManager : MonoBehaviour
     private float StimulusRadius = 0.0f; // Additional world-units to offset the stimulus
     private float TotalOffset = 0.0f;
 
-    // Optional parameter to use a culling mask for full "eyepatch" effect (not recommended)
-    [Tooltip("Enable a layer-based mask to provide the eye-path effect. Not recommended but may be required.")]
+    // Optional parameter to use a culling mask for full "eye-patch" effect
+    [Tooltip("Enable a layer-based mask to provide a full eye-patch effect.")]
     public bool UseCullingMask = false;
 
     // Camera presentation modes
@@ -48,9 +48,6 @@ public class CameraManager : MonoBehaviour
     // Default visual field (active camera)
     private VisualField activeField = VisualField.Both;
 
-    // Logger
-    private VRLogger logger;
-
     private void Start()
     {
         // Check if OVRCameraRig has been specified, required for head tracking
@@ -63,9 +60,6 @@ public class CameraManager : MonoBehaviour
 
             CalculateOffset();
         }
-
-        // Logger
-        logger = FindAnyObjectByType<VRLogger>();
     }
 
     private void CalculateOffset()
@@ -132,7 +126,6 @@ public class CameraManager : MonoBehaviour
         else
         {
             // Central visual presentation
-            Debug.Log("Lateralized presentation disabled for central visual presentation.");
             StimulusAnchor.transform.localPosition = new Vector3(0.0f, 0.0f + VerticalOffset, StimulusAnchorDistance);
             if (UseCullingMask)
             {

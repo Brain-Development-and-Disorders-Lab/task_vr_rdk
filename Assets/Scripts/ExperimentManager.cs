@@ -22,13 +22,16 @@ public class ExperimentManager : MonoBehaviour
     {
         Setup = 1,
         Instructions_Introduction = 2,
-        Trials_Both = 3,
-        PrePractice = 4,
-        Practice = 5,
-        PreMain = 6,
-        Calibration = 7,
-        Main = 8,
-        PostMain = 9,
+        // "Practice_"-type trial blocks
+        Practice_Trials_Binocular = 3,
+        Practice_Trials_Monocular = 4,
+        Practice_Trials_Lateralized = 5,
+        PrePractice = 6, // Instruction break before "Main_"-type trial blocks
+        Practice = 7,
+        PreMain = 8,
+        Calibration = 9,
+        Main = 10,
+        PostMain = 11,
     };
 
     // Manage the number of trials within a specific block in the experiment timeline
@@ -36,7 +39,9 @@ public class ExperimentManager : MonoBehaviour
     {
         Setup = 1,
         Instructions_Introduction = 1, // Welcome instructions, includes tutorial instructions
-        Trials_Both = 20, // Training trials, central presentation to both eyes
+        Practice_Trials_Binocular = 4, // Training trials, central presentation to both eyes
+        Practice_Trials_Monocular = 4, // Training trials, central presentation to one eye
+        Practice_Trials_Lateralized = 4, // Training trials, lateralized presentation to one eye
         PrePractice = 1, // Practice instructions
         Practice = 20, // Practice trials
         PreMain = 1, // Main instructions
@@ -49,7 +54,9 @@ public class ExperimentManager : MonoBehaviour
     readonly List<BlockType> ExperimentTimeline = new() {
         // BlockType.Setup,
         BlockType.Instructions_Introduction,
-        BlockType.Trials_Both,
+        BlockType.Practice_Trials_Binocular,
+        BlockType.Practice_Trials_Monocular,
+        BlockType.Practice_Trials_Lateralized,
         BlockType.PrePractice,
         BlockType.Practice,
         BlockType.PreMain,
@@ -242,20 +249,22 @@ public class ExperimentManager : MonoBehaviour
         // Switch the active eye every fixed number of trials
         if ((Session.instance.CurrentTrial.numberInBlock - 1) % EYE_BLOCK_SIZE == 0)
         {
+            // To-Do: Lateralized presentation disabled for specific trial type
+            bool LateralizedState = ActiveBlock != BlockType.Practice_Trials_Monocular;
             if (cameraManager.GetActiveField() == CameraManager.VisualField.Left)
             {
                 // Switch from left to right
-                cameraManager.SetActiveField(CameraManager.VisualField.Right);
+                cameraManager.SetActiveField(CameraManager.VisualField.Right, LateralizedState);
             }
             else if (cameraManager.GetActiveField() == CameraManager.VisualField.Right)
             {
                 // Switch from right to left
-                cameraManager.SetActiveField(CameraManager.VisualField.Left);
+                cameraManager.SetActiveField(CameraManager.VisualField.Left, LateralizedState);
             }
             else
             {
                 // Randomly select a starting field
-                cameraManager.SetActiveField(UnityEngine.Random.value > 0.5f ? CameraManager.VisualField.Left : CameraManager.VisualField.Right);
+                cameraManager.SetActiveField(UnityEngine.Random.value > 0.5f ? CameraManager.VisualField.Left : CameraManager.VisualField.Right, LateralizedState);
             }
 
             // Store the active visual field locally, since it is changed to present the confidence screen
@@ -327,10 +336,20 @@ public class ExperimentManager : MonoBehaviour
         {
             StartCoroutine(DisplayStimuli("setup"));
         }
-        else if (ActiveBlock == BlockType.Trials_Both)
+        else if (ActiveBlock == BlockType.Practice_Trials_Binocular)
         {
             SetupMotion();
-            StartCoroutine(DisplayStimuli("trials_both"));
+            StartCoroutine(DisplayStimuli("practice_trials_binocular"));
+        }
+        else if (ActiveBlock == BlockType.Practice_Trials_Monocular)
+        {
+            SetupMotion();
+            StartCoroutine(DisplayStimuli("practice_trials_monocular"));
+        }
+        else if (ActiveBlock == BlockType.Practice_Trials_Lateralized)
+        {
+            SetupMotion();
+            StartCoroutine(DisplayStimuli("practice_trials_lateralized"));
         }
         else if (ActiveBlock == BlockType.PrePractice)
         {
@@ -368,11 +387,14 @@ public class ExperimentManager : MonoBehaviour
         stimulusManager.SetVisibleAll(false);
         uiManager.SetVisible(false);
 
+        // Store the displayed stimuli type if not a "feedback_"-type stimulus
+        if (!stimuli.StartsWith("feedback_"))
+        {
+            Session.instance.CurrentTrial.result["name"] = stimuli;
+        }
+
         if (stimuli == "instructions_introduction")
         {
-            // Store the displayed stimuli type
-            Session.instance.CurrentTrial.result["name"] = stimuli;
-
             uiManager.SetVisible(true);
             uiManager.SetHeader("Instructions");
             uiManager.SetLeftButtonState(false, true, "Back");
@@ -383,9 +405,6 @@ public class ExperimentManager : MonoBehaviour
         }
         else if (stimuli == "setup")
         {
-            // Store the displayed stimuli type
-            Session.instance.CurrentTrial.result["name"] = stimuli;
-
             uiManager.SetVisible(true);
             uiManager.SetHeader("Eye-Tracking Setup");
             uiManager.SetBody("You will be shown a red dot in front of you. Follow the dot movement with your eyes. After a brief series of movements, the calibration will automatically end and you will be shown the task instructions.\n\nPress the right controller trigger to select <b>Start</b>.");
@@ -396,43 +415,21 @@ public class ExperimentManager : MonoBehaviour
             yield return StartCoroutine(WaitSeconds(0.25f, true));
             SetInputEnabled(true);
         }
-        else if (stimuli == "trials_both")
+        else if (stimuli == "practice_trials_binocular" || stimuli == "main_trials_binocular")
         {
             // Override and set the camera to display in both eyes
             cameraManager.SetActiveField(CameraManager.VisualField.Both, false);
 
-            SetInputEnabled(false);
-            stimulusManager.SetFixationCrossVisibility(true);
-            yield return new WaitUntil(() => IsFixated());
-
-            // Store the displayed stimuli type
-            Session.instance.CurrentTrial.result["name"] = stimuli;
-
-            // Fixation
-            stimulusManager.SetVisible("fixation", true);
-            yield return StartCoroutine(WaitSeconds(PRE_DISPLAY_DURATION, true));
-            yield return new WaitUntil(() => IsFixated());
-            stimulusManager.SetVisible("fixation", false);
-
-            // Motion
-            stimulusManager.SetVisible("motion", true);
-            yield return StartCoroutine(WaitSeconds(DISPLAY_DURATION, true));
-            stimulusManager.SetVisible("motion", false);
-            stimulusManager.SetFixationCrossVisibility(false);
-
-            // Decision (wait)
-            Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
-            stimulusManager.SetVisible("decision", true);
-            yield return StartCoroutine(WaitSeconds(0.15f, true));
-            SetInputEnabled(true);
+            yield return StartCoroutine(DisplayMotion());
+        }
+        else if (stimuli == "main" || stimuli == "practice_trials_monocular" || stimuli == "practice_trials_lateralized")
+        {
+            yield return StartCoroutine(DisplayMotion());
         }
         else if (stimuli == "prepractice")
         {
             // Override and set the camera to display in both eyes
             cameraManager.SetActiveField(CameraManager.VisualField.Both);
-
-            // Store the displayed stimuli type
-            Session.instance.CurrentTrial.result["name"] = stimuli;
 
             uiManager.SetVisible(true);
             uiManager.SetHeader("Practice Trials");
@@ -444,40 +441,10 @@ public class ExperimentManager : MonoBehaviour
             yield return StartCoroutine(WaitSeconds(0.15f, true));
             SetInputEnabled(true);
         }
-        else if (stimuli == "practice")
-        {
-            SetInputEnabled(false);
-            stimulusManager.SetFixationCrossVisibility(true);
-            yield return new WaitUntil(() => IsFixated());
-
-            // Store the displayed stimuli type
-            Session.instance.CurrentTrial.result["name"] = stimuli;
-
-            // Fixation
-            stimulusManager.SetVisible("fixation", true);
-            yield return StartCoroutine(WaitSeconds(PRE_DISPLAY_DURATION, true));
-            yield return new WaitUntil(() => IsFixated());
-            stimulusManager.SetVisible("fixation", false);
-
-            // Motion
-            stimulusManager.SetVisible("motion", true);
-            yield return StartCoroutine(WaitSeconds(DISPLAY_DURATION, true));
-            stimulusManager.SetVisible("motion", false);
-            stimulusManager.SetFixationCrossVisibility(false);
-
-            // Decision (wait)
-            Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
-            stimulusManager.SetVisible("decision", true);
-            yield return StartCoroutine(WaitSeconds(0.15f, true));
-            SetInputEnabled(true);
-        }
         else if (stimuli == "premain")
         {
             // Override and set the camera to display in both eyes
             cameraManager.SetActiveField(CameraManager.VisualField.Both);
-
-            // Store the displayed stimuli type
-            Session.instance.CurrentTrial.result["name"] = stimuli;
 
             uiManager.SetVisible(true);
             uiManager.SetHeader("Main Trials");
@@ -494,9 +461,6 @@ public class ExperimentManager : MonoBehaviour
             // Override and set the camera to display in both eyes
             cameraManager.SetActiveField(CameraManager.VisualField.Both);
 
-            // Store the displayed stimuli type
-            Session.instance.CurrentTrial.result["name"] = stimuli;
-
             uiManager.SetVisible(true);
             uiManager.SetHeader("Complete");
             uiManager.SetBody("That concludes all the trials of this task. Please notify the experiment facilitator, and you can remove the headset carefully after releasing the rear adjustment wheel.");
@@ -505,77 +469,6 @@ public class ExperimentManager : MonoBehaviour
 
             // Input delay
             yield return StartCoroutine(WaitSeconds(1.0f, true));
-            SetInputEnabled(true);
-        }
-        else if (stimuli == "calibration")
-        {
-            SetInputEnabled(false);
-            stimulusManager.SetFixationCrossVisibility(true);
-            yield return new WaitUntil(() => IsFixated());
-
-            // Store the displayed stimuli type
-            Session.instance.CurrentTrial.result["name"] = stimuli;
-
-            // Fixation
-            stimulusManager.SetVisible("fixation", true);
-            yield return StartCoroutine(WaitSeconds(PRE_DISPLAY_DURATION, true));
-            yield return new WaitUntil(() => IsFixated());
-            stimulusManager.SetVisible("fixation", false);
-
-            // Motion
-            stimulusManager.SetVisible("motion", true);
-            yield return StartCoroutine(WaitSeconds(DISPLAY_DURATION, true));
-            stimulusManager.SetVisible("motion", false);
-            stimulusManager.SetFixationCrossVisibility(false);
-
-            // Decision (wait)
-            Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
-            stimulusManager.SetVisible("decision", true);
-            yield return StartCoroutine(WaitSeconds(0.15f, true));
-            SetInputEnabled(true);
-        }
-        else if (stimuli == "main")
-        {
-            SetInputEnabled(false);
-            stimulusManager.SetFixationCrossVisibility(true);
-            yield return new WaitUntil(() => IsFixated());
-
-            // Store the displayed stimuli type
-            Session.instance.CurrentTrial.result["name"] = stimuli;
-
-            // Fixation
-            stimulusManager.SetVisible("fixation", true);
-            yield return StartCoroutine(WaitSeconds(PRE_DISPLAY_DURATION, true));
-            yield return new WaitUntil(() => IsFixated());
-            stimulusManager.SetVisible("fixation", false);
-
-            // Motion
-            stimulusManager.SetVisible("motion", true);
-            yield return StartCoroutine(WaitSeconds(DISPLAY_DURATION, true));
-            stimulusManager.SetVisible("motion", false);
-            stimulusManager.SetFixationCrossVisibility(false);
-
-            // Decision (wait)
-            Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
-            stimulusManager.SetVisible("decision", true);
-            yield return StartCoroutine(WaitSeconds(0.15f, true));
-            SetInputEnabled(true);
-        }
-        else if (stimuli == "confidence")
-        {
-            // Override and set the camera to display in both eyes
-            cameraManager.SetActiveField(CameraManager.VisualField.Both);
-
-            // Confidence
-            uiManager.SetVisible(true);
-            uiManager.SetHeader("");
-            uiManager.SetBody("Did you feel more confident about your response to: The <b>last</b> trial or <b>this</b> trial?");
-            uiManager.SetLeftButtonState(true, true, "Last Trial");
-            uiManager.SetRightButtonState(true, true, "This Trial");
-
-            // Input delay
-            Session.instance.CurrentTrial.result["confidenceStart"] = Time.time;
-            yield return StartCoroutine(WaitSeconds(0.15f, true));
             SetInputEnabled(true);
         }
         else if (stimuli == "feedback_correct")
@@ -600,6 +493,31 @@ public class ExperimentManager : MonoBehaviour
             stimulusManager.SetFixationCrossColor("white");
             EndTrial();
         }
+    }
+
+    private IEnumerator DisplayMotion()
+    {
+        SetInputEnabled(false);
+        stimulusManager.SetFixationCrossVisibility(true);
+        yield return new WaitUntil(() => IsFixated());
+
+        // Fixation
+        stimulusManager.SetVisible("fixation", true);
+        yield return StartCoroutine(WaitSeconds(PRE_DISPLAY_DURATION, true));
+        yield return new WaitUntil(() => IsFixated());
+        stimulusManager.SetVisible("fixation", false);
+
+        // Motion
+        stimulusManager.SetVisible("motion", true);
+        yield return StartCoroutine(WaitSeconds(DISPLAY_DURATION, true));
+        stimulusManager.SetVisible("motion", false);
+        stimulusManager.SetFixationCrossVisibility(false);
+
+        // Decision (wait)
+        Session.instance.CurrentTrial.result["referenceStart"] = Time.time;
+        stimulusManager.SetVisible("decision", true);
+        yield return StartCoroutine(WaitSeconds(0.15f, true));
+        SetInputEnabled(true);
     }
 
     /// <summary>
@@ -818,10 +736,12 @@ public class ExperimentManager : MonoBehaviour
 
     private bool IsStimulusScreen()
     {
-        return ActiveBlock == BlockType.Trials_Both ||
-                    ActiveBlock == BlockType.Practice ||
-                    ActiveBlock == BlockType.Calibration ||
-                    ActiveBlock == BlockType.Main;
+        return ActiveBlock == BlockType.Practice_Trials_Binocular ||
+                ActiveBlock == BlockType.Practice_Trials_Monocular ||
+                ActiveBlock == BlockType.Practice_Trials_Lateralized ||
+                ActiveBlock == BlockType.Practice ||
+                ActiveBlock == BlockType.Calibration ||
+                ActiveBlock == BlockType.Main;
     }
 
     private bool IsSetupScreen()
