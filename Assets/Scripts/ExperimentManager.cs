@@ -749,9 +749,9 @@ public class ExperimentManager : MonoBehaviour
         ButtonSliderInput[] buttonControllers = stimulusManager.GetButtonControllers();
 
         // Left controller inputs
-        if (inputs.Y_Pressed || inputs.X_Pressed)
+        if (inputs.L_T_State > TriggerThreshold || inputs.X_Pressed)
         {
-            if (inputs.Y_Pressed)
+            if (inputs.L_T_State > TriggerThreshold)
             {
                 // Very confident up
                 buttonControllers[0].SetSliderValue(buttonControllers[0].GetSliderValue() + ButtonHoldFactor * Time.deltaTime);
@@ -785,9 +785,9 @@ public class ExperimentManager : MonoBehaviour
         }
 
         // Right controller inputs
-        else if (inputs.B_Pressed || inputs.A_Pressed)
+        else if (inputs.R_T_State > TriggerThreshold || inputs.A_Pressed)
         {
-            if (inputs.B_Pressed)
+            if (inputs.R_T_State > TriggerThreshold)
             {
                 // Very confident down
                 buttonControllers[2].SetSliderValue(buttonControllers[2].GetSliderValue() + ButtonHoldFactor * Time.deltaTime);
@@ -859,7 +859,7 @@ public class ExperimentManager : MonoBehaviour
             else
             {
                 // Left-side controls
-                if (inputs.Y_Pressed || inputs.X_Pressed)
+                if (inputs.L_T_State > TriggerThreshold || inputs.X_Pressed)
                 {
                     if (IsIntroductionScreen() && InputReset)
                     {
@@ -883,7 +883,7 @@ public class ExperimentManager : MonoBehaviour
                 }
 
                 // Right-side controls
-                if (inputs.B_Pressed || inputs.A_Pressed)
+                if (inputs.R_T_State > TriggerThreshold || inputs.A_Pressed)
                 {
                     if (IsTextScreen() && InputReset)
                     {
