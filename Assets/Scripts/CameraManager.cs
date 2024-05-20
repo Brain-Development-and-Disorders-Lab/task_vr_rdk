@@ -33,8 +33,8 @@ public class CameraManager : MonoBehaviour
     private float StimulusRadius = 0.0f; // Additional world-units to offset the stimulus
     private float TotalOffset = 0.0f;
 
-    // Optional parameter to use a culling mask for full "eyepatch" effect (not recommended)
-    [Tooltip("Enable a layer-based mask to provide the eye-path effect. Not recommended but may be required.")]
+    // Optional parameter to use a culling mask for full "eye-patch" effect
+    [Tooltip("Enable a layer-based mask to provide a full eye-patch effect.")]
     public bool UseCullingMask = false;
 
     // Camera presentation modes
@@ -48,9 +48,6 @@ public class CameraManager : MonoBehaviour
     // Default visual field (active camera)
     private VisualField activeField = VisualField.Both;
 
-    // Logger
-    private VRLogger logger;
-
     private void Start()
     {
         // Check if OVRCameraRig has been specified, required for head tracking
@@ -63,9 +60,6 @@ public class CameraManager : MonoBehaviour
 
             CalculateOffset();
         }
-
-        // Logger
-        logger = FindAnyObjectByType<VRLogger>();
     }
 
     private void CalculateOffset()
@@ -93,17 +87,22 @@ public class CameraManager : MonoBehaviour
     /// Set the active visual field
     /// </summary>
     /// <param name="field"></param>
-    public void SetActiveField(VisualField field)
+    public void SetActiveField(VisualField field, bool lateralized = true)
     {
         if (field != activeField)
         {
             activeField = field;
         }
 
-        // Apply local offset adjustments for lateralized presentation
+        // Apply local offset adjustments for lateralized presentation and culling mask for eye-patch effect
         if (field == VisualField.Left)
         {
-            StimulusAnchor.transform.localPosition = new Vector3(0.0f - TotalOffset, 0.0f + VerticalOffset, StimulusAnchorDistance);
+            // Left visual presentation
+            if (lateralized == true)
+            {
+                StimulusAnchor.transform.localPosition = new Vector3(0.0f - TotalOffset, 0.0f + VerticalOffset, StimulusAnchorDistance);
+            }
+
             if (UseCullingMask)
             {
                 LeftCamera.cullingMask = ~(1 << 6);
@@ -112,7 +111,12 @@ public class CameraManager : MonoBehaviour
         }
         else if (field == VisualField.Right)
         {
-            StimulusAnchor.transform.localPosition = new Vector3(0.0f + TotalOffset, 0.0f + VerticalOffset, StimulusAnchorDistance);
+            // Right visual presentation
+            if (lateralized == true)
+            {
+                StimulusAnchor.transform.localPosition = new Vector3(0.0f + TotalOffset, 0.0f + VerticalOffset, StimulusAnchorDistance);
+            }
+
             if (UseCullingMask)
             {
                 LeftCamera.cullingMask = 1 << 6;
@@ -121,6 +125,7 @@ public class CameraManager : MonoBehaviour
         }
         else
         {
+            // Central visual presentation
             StimulusAnchor.transform.localPosition = new Vector3(0.0f, 0.0f + VerticalOffset, StimulusAnchorDistance);
             if (UseCullingMask)
             {

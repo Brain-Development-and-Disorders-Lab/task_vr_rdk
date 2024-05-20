@@ -9,6 +9,9 @@ using UnityEngine.UI;
 /// </summary>
 public class ButtonSliderInput : MonoBehaviour
 {
+    public GameObject ButtonBackground;
+    public GameObject ButtonFill;
+
     GameObject ButtonSlider;
     TextMeshProUGUI ButtonSliderText;
     Slider ButtonSliderComponent;
@@ -54,5 +57,15 @@ public class ButtonSliderInput : MonoBehaviour
         {
             ButtonSliderComponent.value = value;
         }
+    }
+
+    public void SetBackgroundColor(Color color)
+    {
+        ButtonBackground.GetComponentInChildren<Image>().color = color;
+    }
+
+    public void SetFillColor(Color color)
+    {
+        ButtonFill.GetComponentInChildren<Image>().color = color;
     }
 }

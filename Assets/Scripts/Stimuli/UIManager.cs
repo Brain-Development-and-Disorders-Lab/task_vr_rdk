@@ -72,7 +72,7 @@ namespace Stimuli
             HeaderTextComponent.alignment = TextAlignmentOptions.Center;
             HeaderTextComponent.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
             HeaderTextComponent.transform.localPosition = new Vector3(0.0f, 40.0f, 0.0f);
-            HeaderTextComponent.rectTransform.sizeDelta = new Vector2(140.0f, 10.0f);
+            HeaderTextComponent.rectTransform.sizeDelta = new Vector2(180.0f, 14.0f);
 
             // Create GameObject for body
             BodyContainer = new GameObject();
@@ -90,13 +90,13 @@ namespace Stimuli
             BodyTextComponent.alignment = TextAlignmentOptions.Center;
             BodyTextComponent.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
             BodyTextComponent.transform.localPosition = new Vector3(0.0f, -5.0f, 0.0f);
-            BodyTextComponent.rectTransform.sizeDelta = new Vector2(120.0f, 80.0f);
+            BodyTextComponent.rectTransform.sizeDelta = new Vector2(160.0f, 100.0f);
 
             // Button components (10%, below body)
             GameObject buttonBodyObject = new GameObject();
             buttonBodyObject.name = "rdk_button_body_object";
             buttonBodyObject.transform.SetParent(UICanvas.transform, false);
-            buttonBodyObject.transform.localPosition = new Vector3(0.0f, -50.0f, 0.0f);
+            buttonBodyObject.transform.localPosition = new Vector3(0.0f, -60.0f, 0.0f);
 
             TMP_DefaultControls.Resources ButtonResources = new TMP_DefaultControls.Resources();
 

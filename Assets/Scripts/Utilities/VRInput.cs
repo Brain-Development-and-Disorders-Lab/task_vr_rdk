@@ -3,6 +3,9 @@ using System.Collections;
 using System.Threading.Tasks;
 using System;
 
+// Custom namespaces
+using Utilities;
+
 namespace Utilities
 {
     public static class VRInput
@@ -43,37 +46,17 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Return if the left trigger is active above a defined threshold (sensitivity)
-        /// </summary>
-        /// <param name="threshold">The sensitivity of the trigger before registering an activation</param>
-        /// <returns></returns>
-        public static bool PollLeftTrigger(float threshold = 0.8f)
-        {
-            return OVRInput.Get(OVRInput.Axis1D.PrimaryIndexTrigger) > threshold || Input.GetKey(KeyCode.Alpha2);
-        }
-
-        /// <summary>
-        /// Return if the right trigger is active above a defined threshold (sensitivity)
-        /// </summary>
-        /// <param name="threshold">The sensitivity of the trigger before registering an activation</param>
-        /// <returns></returns>
-        public static bool PollRightTrigger(float threshold = 0.8f)
-        {
-            return OVRInput.Get(OVRInput.Axis1D.SecondaryIndexTrigger) > threshold || Input.GetKey(KeyCode.Alpha7);
-        }
-
-        /// <summary>
         /// Return a structure representing the current input state
         /// </summary>
         /// <returns></returns>
         public static InputState PollAllInput()
         {
             return new InputState(
-                OVRInput.Get(OVRInput.Axis1D.PrimaryIndexTrigger),
-                OVRInput.Get(OVRInput.RawButton.Y) || Input.GetKey(KeyCode.Alpha2),
+                Input.GetKey(KeyCode.Alpha2) ? 1.0f : OVRInput.Get(OVRInput.Axis1D.PrimaryIndexTrigger),
+                OVRInput.Get(OVRInput.RawButton.Y),
                 OVRInput.Get(OVRInput.RawButton.X) || Input.GetKey(KeyCode.Alpha3),
-                OVRInput.Get(OVRInput.Axis1D.SecondaryIndexTrigger),
-                OVRInput.Get(OVRInput.RawButton.B) || Input.GetKey(KeyCode.Alpha7),
+                Input.GetKey(KeyCode.Alpha7) ? 1.0f : OVRInput.Get(OVRInput.Axis1D.SecondaryIndexTrigger),
+                OVRInput.Get(OVRInput.RawButton.B),
                 OVRInput.Get(OVRInput.RawButton.A) || Input.GetKey(KeyCode.Alpha6)
             );
         }
