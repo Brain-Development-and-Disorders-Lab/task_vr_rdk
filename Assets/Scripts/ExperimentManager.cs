@@ -812,7 +812,7 @@ public class ExperimentManager : MonoBehaviour
                 buttonControllers[1].SetSliderValue(buttonControllers[1].GetSliderValue() + ButtonHoldFactor * Time.deltaTime);
                 if (LastInputState.X_Pressed == false)
                 {
-                    Session.instance.CurrentTrial.result["last_keypress_end"] = Time.time;
+                    Session.instance.CurrentTrial.result["last_keypress_start"] = Time.time;
                 }
             }
 
@@ -846,7 +846,7 @@ public class ExperimentManager : MonoBehaviour
             {
                 // Very confident down
                 buttonControllers[2].SetSliderValue(buttonControllers[2].GetSliderValue() + ButtonHoldFactor * Time.deltaTime);
-                if (inputs.R_T_State < TriggerThreshold)
+                if (LastInputState.R_T_State < TriggerThreshold)
                 {
                     Session.instance.CurrentTrial.result["last_keypress_start"] = Time.time;
                 }
