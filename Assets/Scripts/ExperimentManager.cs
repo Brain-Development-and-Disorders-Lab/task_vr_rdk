@@ -102,11 +102,49 @@ public class ExperimentManager : MonoBehaviour
     private readonly float ButtonHoldFactor = 2.0f;
 
     /// <summary>
+    /// Utility function to generate Blocks within an experiment timeline
+    /// </summary>
+    /// <param name="block"></param>
+    /// <param name="length"></param>
+    /// <returns></returns>
+    private List<Timeline.Block> GenerateBlocks(BlockType block, int length)
+    {
+        List<Timeline.Block> blocks = new();
+        int remainingTrials = length;
+
+        while (remainingTrials > 0)
+        {
+            // Generate the next Block length
+            int blockSize = UnityEngine.Random.Range(MIN_BLOCK_LENGTH, MAX_BLOCK_LENGTH + 1);
+            if (blockSize > remainingTrials)
+            {
+                blockSize = remainingTrials;
+            }
+
+            // Create Block and add to list of Blocks
+            blocks.Add(new Timeline.Block(block, blockSize));
+
+            // Update remaining number of trials
+            remainingTrials -= blockSize;
+        }
+
+        return blocks;
+    }
+
+    /// <summary>
     /// Generate the experiment flow
     /// </summary>
     /// <param name="session"></param>
     public void GenerateExperiment(Session session)
     {
+        // Generate list of Blocks for each presentation timeline
+        List<Timeline.Block> blocks = GenerateBlocks(BlockType.Training_Trials_Binocular, 30);
+        Debug.Log("Generated timeline: " + blocks.Count);
+        foreach (Timeline.Block block1 in blocks)
+        {
+            Debug.Log("Block: " + Enum.GetName(typeof(BlockType), block1.GetBlockType()) + "," + block1.GetLength());
+        }
+
         // Validate the "BlockType" and "BlockLength" variables are the same length
         if (Enum.GetNames(typeof(BlockType)).Length != Enum.GetNames(typeof(BlockLength)).Length)
         {
