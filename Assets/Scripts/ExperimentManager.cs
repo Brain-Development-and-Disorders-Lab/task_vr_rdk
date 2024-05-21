@@ -370,11 +370,11 @@ public class ExperimentManager : MonoBehaviour
 
         // Calculate coherences for left `Training_Trials_Lateralized` trials
         List<Trial> LateralizedTrialsLeft = GetTrialsByType(TrialType.Training_Trials_Lateralized, CameraManager.VisualField.Left, BlockSequence.Training);
-        Main_Lateralized_Coherence_Left = CalculateCoherencePairs(LateralizedTrialsLeft, "training_monocular_coherence_left");
+        Main_Lateralized_Coherence_Left = CalculateCoherencePairs(LateralizedTrialsLeft, "training_lateralized_coherence_left");
 
-        // Calculate coherences for right `Training_Trials_Monocular` trials
+        // Calculate coherences for right `Training_Trials_Lateralized` trials
         List<Trial> LateralizedTrialsRight = GetTrialsByType(TrialType.Training_Trials_Lateralized, CameraManager.VisualField.Right, BlockSequence.Training);
-        Main_Lateralized_Coherence_Right = CalculateCoherencePairs(LateralizedTrialsRight, "training_monocular_coherence_right");
+        Main_Lateralized_Coherence_Right = CalculateCoherencePairs(LateralizedTrialsRight, "training_lateralized_coherence_right");
 
         // Clone and store coherence values as a string, separated by "," token
         // Session.instance.CurrentTrial.result["combinedCoherences"] = Coherences["both_eyes"][LOW_INDEX] + "," + Coherences["both_eyes"][HIGH_INDEX];
