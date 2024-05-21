@@ -81,12 +81,7 @@ public class ExperimentManager : MonoBehaviour
     private Tuple<float, float> Main_Lateralized_Coherence_Left;
     private Tuple<float, float> Main_Lateralized_Coherence_Right;
 
-    private readonly int LOW_INDEX = 0; // Index of low coherence value
-    private readonly int HIGH_INDEX = 1; // Index of high coherence value
-    private readonly int EYE_BLOCK_SIZE = 10; // Number of trials per eye
-
     // Timing variables
-    private readonly float FIXATION_DURATION = 0.5f;
     private readonly float PRE_DISPLAY_DURATION = 0.5f;
     private readonly float DISPLAY_DURATION = 0.180f; // 180 milliseconds
 
@@ -226,7 +221,10 @@ public class ExperimentManager : MonoBehaviour
         {
             foreach (Trial trial in SearchBlock.trials)
             {
-                if ((TrialType)trial.result["trial_type"] == trialType && (CameraManager.VisualField)trial.result["active_visual_field"] == visualField)
+                // Extract results into enum names
+                Enum.TryParse(trial.result["active_visual_field"].ToString(), out CameraManager.VisualField priorVisualField);
+                Enum.TryParse(trial.result["trial_type"].ToString(), out TrialType priorTrialType);
+                if (priorTrialType == trialType && priorVisualField == visualField)
                 {
                     result.Add(trial);
                 }
@@ -252,8 +250,8 @@ public class ExperimentManager : MonoBehaviour
         for (int i = currentIndex - 1; i > 1; i --)
         {
             Trial PriorTrial = Session.instance.CurrentBlock.GetRelativeTrial(i);
-            string PriorTrialType = (string)PriorTrial.result["trial_type"];
-            CameraManager.VisualField PriorVisualField = (CameraManager.VisualField)PriorTrial.result["active_visual_field"];
+            string PriorTrialType = PriorTrial.result["trial_type"].ToString();
+            Enum.TryParse(PriorTrial.result["active_visual_field"].ToString(), out CameraManager.VisualField PriorVisualField);
 
             // Compared the stored `name` with the name of the `TrialType`and the active visual field being searched for
             if (PriorTrialType == Enum.GetName(typeof(TrialType), searchType) && PriorVisualField == visualField)
@@ -388,11 +386,31 @@ public class ExperimentManager : MonoBehaviour
     /// Setup operations to perform prior to any motion stimuli. Also responsible for generating coherence values
     /// after the calibration stages.
     /// </summary>
-    private void SetupMotion()
+    private void SetupMotion(TrialType trial)
     {
         // Set the reference direction randomly
         float dotDirection = UnityEngine.Random.value > 0.5f ? (float)Math.PI / 2 : (float)Math.PI * 3 / 2;
         stimulusManager.SetDirection(dotDirection);
+
+        // Setup the camera according to the active `TrialType`
+        if (trial == TrialType.Training_Trials_Binocular || trial == TrialType.Main_Trials_Binocular)
+        {
+            // Activate both cameras in binocular mode
+            cameraManager.SetActiveField(CameraManager.VisualField.Both, false);
+        }
+        else if (trial == TrialType.Training_Trials_Monocular || trial == TrialType.Main_Trials_Monocular)
+        {
+            // Activate one camera in monocular mode, without lateralization
+            CameraManager.VisualField TrialVisualField = UnityEngine.Random.value > 0.5 ? CameraManager.VisualField.Left : CameraManager.VisualField.Right;
+            cameraManager.SetActiveField(TrialVisualField, false);
+        }
+        else
+        {
+            // Activate one camera in lateralized mode, with lateralization enabled
+            CameraManager.VisualField TrialVisualField = UnityEngine.Random.value > 0.5 ? CameraManager.VisualField.Left : CameraManager.VisualField.Right;
+            cameraManager.SetActiveField(TrialVisualField, true);
+        }
+        ActiveVisualField = cameraManager.GetActiveField();
 
         // Set the coherence value depending on the `TrialType`
         if (ActiveTrialType == TrialType.Training_Trials_Binocular)
@@ -430,16 +448,22 @@ public class ExperimentManager : MonoBehaviour
         // Store motion-related data points
         Session.instance.CurrentTrial.result["dot_direction"] = dotDirection == (float)Math.PI / 2 ? "up" : "down";
         Session.instance.CurrentTrial.result["active_coherence"] = ActiveCoherence;
-        Session.instance.CurrentTrial.result["training_binocular_coherence"] = Training_Binocular_Coherence;
-        Session.instance.CurrentTrial.result["training_monocular_coherence_left"] = Training_Monocular_Coherence_Left;
-        Session.instance.CurrentTrial.result["training_monocular_coherence_right"] = Training_Monocular_Coherence_Right;
-        Session.instance.CurrentTrial.result["training_lateralized_coherence_left"] = Training_Lateralized_Coherence_Left;
-        Session.instance.CurrentTrial.result["training_lateralized_coherence_right"] = Training_Lateralized_Coherence_Right;
-        Session.instance.CurrentTrial.result["main_binocular_coherence"] = Main_Binocular_Coherence;
-        Session.instance.CurrentTrial.result["main_monocular_coherence_left"] = Main_Monocular_Coherence_Left.Item1 + "," + Main_Monocular_Coherence_Left.Item2;
-        Session.instance.CurrentTrial.result["main_monocular_coherence_right"] = Main_Monocular_Coherence_Right.Item1 + "," + Main_Monocular_Coherence_Right.Item2;
-        Session.instance.CurrentTrial.result["main_lateralized_coherence_left"] = Main_Lateralized_Coherence_Left.Item1 + "," + Main_Lateralized_Coherence_Left.Item2;
-        Session.instance.CurrentTrial.result["main_lateralized_coherence_right"] = Main_Lateralized_Coherence_Right.Item1 + "," + Main_Lateralized_Coherence_Right.Item2;
+        if (ActiveBlock == BlockSequence.Training)
+        {
+            Session.instance.CurrentTrial.result["training_binocular_coherence"] = Training_Binocular_Coherence;
+            Session.instance.CurrentTrial.result["training_monocular_coherence_left"] = Training_Monocular_Coherence_Left;
+            Session.instance.CurrentTrial.result["training_monocular_coherence_right"] = Training_Monocular_Coherence_Right;
+            Session.instance.CurrentTrial.result["training_lateralized_coherence_left"] = Training_Lateralized_Coherence_Left;
+            Session.instance.CurrentTrial.result["training_lateralized_coherence_right"] = Training_Lateralized_Coherence_Right;
+        }
+        if (ActiveBlock == BlockSequence.Main)
+        {
+            Session.instance.CurrentTrial.result["main_binocular_coherence"] = Main_Binocular_Coherence.Item1 + "," + Main_Binocular_Coherence.Item2;
+            Session.instance.CurrentTrial.result["main_monocular_coherence_left"] = Main_Monocular_Coherence_Left.Item1 + "," + Main_Monocular_Coherence_Left.Item2;
+            Session.instance.CurrentTrial.result["main_monocular_coherence_right"] = Main_Monocular_Coherence_Right.Item1 + "," + Main_Monocular_Coherence_Right.Item2;
+            Session.instance.CurrentTrial.result["main_lateralized_coherence_left"] = Main_Lateralized_Coherence_Left.Item1 + "," + Main_Lateralized_Coherence_Left.Item2;
+            Session.instance.CurrentTrial.result["main_lateralized_coherence_right"] = Main_Lateralized_Coherence_Right.Item1 + "," + Main_Lateralized_Coherence_Right.Item2;
+        }
         Session.instance.CurrentTrial.result["active_visual_field"] = ActiveVisualField;
         Session.instance.CurrentTrial.result["motion_duration"] = DISPLAY_DURATION;
     }
@@ -512,8 +536,42 @@ public class ExperimentManager : MonoBehaviour
         }
         else if (block == BlockSequence.Training || block == BlockSequence.Main)
         {
-            SetupMotion();
-            yield return StartCoroutine(DisplayMotion(ActiveTrialType));
+            // Run setup for the motion stimuli
+            SetupMotion(ActiveTrialType);
+            yield return StartCoroutine(DisplayMotion());
+        }
+        else if (block == BlockSequence.Mid_Instructions)
+        {
+            // Run calibration calculations
+            CalculateCoherences();
+
+            // Override and set the camera to display in both eyes
+            cameraManager.SetActiveField(CameraManager.VisualField.Both);
+
+            uiManager.SetVisible(true);
+            uiManager.SetHeader("Main Trials");
+            uiManager.SetBody("That concludes the practice trials. You will now play " + MainTimeline.Count + " main trials.\n\nYou will not be shown if you answered correctly or not, but sometimes you will be asked whether you were more confident in that trial than in the previous trial.\n\nWhen you are ready and comfortable, press the right controller trigger to select <b>Next</b> and continue.");
+            uiManager.SetLeftButtonState(false, true, "Back");
+            uiManager.SetRightButtonState(true, true, "Next");
+
+            // Input delay
+            yield return StartCoroutine(WaitSeconds(0.15f, true));
+            SetInputEnabled(true);
+        }
+        else if (block == BlockSequence.Post_Instructions)
+        {
+            // Override and set the camera to display in both eyes
+            cameraManager.SetActiveField(CameraManager.VisualField.Both);
+
+            uiManager.SetVisible(true);
+            uiManager.SetHeader("Complete");
+            uiManager.SetBody("That concludes all the trials of this task. Please notify the experiment facilitator, and you can remove the headset carefully after releasing the rear adjustment wheel.");
+            uiManager.SetLeftButtonState(false, false, "Back");
+            uiManager.SetRightButtonState(true, true, "Finish");
+
+            // Input delay
+            yield return StartCoroutine(WaitSeconds(1.0f, true));
+            SetInputEnabled(true);
         }
         // else if (block == TrialType.Setup)
         // {
@@ -525,51 +583,6 @@ public class ExperimentManager : MonoBehaviour
 
         //     // Input delay
         //     yield return StartCoroutine(WaitSeconds(0.25f, true));
-        //     SetInputEnabled(true);
-        // }
-        // else if (block == TrialType.PostMain)
-        // {
-        //     // Override and set the camera to display in both eyes
-        //     cameraManager.SetActiveField(CameraManager.VisualField.Both);
-
-        //     uiManager.SetVisible(true);
-        //     uiManager.SetHeader("Complete");
-        //     uiManager.SetBody("That concludes all the trials of this task. Please notify the experiment facilitator, and you can remove the headset carefully after releasing the rear adjustment wheel.");
-        //     uiManager.SetLeftButtonState(false, false, "Back");
-        //     uiManager.SetRightButtonState(true, true, "Finish");
-
-        //     // Input delay
-        //     yield return StartCoroutine(WaitSeconds(1.0f, true));
-        //     SetInputEnabled(true);
-        // }
-        // else if (stimuli == "prepractice")
-        // {
-        //     // Override and set the camera to display in both eyes
-        //     cameraManager.SetActiveField(CameraManager.VisualField.Both);
-
-        //     uiManager.SetVisible(true);
-        //     uiManager.SetHeader("Practice Trials");
-        //     uiManager.SetBody("You will now complete another " + (int)TrialCount.Practice + " practice trials. After selecting a direction, the cross in the center of the circular area will briefly change color if your answer was correct or not. Green is a correct answer, red is an incorrect answer.\n\nWhen you are ready and comfortable, press the right controller trigger to select <b>Next</b> and continue.");
-        //     uiManager.SetLeftButtonState(false, true, "Back");
-        //     uiManager.SetRightButtonState(true, true, "Next");
-
-        //     // Input delay
-        //     yield return StartCoroutine(WaitSeconds(0.15f, true));
-        //     SetInputEnabled(true);
-        // }
-        // else if (stimuli == "premain")
-        // {
-        //     // Override and set the camera to display in both eyes
-        //     cameraManager.SetActiveField(CameraManager.VisualField.Both);
-
-        //     uiManager.SetVisible(true);
-        //     uiManager.SetHeader("Main Trials");
-        //     uiManager.SetBody("That concludes the practice trials. You will now play " + ((int)TrialCount.Calibration + (int)TrialCount.Main) + " main trials.\n\nYou will not be shown if you answered correctly or not, but sometimes you will be asked whether you were more confident in that trial than in the previous trial.\n\nWhen you are ready and comfortable, press the right controller trigger to select <b>Next</b> and continue.");
-        //     uiManager.SetLeftButtonState(false, true, "Back");
-        //     uiManager.SetRightButtonState(true, true, "Next");
-
-        //     // Input delay
-        //     yield return StartCoroutine(WaitSeconds(0.15f, true));
         //     SetInputEnabled(true);
         // }
     }
@@ -593,27 +606,8 @@ public class ExperimentManager : MonoBehaviour
     /// Utility function to display the dot motion stimulus and wait for a response, used in all trial types
     /// </summary>
     /// <returns></returns>
-    private IEnumerator DisplayMotion(TrialType trial)
+    private IEnumerator DisplayMotion()
     {
-        // Setup the camera according to the active `TrialType`
-        if (trial == TrialType.Training_Trials_Binocular || trial == TrialType.Main_Trials_Binocular)
-        {
-            // Activate both cameras in binocular mode
-            cameraManager.SetActiveField(CameraManager.VisualField.Both, false);
-        }
-        else if (trial == TrialType.Training_Trials_Monocular || trial == TrialType.Main_Trials_Monocular)
-        {
-            // Activate one camera in monocular mode, without lateralization
-            CameraManager.VisualField TrialVisualField = UnityEngine.Random.value > 0.5 ? CameraManager.VisualField.Left : CameraManager.VisualField.Right;
-            cameraManager.SetActiveField(TrialVisualField, false);
-        }
-        else
-        {
-            // Activate one camera in lateralized mode, with lateralization enabled
-            CameraManager.VisualField TrialVisualField = UnityEngine.Random.value > 0.5 ? CameraManager.VisualField.Left : CameraManager.VisualField.Right;
-            cameraManager.SetActiveField(TrialVisualField, true);
-        }
-
         // Disable input and wait for fixation if enabled
         SetInputEnabled(false);
         stimulusManager.SetFixationCrossVisibility(true);
