@@ -247,7 +247,7 @@ public class ExperimentManager : MonoBehaviour
             return -1;
         }
 
-        for (int i = currentIndex - 1; i > 1; i --)
+        for (int i = currentIndex - 1; i >= 1; i--)
         {
             Trial PriorTrial = Session.instance.CurrentBlock.GetRelativeTrial(i);
             string PriorTrialType = PriorTrial.result["trial_type"].ToString();
@@ -257,7 +257,7 @@ public class ExperimentManager : MonoBehaviour
             if (PriorTrialType == Enum.GetName(typeof(TrialType), searchType) && PriorVisualField == visualField)
             {
                 // Found `Trial` with matching `TrialType`
-                return currentIndex;
+                return i;
             }
         }
 
