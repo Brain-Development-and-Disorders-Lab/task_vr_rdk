@@ -1,9 +1,6 @@
 ﻿using UnityEngine;
 using System;
 using System.Collections.Generic;
-using TMPro;
-using UnityEngine.UI;
-using System.Linq;
 
 namespace Stimuli
 {
@@ -26,17 +23,15 @@ namespace Stimuli
         [SerializeField]
         private GameObject fixationAnchor;
 
-        [SerializeField]
-        private float ScalingFactor = 3.0f; // Adjust scaling of stimulus to be viewable
-
         // Calculated dimensions of stimuli
+        public float ScalingFactor = 1.5f;
         private float StimulusDistance;
-        private readonly float ApertureWidth = 2.8f; // Degrees
+        private readonly float ApertureWidth = 8.0f; // Degrees
         private float ApertureWorldWidth; // Calculated from degrees into world units
         private float ApertureWorldHeight; // Calculated from degrees into world units
         private readonly float LineWidth = 0.04f; // Specified in supplementary materials
         private float LineWorldWidth;
-        private readonly float FixationDiameter = 0.04f; // Specified in supplementary materials
+        private readonly float FixationDiameter = 0.5f; // Adapted from supplementary materials
         private float FixationWorldRadius;
 
         // Dot parameters
@@ -45,8 +40,8 @@ namespace Stimuli
         private List<Dot> Dots = new();
         private float DotCoherence = 0.5f;
         private float DotDirection = (float)Math.PI; // "reference" dot type direction
-        private readonly float DotDensity = 64.0f;
-        private float DotWorldDensity;
+        private readonly float DotDensity = 16.0f;
+        private int DotCount = 0;
 
         // Timer for preserving consistent update rates
         private float UpdateTimer = 0.0f;
@@ -55,8 +50,7 @@ namespace Stimuli
         // Stimuli groups, assembled from individual components
         private Dictionary<StimulusType, List<GameObject>> Stimuli = new();
         private Dictionary<StimulusType, bool> StimuliVisibility = new();
-
-        private GameObject FixationCross;
+        private GameObject FixationCross; // Fixation cross parent GameObject
 
         // Slider-based button prefab
         public GameObject ButtonPrefab;
@@ -82,12 +76,12 @@ namespace Stimuli
         private void CalculateValues()
         {
             StimulusDistance = Mathf.Abs(transform.position.z - stimulusAnchor.transform.position.z);
-            ApertureWorldWidth = StimulusDistance * Mathf.Tan(ScalingFactor * ApertureWidth * (Mathf.PI / 180.0f)) * 2.0f;
+            ApertureWorldWidth = ScalingFactor * StimulusDistance * Mathf.Tan(ApertureWidth * (Mathf.PI / 180.0f));
             ApertureWorldHeight = ApertureWorldWidth * 2.0f;
-            LineWorldWidth = LineWidth;
-            FixationWorldRadius = FixationDiameter * 2.0f;
-            DotWorldRadius = StimulusDistance * Mathf.Tan(ScalingFactor * DotDiameter / 2 * (Mathf.PI / 180.0f));
-            DotWorldDensity = DotDensity * StimulusDistance * Mathf.Tan(ScalingFactor * 1.0f / 2.0f * (Mathf.PI / 180.0f)) * 2.0f;
+            LineWorldWidth = ScalingFactor * LineWidth;
+            FixationWorldRadius = ScalingFactor * StimulusDistance * Mathf.Tan(FixationDiameter / 2.0f * (Mathf.PI / 180.0f));
+            DotWorldRadius = ScalingFactor * StimulusDistance * Mathf.Tan(DotDiameter / 2.0f * (Mathf.PI / 180.0f));
+            DotCount = Mathf.RoundToInt(ScalingFactor * DotDensity * ApertureWidth * ApertureWidth * 2.0f * StimulusDistance * Mathf.Tan(Mathf.PI / 180.0f));
         }
 
         /// <summary>
@@ -190,6 +184,15 @@ namespace Stimuli
         }
 
         /// <summary>
+        /// Utility function to get the scaling factor applied to all visual stimuli
+        /// </summary>
+        /// <returns>`float` greater than or equal to `1.0f`</returns>
+        public float GetScalingFactor()
+        {
+            return ScalingFactor;
+        }
+
+        /// <summary>
         /// Utility function to create a 2D rectangle with an outline and no fill
         /// </summary>
         /// <param name="width">Width in world units</param>
@@ -261,8 +264,8 @@ namespace Stimuli
             horizontalLine.SetPosition(1, new Vector3(FixationWorldRadius, 0.0f, 0.0f));
             horizontalLine.material = new Material(Resources.Load<Material>("Materials/DefaultWhite"));
             horizontalLine.material.SetColor("_Color", CrossColor);
-            horizontalLine.startWidth = LineWorldWidth;
-            horizontalLine.endWidth = LineWorldWidth;
+            horizontalLine.startWidth = LineWorldWidth / 1.8f;
+            horizontalLine.endWidth = LineWorldWidth / 1.8f;
 
             // Create vertical component
             GameObject fixationObjectVertical = new GameObject();
@@ -278,8 +281,8 @@ namespace Stimuli
             verticalLine.SetPosition(1, new Vector3(0.0f, FixationWorldRadius, 0.0f));
             verticalLine.material = new Material(Resources.Load<Material>("Materials/DefaultWhite"));
             verticalLine.material.SetColor("_Color", CrossColor);
-            verticalLine.startWidth = LineWorldWidth;
-            verticalLine.endWidth = LineWorldWidth;
+            verticalLine.startWidth = LineWorldWidth / 1.8f;
+            verticalLine.endWidth = LineWorldWidth / 1.8f;
 
             return fixationObjectParent;
         }
@@ -310,7 +313,6 @@ namespace Stimuli
 
         public void CreateDots()
         {
-            int DotCount = (int)(ApertureWorldHeight * ApertureWorldWidth * DotWorldDensity);
             for (int i = 0; i < DotCount; i++)
             {
                 float x = UnityEngine.Random.Range(-ApertureWorldWidth / 2.0f, ApertureWorldWidth / 2.0f);
