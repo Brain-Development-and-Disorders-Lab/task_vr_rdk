@@ -759,9 +759,8 @@ MonoBehaviour:
   StimulusAnchor: {fileID: 1762882801}
   UIAnchor: {fileID: 1149117689}
   FixationAnchor: {fileID: 223726298}
-  FollowHeadMovement: 1
   OffsetAngle: 3
-  VerticalOffset: -1.1
+  VerticalOffset: -1.5
   UseCullingMask: 1
 --- !u!114 &215276332
 MonoBehaviour:
@@ -777,7 +776,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   stimulusAnchor: {fileID: 1762882801}
   fixationAnchor: {fileID: 223726298}
-  ScalingFactor: 2
+  ScalingFactor: 1.4
   ButtonPrefab: {fileID: 8522343874815329266, guid: e6126560ae55a4523a666cf82bc38f1e, type: 3}
 --- !u!114 &215276333
 MonoBehaviour:
@@ -810,7 +809,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   UICanvas: {fileID: 1149117692}
   ScalingFactor: 0.1
-  VerticalOffset: -1.1
+  VerticalOffset: -1.5
 --- !u!114 &215276335
 MonoBehaviour:
   m_ObjectHideFlags: 0
