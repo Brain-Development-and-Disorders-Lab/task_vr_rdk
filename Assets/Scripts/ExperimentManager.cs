@@ -795,7 +795,7 @@ public class ExperimentManager : MonoBehaviour
     /// <param name="inputs">`InputState` object</param>
     private void ApplyInputs(InputState inputs)
     {
-        ButtonSliderInput[] buttonControllers = stimulusManager.GetButtonControllers();
+        ButtonSliderInput[] buttonControllers = stimulusManager.GetButtonSliders();
 
         // Left controller inputs
         if (inputs.L_T_State >= TRIGGER_THRESHOLD || inputs.X_Pressed)
@@ -894,7 +894,7 @@ public class ExperimentManager : MonoBehaviour
     /// </summary>
     private void ButtonCooldown()
     {
-        foreach (ButtonSliderInput button in stimulusManager.GetButtonControllers())
+        foreach (ButtonSliderInput button in stimulusManager.GetButtonSliders())
         {
             button.SetSliderValue(button.GetSliderValue() - BUTTON_HOLD_FACTOR / 3.0f * Time.deltaTime);
         }
@@ -905,7 +905,7 @@ public class ExperimentManager : MonoBehaviour
     /// </summary>
     private void ResetButtons()
     {
-        foreach (ButtonSliderInput button in stimulusManager.GetButtonControllers())
+        foreach (ButtonSliderInput button in stimulusManager.GetButtonSliders())
         {
             button.SetSliderValue(0.0f);
         }
