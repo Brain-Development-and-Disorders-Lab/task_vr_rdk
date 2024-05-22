@@ -50,11 +50,12 @@ public class ExperimentManager : MonoBehaviour
     // Define the order of UXF `Blocks` and their expected block numbers (non-zero indexed)
     private enum BlockSequence
     {
-        Pre_Instructions = 1,
-        Training = 2,
-        Mid_Instructions = 3,
-        Main = 4,
-        Post_Instructions = 5
+        Setup = 1,
+        Pre_Instructions = 2,
+        Training = 3,
+        Mid_Instructions = 4,
+        Main = 5,
+        Post_Instructions = 6
     };
 
     // List to populate with
@@ -147,6 +148,7 @@ public class ExperimentManager : MonoBehaviour
 
         // Create a UXF `Block` for each part of the experiment, corresponding to `BlockSequence` enum
         // Use UXF `Session` to generate experiment timeline from shuffled "Training_" and "Main_" timelines
+        session.CreateBlock((int)TrialCount.Setup); // Pre-experiment setup
         session.CreateBlock((int)TrialCount.Pre_Instructions); // Pre-experiment instructions
         session.CreateBlock(trainingTimeline.Count); // Training trials
         session.CreateBlock((int)TrialCount.Mid_Instructions); // Mid-experiment instructions
@@ -187,22 +189,6 @@ public class ExperimentManager : MonoBehaviour
         Application.Quit();
     }
 
-    /// <summary>
-    /// Setup the "Instructions" screen presented to participants after any headset calibration operations.
-    /// </summary>
-    private void SetupInstructions()
-    {
-        // Setup the UI manager with instructions
-        uiManager.EnablePagination(true);
-        List<string> Instructions = new List<string>{
-            "Before continuing, ensure you are able to read this text easily.\n\nIf not, go ahead and adjust the headset placement. The rear of the headset should sit higher than the front of the headset, and the front pad above the lenses should be resting on your forehead.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue.",
-            "During the task, a small cross will be visible in the center of the screen.\n\nYou must maintain focus on this cross whenever it is visible.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue, or press <b>Left Trigger</b> to select <b>Back</b>.",
-            "While focusing on the cross, a field of moving dots will appear very briefly around the cross.\n\nSome of the dots will move only up or only down, and the rest of the dots will move randomly as a distraction.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue, or press <b>Left Trigger</b> to select <b>Back</b>.",
-            "After viewing the dots, you will be asked if you thought the dots moving together moved up or down.\n\nYou will have four options to choose from:\n<b>Up - Very Confident (Left Trigger)</b>\n<b>Up - Somewhat Confident (X)</b>\n<b>Down - Somewhat Confident (A)</b>\n<b>Down - Very Confident (Right Trigger)</b>\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue, or press <b>Left Trigger</b> to select <b>Back</b>.",
-            "You <b>must</b> select one of the four options, the one which best represents your decision and how confident you were in your decision. You will need to hold the button for an option approximately 1 second to select it.\n\nYou are about to start the task.\n\n\nWhen you are ready and comfortable, press <b>Right Trigger</b> to select <b>Continue</b> and begin."
-        };
-        uiManager.SetPages(Instructions);
-    }
 
     /// <summary>
     /// Get trials of a specific `TrialType` and `VisualField` from a `Block`. Used primarily to filter a set of `Trial`s
@@ -375,11 +361,23 @@ public class ExperimentManager : MonoBehaviour
         // Calculate coherences for right `Training_Trials_Lateralized` trials
         List<Trial> lateralizedTrialsRight = GetTrialsByType(TrialType.Training_Trials_Lateralized, CameraManager.VisualField.Right, BlockSequence.Training);
         mainLateralizedCoherenceRight = CalculateCoherencePairs(lateralizedTrialsRight, "training_lateralized_coherence_right");
+    }
 
-        // Clone and store coherence values as a string, separated by "," token
-        // Session.instance.CurrentTrial.result["combinedCoherences"] = Coherences["both_eyes"][LOW_INDEX] + "," + Coherences["both_eyes"][HIGH_INDEX];
-        // Session.instance.CurrentTrial.result["leftCoherences"] = Coherences["left_eye"][LOW_INDEX] + "," + Coherences["left_eye"][HIGH_INDEX];
-        // Session.instance.CurrentTrial.result["rightCoherences"] = Coherences["right_eye"][LOW_INDEX] + "," + Coherences["right_eye"][HIGH_INDEX];
+    /// <summary>
+    /// Setup the "Instructions" screen presented to participants after headset setup operations.
+    /// </summary>
+    private void SetupInstructions()
+    {
+        // Setup the UI manager with instructions
+        uiManager.EnablePagination(true);
+        List<string> Instructions = new List<string>{
+            "Before continuing, ensure you are able to read this text easily.\n\nIf not, go ahead and adjust the headset placement. The rear of the headset should sit higher than the front of the headset, and the front pad above the lenses should be resting on your forehead.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue.",
+            "During the task, a small cross will be visible in the center of the screen.\n\nYou must maintain focus on this cross whenever it is visible.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue, or press <b>Left Trigger</b> to select <b>Back</b>.",
+            "While focusing on the cross, a field of moving dots will appear very briefly around the cross.\n\nSome of the dots will move only up or only down, and the rest of the dots will move randomly as a distraction.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue, or press <b>Left Trigger</b> to select <b>Back</b>.",
+            "After viewing the dots, you will be asked if you thought the dots moving together moved up or down.\n\nYou will have four options to choose from:\n<b>Up - Very Confident (Left Trigger)</b>\n<b>Up - Somewhat Confident (X)</b>\n<b>Down - Somewhat Confident (A)</b>\n<b>Down - Very Confident (Right Trigger)</b>\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue, or press <b>Left Trigger</b> to select <b>Back</b>.",
+            "You <b>must</b> select one of the four options, the one which best represents your decision and how confident you were in your decision. You will need to hold the button for an option approximately 1 second to select it.\n\nYou are about to start the task.\n\n\nWhen you are ready and comfortable, press <b>Right Trigger</b> to select <b>Continue</b> and begin."
+        };
+        uiManager.SetPages(Instructions);
     }
 
     /// <summary>
@@ -523,7 +521,19 @@ public class ExperimentManager : MonoBehaviour
         // Store the current `TrialType`
         Session.instance.CurrentTrial.result["trial_type"] = Enum.GetName(typeof(TrialType), activeTrialType);
 
-        if (block == BlockSequence.Pre_Instructions)
+        if (block == BlockSequence.Setup)
+        {
+            uiManager.SetVisible(true);
+            uiManager.SetHeader("Eye-Tracking Setup");
+            uiManager.SetBody("You will be shown a red dot in front of you. Follow the dot movement with your eyes. After a brief series of movements, the calibration will automatically end and you will be shown the task instructions.\n\nPress the right controller trigger to select <b>Start</b>.");
+            uiManager.SetLeftButtonState(false, false, "");
+            uiManager.SetRightButtonState(true, true, "Start");
+
+            // Input delay
+            yield return StartCoroutine(WaitSeconds(0.25f, true));
+            SetIsInputEnabled(true);
+        }
+        else if (block == BlockSequence.Pre_Instructions)
         {
             SetupInstructions();
             uiManager.SetVisible(true);
@@ -573,18 +583,6 @@ public class ExperimentManager : MonoBehaviour
             yield return StartCoroutine(WaitSeconds(1.0f, true));
             SetIsInputEnabled(true);
         }
-        // else if (block == TrialType.Setup)
-        // {
-        //     uiManager.SetVisible(true);
-        //     uiManager.SetHeader("Eye-Tracking Setup");
-        //     uiManager.SetBody("You will be shown a red dot in front of you. Follow the dot movement with your eyes. After a brief series of movements, the calibration will automatically end and you will be shown the task instructions.\n\nPress the right controller trigger to select <b>Start</b>.");
-        //     uiManager.SetLeftButtonState(false, false, "");
-        //     uiManager.SetRightButtonState(true, true, "Start");
-
-        //     // Input delay
-        //     yield return StartCoroutine(WaitSeconds(0.25f, true));
-        //     SetIsInputEnabled(true);
-        // }
     }
 
     /// <summary>
@@ -785,6 +783,11 @@ public class ExperimentManager : MonoBehaviour
                 activeBlock == BlockSequence.Main;
     }
 
+    private bool IsSetupScreen()
+    {
+        return activeBlock == BlockSequence.Setup;
+    }
+
     /// <summary>
     /// Input function to handle `InputState` object and update button presentation or take action depending on
     /// the active `TrialType`
@@ -978,25 +981,25 @@ public class ExperimentManager : MonoBehaviour
                         }
                         isInputReset = false;
                     }
-                    // else if (IsSetupScreen() && isInputReset)
-                    // {
-                    //     // Hide the UI
-                    //     uiManager.SetVisible(false);
+                    else if (IsSetupScreen() && isInputReset)
+                    {
+                        // Hide the UI
+                        uiManager.SetVisible(false);
 
-                    //     // Only provide haptic feedback before calibration is run
-                    //     if (!calibrationManager.IsCalibrationActive() && !calibrationManager.CalibrationStatus())
-                    //     {
-                    //         // Trigger controller haptics
-                    //         VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
-                    //     }
+                        // Only provide haptic feedback before calibration is run
+                        if (!calibrationManager.IsCalibrationActive() && !calibrationManager.CalibrationStatus())
+                        {
+                            // Trigger controller haptics
+                            VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
+                        }
 
-                    //     // Trigger eye-tracking calibration the end the trial
-                    //     calibrationManager.RunCalibration(() =>
-                    //     {
-                    //         EndTrial();
-                    //     });
-                    //     isInputReset = false;
-                    // }
+                        // Trigger eye-tracking calibration the end the trial
+                        calibrationManager.RunCalibration(() =>
+                        {
+                            EndTrial();
+                        });
+                        isInputReset = false;
+                    }
                 }
 
                 // Reset input state to prevent holding buttons to repeatedly select options
