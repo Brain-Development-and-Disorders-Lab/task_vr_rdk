@@ -524,8 +524,8 @@ public class ExperimentManager : MonoBehaviour
         if (block == BlockSequence.Setup)
         {
             uiManager.SetVisible(true);
-            uiManager.SetHeader("Eye-Tracking Setup");
-            uiManager.SetBody("You will be shown a red dot in front of you. Follow the dot movement with your eyes. After a brief series of movements, the calibration will automatically end and you will be shown the task instructions.\n\nPress the right controller trigger to select <b>Start</b>.");
+            uiManager.SetHeaderText("Eye-Tracking Setup");
+            uiManager.SetBodyText("You will be shown a red dot in front of you. Follow the dot movement with your eyes. After a brief series of movements, the calibration will automatically end and you will be shown the task instructions.\n\nPress the right controller trigger to select <b>Start</b>.");
             uiManager.SetLeftButtonState(false, false, "");
             uiManager.SetRightButtonState(true, true, "Start");
 
@@ -537,7 +537,7 @@ public class ExperimentManager : MonoBehaviour
         {
             SetupInstructions();
             uiManager.SetVisible(true);
-            uiManager.SetHeader("Instructions");
+            uiManager.SetHeaderText("Instructions");
             uiManager.SetLeftButtonState(false, true, "Back");
             uiManager.SetRightButtonState(true, true, "Next");
 
@@ -559,8 +559,8 @@ public class ExperimentManager : MonoBehaviour
             cameraManager.SetActiveField(CameraManager.VisualField.Both);
 
             uiManager.SetVisible(true);
-            uiManager.SetHeader("Main Trials");
-            uiManager.SetBody("That concludes the practice trials. You will now play " + mainTimeline.Count + " main trials.\n\nYou will not be shown if you answered correctly or not, but sometimes you will be asked whether you were more confident in that trial than in the previous trial.\n\nWhen you are ready and comfortable, press the right controller trigger to select <b>Next</b> and continue.");
+            uiManager.SetHeaderText("Main Trials");
+            uiManager.SetBodyText("That concludes the practice trials. You will now play " + mainTimeline.Count + " main trials.\n\nYou will not be shown if you answered correctly or not, but sometimes you will be asked whether you were more confident in that trial than in the previous trial.\n\nWhen you are ready and comfortable, press the right controller trigger to select <b>Next</b> and continue.");
             uiManager.SetLeftButtonState(false, true, "Back");
             uiManager.SetRightButtonState(true, true, "Next");
 
@@ -574,8 +574,8 @@ public class ExperimentManager : MonoBehaviour
             cameraManager.SetActiveField(CameraManager.VisualField.Both);
 
             uiManager.SetVisible(true);
-            uiManager.SetHeader("Complete");
-            uiManager.SetBody("That concludes all the trials of this task. Please notify the experiment facilitator, and you can remove the headset carefully after releasing the rear adjustment wheel.");
+            uiManager.SetHeaderText("Complete");
+            uiManager.SetBodyText("That concludes all the trials of this task. Please notify the experiment facilitator, and you can remove the headset carefully after releasing the rear adjustment wheel.");
             uiManager.SetLeftButtonState(false, false, "Back");
             uiManager.SetRightButtonState(true, true, "Finish");
 
