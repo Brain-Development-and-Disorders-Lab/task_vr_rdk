@@ -38,13 +38,8 @@ namespace UXF
         private string TrackedEye = "left"; // Specify if the left or right eye
         private Vector3 GazeEstimate;
 
-        // Other references
-        private VRLogger logger;
-
         public void Start()
         {
-            logger = FindObjectOfType<VRLogger>();
-
             // Get calibration component
             calibrationManager = FindObjectOfType<CalibrationManager>();
 

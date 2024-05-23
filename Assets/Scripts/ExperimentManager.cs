@@ -93,6 +93,12 @@ public class ExperimentManager : MonoBehaviour
     private CalibrationManager calibrationManager;
 
     // Store references to EyePositionTracker instances
+    [Header("Gaze Fixation Parameters")]
+    [Tooltip("Require a central fixation prior to presenting the trial stimuli")]
+    public bool RequireFixation = true; // Require participant to be fixation on center before trial begins
+    [Tooltip("Radius (in world units) around the central fixation point which registers as fixated")]
+    public float FixationRadius = 0.5f; // Specify the fixation radius
+    [Header("EyePositionTrackers")]
     public EyePositionTracker LeftEyeTracker;
     public EyePositionTracker RightEyeTracker;
     private int fixationMeasurementCounter = 0; // Counter for number of fixation measurements
@@ -101,7 +107,6 @@ public class ExperimentManager : MonoBehaviour
     // Input parameters
     private bool isInputEnabled = false; // Input is accepted
     private bool isInputReset = true; // Flag to prevent input being held down
-    public bool RequireFixation = true; // Require participant to be fixation on center before trial begins
     private InputState lastInputState; // Prior frame input state
 
     // Input button slider GameObjects and variables
@@ -189,7 +194,6 @@ public class ExperimentManager : MonoBehaviour
         Application.Quit();
     }
 
-
     /// <summary>
     /// Get trials of a specific `TrialType` and `VisualField` from a `Block`. Used primarily to filter a set of `Trial`s
     /// for calculation of coherence values that are specific to the search parameters.
@@ -201,7 +205,6 @@ public class ExperimentManager : MonoBehaviour
     private List<Trial> GetTrialsByType(TrialType trialType, CameraManager.VisualField visualField, BlockSequence blockIndex)
     {
         List<Trial> result = new();
-
         Block searchBlock = Session.instance.GetBlock((int)blockIndex);
         if (searchBlock.trials.Count > 0)
         {
@@ -216,7 +219,6 @@ public class ExperimentManager : MonoBehaviour
                 }
             }
         }
-
         return result;
     }
 
@@ -265,7 +267,6 @@ public class ExperimentManager : MonoBehaviour
         bool currentTrialAccuracy = (bool)currentTrial.result["correct_selection"];
         int currentTrialIndex = currentTrial.numberInBlock;
         float currentTrialCoherence = (float)currentTrial.result["active_coherence"];
-
         if (currentTrialAccuracy == true)
         {
             // Search for previous trial of matching `TrialType` for comparison
@@ -616,6 +617,7 @@ public class ExperimentManager : MonoBehaviour
 
         // Present fixation stimulus
         stimulusManager.SetVisible(StimulusType.Fixation, true);
+
         // Wait either for fixation or a fixed duration if fixation not required
         if (RequireFixation)
         {
@@ -676,6 +678,7 @@ public class ExperimentManager : MonoBehaviour
 
     public void EndTrial()
     {
+        // Store a timestamp and end the trial
         Session.instance.CurrentTrial.result["trial_end"] = Time.time;
         Session.instance.EndCurrentTrial();
 
@@ -714,17 +717,16 @@ public class ExperimentManager : MonoBehaviour
         Vector3 rightGaze = RightEyeTracker.GetGazeEstimate();
         Vector3 worldPosition = stimulusManager.GetFixationAnchor().transform.position;
 
-        float gazeThreshold = 0.5f; // Error threshold (world units)
         bool isFixated = false; // Fixated state
-        if ((Mathf.Abs(leftGaze.x - worldPosition.x) <= gazeThreshold && Mathf.Abs(leftGaze.y - worldPosition.y) <= gazeThreshold) || (Mathf.Abs(rightGaze.x - worldPosition.x) <= gazeThreshold && Mathf.Abs(rightGaze.y - worldPosition.y) <= gazeThreshold))
+        // If the gaze is directed in fixation, increment the counter to signify a measurement
+        if ((Mathf.Abs(leftGaze.x - worldPosition.x) <= FixationRadius && Mathf.Abs(leftGaze.y - worldPosition.y) <= FixationRadius) || (Mathf.Abs(rightGaze.x - worldPosition.x) <= FixationRadius && Mathf.Abs(rightGaze.y - worldPosition.y) <= FixationRadius))
         {
-            // If the gaze is directed in fixation, increment the counter to signify a measurement
             fixationMeasurementCounter += 1;
         }
 
+        // Register as fixated if the required number of measurements have been taken
         if (fixationMeasurementCounter >= REQUIRED_FIXATION_MEASUREMENTS)
         {
-            // Register as fixated if the required number of measurements have been taken
             isFixated = true;
             fixationMeasurementCounter = 0;
         }
