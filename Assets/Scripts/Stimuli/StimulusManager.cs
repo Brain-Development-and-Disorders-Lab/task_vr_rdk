@@ -1,9 +1,6 @@
 ﻿using UnityEngine;
 using System;
 using System.Collections.Generic;
-using TMPro;
-using UnityEngine.UI;
-using System.Linq;
 
 namespace Stimuli
 {
@@ -26,53 +23,50 @@ namespace Stimuli
         [SerializeField]
         private GameObject fixationAnchor;
 
-        [SerializeField]
-        private float ScalingFactor = 3.0f; // Adjust scaling of stimulus to be viewable
-
         // Calculated dimensions of stimuli
-        private float StimulusDistance;
-        private readonly float ApertureWidth = 2.8f; // Degrees
-        private float ApertureWorldWidth; // Calculated from degrees into world units
-        private float ApertureWorldHeight; // Calculated from degrees into world units
-        private readonly float LineWidth = 0.04f; // Specified in supplementary materials
-        private float LineWorldWidth;
-        private readonly float FixationDiameter = 0.04f; // Specified in supplementary materials
-        private float FixationWorldRadius;
+        public float ScalingFactor = 1.5f;
+        private float stimulusDistance;
+        private readonly float APERTURE_WIDTH = 8.0f; // Degrees
+        private float apertureWorldWidth; // Calculated from degrees into world units
+        private float apertureWorldHeight; // Calculated from degrees into world units
+        private readonly float LINE_WIDTH = 0.04f; // Specified in supplementary materials
+        private float lineWorldWidth;
+        private readonly float FIXATION_DIAMETER = 0.5f; // Adapted from supplementary materials
+        private float fixationWorldRadius;
 
         // Dot parameters
-        private readonly float DotDiameter = 0.12f; // Specified in supplementary materials
-        private float DotWorldRadius;
-        private List<Dot> Dots = new();
-        private float DotCoherence = 0.5f;
-        private float DotDirection = (float)Math.PI; // "reference" dot type direction
-        private readonly float DotDensity = 64.0f;
-        private float DotWorldDensity;
+        private readonly float DOT_DIAMETER = 0.12f; // Specified in supplementary materials
+        private float dotWorldRadius;
+        private List<Dot> dots = new();
+        private float dotCoherence = 0.5f;
+        private float dotDirection = (float)Math.PI; // "reference" dot type direction
+        private readonly float DOT_DENSITY = 16.0f;
+        private int dotCount = 0;
 
         // Timer for preserving consistent update rates
-        private float UpdateTimer = 0.0f;
+        private float updateTimer = 0.0f;
         private readonly int REFRESH_RATE = 90; // hertz
 
         // Stimuli groups, assembled from individual components
-        private Dictionary<StimulusType, List<GameObject>> Stimuli = new();
-        private Dictionary<StimulusType, bool> StimuliVisibility = new();
-
-        private GameObject FixationCross;
+        private Dictionary<StimulusType, List<GameObject>> stimuliCollection = new();
+        private Dictionary<StimulusType, bool> stimuliVisibility = new();
+        private GameObject fixationCross; // Fixation cross parent GameObject
 
         // Slider-based button prefab
         public GameObject ButtonPrefab;
-        private ButtonSliderInput[] ButtonSliders = new ButtonSliderInput[4];
+        private ButtonSliderInput[] buttonSliders = new ButtonSliderInput[4];
 
         // Initialize StimulusManager
         void Start()
         {
             CalculateValues(); // Run pre-component calculations to ensure consistent world sizing
-            FixationCross = CreateFixationCross();
+            fixationCross = CreateFixationCross();
 
             foreach (StimulusType stimuli in Enum.GetValues(typeof(StimulusType)))
             {
                 // Create the named set of components and store
-                Stimuli.Add(stimuli, CreateStimulus(stimuli));
-                StimuliVisibility.Add(stimuli, false);
+                stimuliCollection.Add(stimuli, CreateStimulus(stimuli));
+                stimuliVisibility.Add(stimuli, false);
             }
         }
 
@@ -81,13 +75,13 @@ namespace Stimuli
         /// </summary>
         private void CalculateValues()
         {
-            StimulusDistance = Mathf.Abs(transform.position.z - stimulusAnchor.transform.position.z);
-            ApertureWorldWidth = StimulusDistance * Mathf.Tan(ScalingFactor * ApertureWidth * (Mathf.PI / 180.0f)) * 2.0f;
-            ApertureWorldHeight = ApertureWorldWidth * 2.0f;
-            LineWorldWidth = LineWidth;
-            FixationWorldRadius = FixationDiameter * 2.0f;
-            DotWorldRadius = StimulusDistance * Mathf.Tan(ScalingFactor * DotDiameter / 2 * (Mathf.PI / 180.0f));
-            DotWorldDensity = DotDensity * StimulusDistance * Mathf.Tan(ScalingFactor * 1.0f / 2.0f * (Mathf.PI / 180.0f)) * 2.0f;
+            stimulusDistance = Mathf.Abs(transform.position.z - stimulusAnchor.transform.position.z);
+            apertureWorldWidth = ScalingFactor * stimulusDistance * Mathf.Tan(APERTURE_WIDTH * (Mathf.PI / 180.0f));
+            apertureWorldHeight = apertureWorldWidth * 2.0f;
+            lineWorldWidth = ScalingFactor * LINE_WIDTH;
+            fixationWorldRadius = ScalingFactor * stimulusDistance * Mathf.Tan(FIXATION_DIAMETER / 2.0f * (Mathf.PI / 180.0f));
+            dotWorldRadius = ScalingFactor * stimulusDistance * Mathf.Tan(DOT_DIAMETER / 2.0f * (Mathf.PI / 180.0f));
+            dotCount = Mathf.RoundToInt(ScalingFactor * DOT_DENSITY * APERTURE_WIDTH * APERTURE_WIDTH * 2.0f * stimulusDistance * Mathf.Tan(Mathf.PI / 180.0f));
         }
 
         /// <summary>
@@ -102,31 +96,31 @@ namespace Stimuli
             if (stimulus == StimulusType.Fixation)
             {
                 // Generate aperture
-                StaticComponents.Add(CreateRectangle(ApertureWorldWidth, ApertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
+                StaticComponents.Add(CreateRectangle(apertureWorldWidth, apertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
             }
             else if (stimulus == StimulusType.Decision)
             {
                 // Generate aperture
-                StaticComponents.Add(CreateRectangle(ApertureWorldWidth, ApertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
+                StaticComponents.Add(CreateRectangle(apertureWorldWidth, apertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
                 // Add selection buttons
                 StaticComponents.Add(CreateDecisionButtons());
             }
             else if (stimulus == StimulusType.Motion)
             {
                 // Generate aperture
-                StaticComponents.Add(CreateRectangle(ApertureWorldWidth, ApertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
+                StaticComponents.Add(CreateRectangle(apertureWorldWidth, apertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
                 // Add dots
                 CreateDots();
             }
             else if (stimulus == StimulusType.Feedback_Correct)
             {
                 // Generate aperture
-                StaticComponents.Add(CreateRectangle(ApertureWorldWidth, ApertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
+                StaticComponents.Add(CreateRectangle(apertureWorldWidth, apertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
             }
             else if (stimulus == StimulusType.Feedback_Incorrect)
             {
                 // Generate aperture
-                StaticComponents.Add(CreateRectangle(ApertureWorldWidth, ApertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
+                StaticComponents.Add(CreateRectangle(apertureWorldWidth, apertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
             }
             else
             {
@@ -142,13 +136,13 @@ namespace Stimuli
         /// <param name="visibility">Visibility state, `true` is visible, `false` is not</param>
         public void SetVisible(StimulusType stimulus, bool visibility)
         {
-            // Apply visibility to Dots separately, if this is a stimulus that uses Dots
+            // Apply visibility to dots separately, if this is a stimulus that uses dots
             if (stimulus == StimulusType.Motion)
             {
-                foreach (Dot dot in Dots)
+                foreach (Dot dot in dots)
                 {
                     // Only set the dot to be visible if it is within the aperture
-                    if (visibility == true & Mathf.Sqrt(Mathf.Pow(dot.GetPosition().x, 2.0f) + Mathf.Pow(dot.GetPosition().y, 2.0f)) <= ApertureWorldWidth / 2.0f)
+                    if (visibility == true & Mathf.Sqrt(Mathf.Pow(dot.GetPosition().x, 2.0f) + Mathf.Pow(dot.GetPosition().y, 2.0f)) <= apertureWorldWidth / 2.0f)
                     {
                         dot.SetVisible(true);
                     }
@@ -161,7 +155,7 @@ namespace Stimuli
 
             // Apply visibility to general stimuli components
             List<GameObject> StimuliGroup;
-            Stimuli.TryGetValue(stimulus, out StimuliGroup);
+            stimuliCollection.TryGetValue(stimulus, out StimuliGroup);
 
             if (StimuliGroup.Count > 0)
             {
@@ -169,7 +163,7 @@ namespace Stimuli
                 {
                     component.SetActive(visibility);
                 }
-                StimuliVisibility[stimulus] = visibility;
+                stimuliVisibility[stimulus] = visibility;
             }
             else
             {
@@ -183,10 +177,19 @@ namespace Stimuli
         /// <param name="visibility">Visibility state of all stimuli, `true` shows all, `false` hides all</param>
         public void SetVisibleAll(bool visibility)
         {
-            foreach (StimulusType Key in Stimuli.Keys)
+            foreach (StimulusType Key in stimuliCollection.Keys)
             {
                 SetVisible(Key, visibility);
             }
+        }
+
+        /// <summary>
+        /// Utility function to get the scaling factor applied to all visual stimuli
+        /// </summary>
+        /// <returns>`float` greater than or equal to `1.0f`</returns>
+        public float GetScalingFactor()
+        {
+            return ScalingFactor;
         }
 
         /// <summary>
@@ -223,8 +226,8 @@ namespace Stimuli
             rectangleLine.SetPositions(linePositions);
             rectangleLine.material = new Material(Resources.Load<Material>("Materials/DefaultWhite"));
             rectangleLine.material.SetColor("_Color", color);
-            rectangleLine.startWidth = LineWorldWidth;
-            rectangleLine.endWidth = LineWorldWidth;
+            rectangleLine.startWidth = lineWorldWidth;
+            rectangleLine.endWidth = lineWorldWidth;
 
             return rectangleObject;
         }
@@ -257,12 +260,12 @@ namespace Stimuli
             LineRenderer horizontalLine = fixationObjectHorizontal.GetComponent<LineRenderer>();
             horizontalLine.useWorldSpace = false;
             horizontalLine.positionCount = 2;
-            horizontalLine.SetPosition(0, new Vector3(-FixationWorldRadius, 0.0f, 0.0f));
-            horizontalLine.SetPosition(1, new Vector3(FixationWorldRadius, 0.0f, 0.0f));
+            horizontalLine.SetPosition(0, new Vector3(-fixationWorldRadius, 0.0f, 0.0f));
+            horizontalLine.SetPosition(1, new Vector3(fixationWorldRadius, 0.0f, 0.0f));
             horizontalLine.material = new Material(Resources.Load<Material>("Materials/DefaultWhite"));
             horizontalLine.material.SetColor("_Color", CrossColor);
-            horizontalLine.startWidth = LineWorldWidth;
-            horizontalLine.endWidth = LineWorldWidth;
+            horizontalLine.startWidth = lineWorldWidth / 1.8f;
+            horizontalLine.endWidth = lineWorldWidth / 1.8f;
 
             // Create vertical component
             GameObject fixationObjectVertical = new GameObject();
@@ -274,24 +277,24 @@ namespace Stimuli
             LineRenderer verticalLine = fixationObjectVertical.GetComponent<LineRenderer>();
             verticalLine.useWorldSpace = false;
             verticalLine.positionCount = 2;
-            verticalLine.SetPosition(0, new Vector3(0.0f, -FixationWorldRadius, 0.0f));
-            verticalLine.SetPosition(1, new Vector3(0.0f, FixationWorldRadius, 0.0f));
+            verticalLine.SetPosition(0, new Vector3(0.0f, -fixationWorldRadius, 0.0f));
+            verticalLine.SetPosition(1, new Vector3(0.0f, fixationWorldRadius, 0.0f));
             verticalLine.material = new Material(Resources.Load<Material>("Materials/DefaultWhite"));
             verticalLine.material.SetColor("_Color", CrossColor);
-            verticalLine.startWidth = LineWorldWidth;
-            verticalLine.endWidth = LineWorldWidth;
+            verticalLine.startWidth = lineWorldWidth / 1.8f;
+            verticalLine.endWidth = lineWorldWidth / 1.8f;
 
             return fixationObjectParent;
         }
 
         public void SetFixationCrossVisibility(bool isVisible)
         {
-            FixationCross.SetActive(isVisible);
+            fixationCross.SetActive(isVisible);
         }
 
         public void SetFixationCrossColor(string color)
         {
-            LineRenderer[] renderers = FixationCross.GetComponentsInChildren<LineRenderer>();
+            LineRenderer[] renderers = fixationCross.GetComponentsInChildren<LineRenderer>();
             foreach (LineRenderer renderer in renderers)
             {
                 if (color == "white") {
@@ -310,14 +313,13 @@ namespace Stimuli
 
         public void CreateDots()
         {
-            int DotCount = (int)(ApertureWorldHeight * ApertureWorldWidth * DotWorldDensity);
-            for (int i = 0; i < DotCount; i++)
+            for (int i = 0; i < dotCount; i++)
             {
-                float x = UnityEngine.Random.Range(-ApertureWorldWidth / 2.0f, ApertureWorldWidth / 2.0f);
-                float y = UnityEngine.Random.Range(-ApertureWorldHeight / 2.0f, ApertureWorldHeight / 2.0f);
+                float x = UnityEngine.Random.Range(-apertureWorldWidth / 2.0f, apertureWorldWidth / 2.0f);
+                float y = UnityEngine.Random.Range(-apertureWorldHeight / 2.0f, apertureWorldHeight / 2.0f);
 
-                string dotBehavior = UnityEngine.Random.value > DotCoherence ? "random" : "reference";
-                Dots.Add(new Dot(stimulusAnchor, DotWorldRadius, ApertureWorldWidth, ApertureWorldHeight, dotBehavior, x, y, false));
+                string dotBehavior = UnityEngine.Random.value > dotCoherence ? "random" : "reference";
+                dots.Add(new Dot(stimulusAnchor, dotWorldRadius, apertureWorldWidth, apertureWorldHeight, dotBehavior, x, y, false));
             }
         }
 
@@ -362,7 +364,7 @@ namespace Stimuli
             S_D_Slider.SetFillColor(new Color(81f/255f, 178f/255f, 252f/255f));
 
             // Store the slider controllers
-            ButtonSliders = new ButtonSliderInput[] {
+            buttonSliders = new ButtonSliderInput[] {
                 V_U_Slider,
                 S_U_Slider,
                 V_D_Slider,
@@ -372,14 +374,14 @@ namespace Stimuli
             return buttonDecisionObject;
         }
 
-        public ButtonSliderInput[] GetButtonControllers()
+        public ButtonSliderInput[] GetButtonSliders()
         {
-            return ButtonSliders;
+            return buttonSliders;
         }
 
         public float GetCoherence()
         {
-            return DotCoherence;
+            return dotCoherence;
         }
 
         public void SetCoherence(float coherence)
@@ -387,32 +389,32 @@ namespace Stimuli
             // Update the stored coherence value
             if (coherence >= 0.0f && coherence <= 1.0f)
             {
-                DotCoherence = coherence;
+                dotCoherence = coherence;
             }
 
             // Apply the coherence across all dots
-            foreach (Dot dot in Dots)
+            foreach (Dot dot in dots)
             {
-                string dotBehavior = UnityEngine.Random.value > DotCoherence ? "random" : "reference";
+                string dotBehavior = UnityEngine.Random.value > dotCoherence ? "random" : "reference";
                 dot.SetBehavior(dotBehavior);
             }
         }
 
         public float GetDirection()
         {
-            return DotDirection;
+            return dotDirection;
         }
 
         public void SetDirection(float direction)
         {
-            DotDirection = direction;
+            dotDirection = direction;
 
             // Apply the direction across all "reference" type dots
-            foreach (Dot dot in Dots)
+            foreach (Dot dot in dots)
             {
                 if (dot.GetBehavior() == "reference")
                 {
-                    dot.SetDirection(DotDirection);
+                    dot.SetDirection(dotDirection);
                 }
             }
         }
@@ -424,7 +426,7 @@ namespace Stimuli
         /// <returns>Stimulus width, measured in world units</returns>
         public float GetApertureWidth()
         {
-            return ApertureWorldWidth;
+            return apertureWorldWidth;
         }
 
         public GameObject GetAnchor()
@@ -434,21 +436,21 @@ namespace Stimuli
 
         void Update()
         {
-            UpdateTimer += Time.deltaTime;
+            updateTimer += Time.deltaTime;
 
             // Apply updates at the frequency of the desired refresh rate
-            if (UpdateTimer >= 1.0f / REFRESH_RATE)
+            if (updateTimer >= 1.0f / REFRESH_RATE)
             {
-                if (StimuliVisibility[StimulusType.Motion] == true)
+                if (stimuliVisibility[StimulusType.Motion] == true)
                 {
-                    foreach (Dot dot in Dots)
+                    foreach (Dot dot in dots)
                     {
                         dot.Update();
                     }
                 }
 
                 // Reset the update timer
-                UpdateTimer = 0.0f;
+                updateTimer = 0.0f;
             }
         }
     }

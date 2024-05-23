@@ -6,34 +6,23 @@ using Utilities;
 public class CameraManager : MonoBehaviour
 {
     // Left and Right eye cameras
-    [SerializeField]
-    private Camera LeftCamera;
-    [SerializeField]
-    private Camera RightCamera;
-    [SerializeField]
-    private OVRCameraRig CameraRig;
+    public Camera LeftCamera;
+    public Camera RightCamera;
+    public OVRCameraRig CameraRig;
 
     // Anchor for stimulus, this is critical for true dichoptic presentation
-    [SerializeField]
-    private GameObject StimulusAnchor;
-    [SerializeField]
-    private GameObject UIAnchor;
-    [SerializeField]
-    private GameObject FixationAnchor;
-    [SerializeField]
-    private bool FollowHeadMovement;
-
-    private float StimulusAnchorDistance;
+    public GameObject StimulusAnchor;
+    public GameObject UIAnchor;
+    public GameObject FixationAnchor;
 
     // Visual offset angle to place stimulus in single hemifield
-    [SerializeField]
-    private float OffsetAngle = 3.0f; // Degrees
-    [SerializeField]
-    private float VerticalOffset = -2.0f;
-    private float StimulusRadius = 0.0f; // Additional world-units to offset the stimulus
-    private float TotalOffset = 0.0f;
+    public float OffsetAngle = 3.0f; // Degrees
+    public float VerticalOffset = -2.0f;
+    private float stimulusWidth = 0.0f; // Additional world-units to offset the stimulus
+    private float totalOffset = 0.0f;
+    private float stimulusAnchorDistance;
 
-    // Optional parameter to use a culling mask for full "eye-patch" effect
+    // Parameter to use a culling mask for full "eye-patch" effect
     [Tooltip("Enable a layer-based mask to provide a full eye-patch effect.")]
     public bool UseCullingMask = false;
 
@@ -62,25 +51,28 @@ public class CameraManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Calculate the offset distance to accurately present the stimulus 2.5-3 degrees offset from the central
+    /// fixation point.
+    /// </summary>
     private void CalculateOffset()
     {
         // Calculate required visual offsets for dichoptic presentation
         // Step 1: Calculate IPD
         float ipd = Mathf.Abs(LeftCamera.transform.position.x - RightCamera.transform.position.x);
 
-        StimulusAnchorDistance = Mathf.Abs(LeftCamera.transform.position.z - StimulusAnchor.transform.position.z);
+        // Step 2: Calculate the distance (d) of the view position to the stimulus, world units
+        stimulusAnchorDistance = Mathf.Abs(LeftCamera.transform.position.z - StimulusAnchor.transform.position.z);
 
-        // Step 2: Calculate lambda (angle between gaze vector and static eye position vector, using IPD)
-        float lambda = Mathf.Atan((ipd / 2) / StimulusAnchorDistance);
+        // Step 3: Calculate theta (angle between static eye position vector and future offset vector), radians
+        float theta = OffsetAngle * Mathf.PI / 180;
 
-        // Step 3: Calculate omega (angle between static eye position vector and future offset vector)
-        float omega = (OffsetAngle * Mathf.PI / 180) - lambda;
-
-        // Step 4: Calculate baseline offset distance from static eye position to offset position
-        float offsetDistance = StimulusAnchorDistance * Mathf.Tan(omega);
+        // Step 4: Calculate baseline offset distance from static eye position to offset position, world units
+        float offsetDistance = stimulusAnchorDistance * Mathf.Tan(theta);
 
         // Step 5: Calculate total offset value
-        TotalOffset = offsetDistance + StimulusRadius + (ipd / 2);
+        totalOffset = offsetDistance + (stimulusWidth / 2.0f) + (ipd / 2.0f);
+        Debug.Log("Calculated CameraManager offset distance: " + offsetDistance);
     }
 
     /// <summary>
@@ -94,13 +86,16 @@ public class CameraManager : MonoBehaviour
             activeField = field;
         }
 
+        // Update the vertical offset of the fixation cross
+        FixationAnchor.transform.localPosition = new Vector3(0.0f, 0.0f + VerticalOffset, stimulusAnchorDistance);
+
         // Apply local offset adjustments for lateralized presentation and culling mask for eye-patch effect
         if (field == VisualField.Left)
         {
             // Left visual presentation
             if (lateralized == true)
             {
-                StimulusAnchor.transform.localPosition = new Vector3(0.0f - TotalOffset, 0.0f + VerticalOffset, StimulusAnchorDistance);
+                StimulusAnchor.transform.localPosition = new Vector3(0.0f - totalOffset, 0.0f + VerticalOffset, stimulusAnchorDistance);
             }
 
             if (UseCullingMask)
@@ -114,7 +109,7 @@ public class CameraManager : MonoBehaviour
             // Right visual presentation
             if (lateralized == true)
             {
-                StimulusAnchor.transform.localPosition = new Vector3(0.0f + TotalOffset, 0.0f + VerticalOffset, StimulusAnchorDistance);
+                StimulusAnchor.transform.localPosition = new Vector3(0.0f + totalOffset, 0.0f + VerticalOffset, stimulusAnchorDistance);
             }
 
             if (UseCullingMask)
@@ -126,7 +121,7 @@ public class CameraManager : MonoBehaviour
         else
         {
             // Central visual presentation
-            StimulusAnchor.transform.localPosition = new Vector3(0.0f, 0.0f + VerticalOffset, StimulusAnchorDistance);
+            StimulusAnchor.transform.localPosition = new Vector3(0.0f, 0.0f + VerticalOffset, stimulusAnchorDistance);
             if (UseCullingMask)
             {
                 LeftCamera.cullingMask = ~(1 << 6);
@@ -136,13 +131,12 @@ public class CameraManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Set the offset value for the aperture. This should be in world units, and typically represents the radius
-    /// of the aperture.
+    /// Set the width of the stimulus, measured in world units
     /// </summary>
-    /// <param name="offsetValue">Offset value, measured in world units</param>
-    public void SetStimulusRadius(float offsetValue)
+    /// <param name="width">Stimulus width, measured in world units</param>
+    public void SetStimulusWidth(float width)
     {
-        StimulusRadius = offsetValue;
+        stimulusWidth = width;
         CalculateOffset(); // We need to re-calculate the offset values if this has been updated
     }
 
@@ -155,8 +149,12 @@ public class CameraManager : MonoBehaviour
         return activeField;
     }
 
+    /// <summary>
+    /// Get the offset distance, measured in world units
+    /// </summary>
+    /// <returns>`float` representing the offset distance</returns>
     public float GetTotalOffset()
     {
-        return TotalOffset;
+        return totalOffset;
     }
 }
