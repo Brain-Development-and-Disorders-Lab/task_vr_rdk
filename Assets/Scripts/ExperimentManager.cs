@@ -679,6 +679,9 @@ public class ExperimentManager : MonoBehaviour
         Session.instance.CurrentTrial.result["trial_end"] = Time.time;
         Session.instance.EndCurrentTrial();
 
+        // Reset the active visual field
+        cameraManager.SetActiveField(CameraManager.VisualField.Both, false);
+
         try
         {
             // Proceed to the next trial
@@ -709,21 +712,7 @@ public class ExperimentManager : MonoBehaviour
         // Get gaze estimates and the current world position
         Vector3 leftGaze = LeftEyeTracker.GetGazeEstimate();
         Vector3 rightGaze = RightEyeTracker.GetGazeEstimate();
-        Vector3 worldPosition = stimulusManager.GetAnchor().transform.position;
-
-        // Calculate central gaze position and adjust world position if a lateralized trial
-        float gazeOffset = cameraManager.GetTotalOffset();
-        if (activeTrialType == TrialType.Training_Trials_Lateralized || activeTrialType == TrialType.Main_Trials_Lateralized)
-        {
-            if (cameraManager.GetActiveField() == CameraManager.VisualField.Left)
-            {
-                worldPosition.x += gazeOffset;
-            }
-            else if (cameraManager.GetActiveField() == CameraManager.VisualField.Right)
-            {
-                worldPosition.x -= gazeOffset;
-            }
-        }
+        Vector3 worldPosition = stimulusManager.GetFixationAnchor().transform.position;
 
         float gazeThreshold = 0.5f; // Error threshold (world units)
         bool isFixated = false; // Fixated state

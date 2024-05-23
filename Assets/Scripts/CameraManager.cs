@@ -81,11 +81,6 @@ public class CameraManager : MonoBehaviour
     /// <param name="field"></param>
     public void SetActiveField(VisualField field, bool lateralized = true)
     {
-        if (field != activeField)
-        {
-            activeField = field;
-        }
-
         // Update the vertical offset of the fixation cross
         FixationAnchor.transform.localPosition = new Vector3(0.0f, 0.0f + VerticalOffset, stimulusAnchorDistance);
 

@@ -429,9 +429,22 @@ namespace Stimuli
             return apertureWorldWidth;
         }
 
-        public GameObject GetAnchor()
+        /// <summary>
+        /// Get a reference to the StimulusAnchor `GameObject`
+        /// </summary>
+        /// <returns>StimulusAnchor `GameObject`</returns>
+        public GameObject GetStimulusAnchor()
         {
             return stimulusAnchor;
+        }
+
+        /// <summary>
+        /// Get a reference to the FixationAnchor `GameObject`
+        /// </summary>
+        /// <returns>FixationAnchor `GameObject`</returns>
+        public GameObject GetFixationAnchor()
+        {
+            return fixationAnchor;
         }
 
         void Update()

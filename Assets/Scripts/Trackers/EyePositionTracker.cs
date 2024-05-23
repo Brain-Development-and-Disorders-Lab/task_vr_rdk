@@ -15,8 +15,9 @@ namespace UXF
     public class EyePositionTracker : Tracker
     {
         // Default gaze distance (should be mapped to the "surface" of the furthest 2D stimulus)
-        [SerializeField]
-        private float gazeDistance = 10.0f;
+        private float gazeDistance = 10.0f; // World units
+        public GameObject GazeTargetSurface; // Typically mapped to StimulusAnchor `GameObject`
+        public GameObject GazeSource; // Typically mapped to CenterEyeAnchor under the `OVRCameraRig` prefab
 
         // Fields to enable and manage the gaze indicators
         [SerializeField]
@@ -50,6 +51,12 @@ namespace UXF
             // Get OVR components
             eyeGazeComponent = GetComponentInParent<OVREyeGaze>();
             faceComponent = FindObjectOfType<OVRFaceExpressions>();
+
+            // Setup gaze distance
+            if (GazeTargetSurface != null && GazeSource != null)
+            {
+                gazeDistance = GazeTargetSurface.transform.position.z - GazeSource.transform.position.z;
+            }
 
             // Eye gaze setup
             if (eyeGazeComponent)
