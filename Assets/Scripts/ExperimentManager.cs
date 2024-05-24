@@ -920,11 +920,13 @@ public class ExperimentManager : MonoBehaviour
 
             if (IsStimulusScreen())
             {
-                // Run the cooldown function for buttons
-                ButtonCooldown();
-
                 // Take action as specified by the inputs
                 ApplyInputs(inputs);
+
+                if (!VRInput.AnyInput())
+                {
+                    ResetButtons();
+                }
             }
             else
             {
