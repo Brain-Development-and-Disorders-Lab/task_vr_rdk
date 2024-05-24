@@ -336,32 +336,32 @@ namespace Stimuli
             ButtonSliderInput V_U_Slider = V_U_Button.GetComponentInChildren<ButtonSliderInput>();
             V_U_Slider.Setup();
             V_U_Slider.SetButtonText("<b>Up</b>\nVery Confident");
-            V_U_Slider.SetBackgroundColor(new Color(240f/255f, 185f/255f, 55f/255f));
-            V_U_Slider.SetFillColor(new Color(245f/255f, 190f/255f, 62f/255f));
+            V_U_Slider.SetBackgroundColor(new Color(255f/255f, 194f/255f, 10f/255f)); // Colorblind-friendly
+            V_U_Slider.SetFillColor(new Color(255f/255f, 206f/255f, 59f/255f)); // 20% lighter
 
             GameObject S_U_Button = Instantiate(ButtonPrefab, buttonDecisionObject.transform);
             S_U_Button.transform.localPosition = new Vector3(0.0f, 2.25f, 0.0f);
             ButtonSliderInput S_U_Slider = S_U_Button.GetComponentInChildren<ButtonSliderInput>();
             S_U_Slider.Setup();
             S_U_Slider.SetButtonText("<b>Up</b>\nSomewhat Confident");
-            S_U_Slider.SetBackgroundColor(new Color(240f/255f, 185f/255f, 55f/255f));
-            S_U_Slider.SetFillColor(new Color(245f/255f, 190f/255f, 62f/255f));
+            S_U_Slider.SetBackgroundColor(new Color(255f/255f, 224f/255f, 132f/255f)); // 50% lighter
+            S_U_Slider.SetFillColor(new Color(255f/255f, 230f/255f, 157f/255f)); // 20% lighter
 
             GameObject V_D_Button = Instantiate(ButtonPrefab, buttonDecisionObject.transform);
             V_D_Button.transform.localPosition = new Vector3(0.0f, -2.95f, 0.0f);
             ButtonSliderInput V_D_Slider = V_D_Button.GetComponentInChildren<ButtonSliderInput>();
             V_D_Slider.Setup();
             V_D_Slider.SetButtonText("<b>Down</b>\nVery Confident");
-            V_D_Slider.SetBackgroundColor(new Color(61f/255f, 162f/255f, 241f/255f));
-            V_D_Slider.SetFillColor(new Color(81f/255f, 178f/255f, 252f/255f));
+            V_D_Slider.SetBackgroundColor(new Color(12f/255f, 123f/255f, 220f/255f)); // Colorblind-friendly
+            V_D_Slider.SetFillColor(new Color(44f/255f, 151f/255f, 243f/255f)); // 20% lighter
 
             GameObject S_D_Button = Instantiate(ButtonPrefab, buttonDecisionObject.transform);
             S_D_Button.transform.localPosition = new Vector3(0.0f, -2.25f, 0.0f);
             ButtonSliderInput S_D_Slider = S_D_Button.GetComponentInChildren<ButtonSliderInput>();
             S_D_Slider.Setup();
             S_D_Slider.SetButtonText("<b>Down</b>\nSomewhat Confident");
-            S_D_Slider.SetBackgroundColor(new Color(61f/255f, 162f/255f, 241f/255f));
-            S_D_Slider.SetFillColor(new Color(81f/255f, 178f/255f, 252f/255f));
+            S_D_Slider.SetBackgroundColor(new Color(123f/255f, 190f/255f, 248f/255f)); // 50% lighter
+            S_D_Slider.SetFillColor(new Color(149f/255f, 203f/255f, 249f/255f)); // 20% lighter
 
             // Store the slider controllers
             buttonSliders = new ButtonSliderInput[] {
