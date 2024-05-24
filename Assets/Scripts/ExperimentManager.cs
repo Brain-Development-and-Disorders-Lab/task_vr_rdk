@@ -978,7 +978,7 @@ public class ExperimentManager : MonoBehaviour
                         uiManager.SetVisible(false);
 
                         // Only provide haptic feedback before calibration is run
-                        if (!calibrationManager.IsCalibrationActive() && !calibrationManager.CalibrationStatus())
+                        if (!calibrationManager.GetCalibrationActive() && !calibrationManager.GetCalibrationComplete())
                         {
                             // Trigger controller haptics
                             VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
