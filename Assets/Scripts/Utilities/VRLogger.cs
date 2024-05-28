@@ -53,7 +53,7 @@ namespace Utilities
             {
                 GameObject textContainer = messageContainers[i];
                 Text messageText = textContainer.GetComponent<Text>();
-                messageText.text = DateTime.Now.ToString("T") + ": " + messages[i];
+                messageText.text = messages[i];
 
                 // Toggle visibility
                 textContainer.SetActive(showLogger);
@@ -87,6 +87,7 @@ namespace Utilities
 
         public void Log(string message)
         {
+            message = DateTime.Now.ToString("T") + ": " + message;
             messages.Add(message);
             if (messages.Count > MessageLimit)
             {
