@@ -18,12 +18,14 @@ namespace Stimuli
 
     public class StimulusManager : MonoBehaviour
     {
+        [Header("Anchors and visual parameters")]
         [SerializeField]
         private GameObject stimulusAnchor;
         [SerializeField]
         private GameObject fixationAnchor;
 
         // Calculated dimensions of stimuli
+        [Tooltip("Global scaling factor used to increase or decrease size of stimuli")]
         public float ScalingFactor = 1.5f;
         private float stimulusDistance;
         private readonly float APERTURE_WIDTH = 8.0f; // Degrees
@@ -53,6 +55,7 @@ namespace Stimuli
         private GameObject fixationCross; // Fixation cross parent GameObject
 
         // Slider-based button prefab
+        [Header("Prefabs")]
         public GameObject ButtonPrefab;
         private ButtonSliderInput[] buttonSliders = new ButtonSliderInput[4];
 
@@ -429,9 +432,22 @@ namespace Stimuli
             return apertureWorldWidth;
         }
 
-        public GameObject GetAnchor()
+        /// <summary>
+        /// Get a reference to the StimulusAnchor `GameObject`
+        /// </summary>
+        /// <returns>StimulusAnchor `GameObject`</returns>
+        public GameObject GetStimulusAnchor()
         {
             return stimulusAnchor;
+        }
+
+        /// <summary>
+        /// Get a reference to the FixationAnchor `GameObject`
+        /// </summary>
+        /// <returns>FixationAnchor `GameObject`</returns>
+        public GameObject GetFixationAnchor()
+        {
+            return fixationAnchor;
         }
 
         void Update()

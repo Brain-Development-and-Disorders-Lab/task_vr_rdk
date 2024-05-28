@@ -8,7 +8,6 @@ using UXF;
 using MathNet.Numerics.Statistics;
 
 // Custom namespaces
-using Calibration;
 using Stimuli;
 using Utilities;
 
@@ -20,21 +19,23 @@ public class ExperimentManager : MonoBehaviour
     // Define the types of trials that occur during the experiment timeline
     public enum TrialType
     {
-        Setup = 1,
-        Pre_Instructions = 2,
-        Training_Trials_Binocular = 3,
-        Training_Trials_Monocular = 4,
-        Training_Trials_Lateralized = 5,
-        Mid_Instructions = 6,
-        Main_Trials_Binocular = 7,
-        Main_Trials_Monocular = 8,
-        Main_Trials_Lateralized = 9,
-        Post_Instructions = 10,
+        Fit = 1,
+        Setup = 2,
+        Pre_Instructions = 3,
+        Training_Trials_Binocular = 4,
+        Training_Trials_Monocular = 5,
+        Training_Trials_Lateralized = 6,
+        Mid_Instructions = 7,
+        Main_Trials_Binocular = 8,
+        Main_Trials_Monocular = 9,
+        Main_Trials_Lateralized = 10,
+        Post_Instructions = 11,
     };
 
     // Set the number of trials within a specific block in the experiment timeline
     private enum TrialCount
     {
+        Fit = 1,
         Setup = 1,
         Pre_Instructions = 1, // Welcome instructions, includes tutorial instructions
         Training_Trials_Binocular = 30, // Training trials, central presentation to both eyes
@@ -50,12 +51,13 @@ public class ExperimentManager : MonoBehaviour
     // Define the order of UXF `Blocks` and their expected block numbers (non-zero indexed)
     private enum BlockSequence
     {
-        Setup = 1,
-        Pre_Instructions = 2,
-        Training = 3,
-        Mid_Instructions = 4,
-        Main = 5,
-        Post_Instructions = 6
+        Fit = 1,
+        Setup = 2,
+        Pre_Instructions = 3,
+        Training = 4,
+        Mid_Instructions = 5,
+        Main = 6,
+        Post_Instructions = 7
     };
 
     // List to populate with
@@ -90,9 +92,15 @@ public class ExperimentManager : MonoBehaviour
     private StimulusManager stimulusManager;
     private UIManager uiManager;
     private CameraManager cameraManager;
-    private CalibrationManager calibrationManager;
+    private SetupManager setupManager;
 
     // Store references to EyePositionTracker instances
+    [Header("Gaze Fixation Parameters")]
+    [Tooltip("Require a central fixation prior to presenting the trial stimuli")]
+    public bool RequireFixation = true; // Require participant to be fixation on center before trial begins
+    [Tooltip("Radius (in world units) around the central fixation point which registers as fixated")]
+    public float FixationRadius = 0.5f; // Specify the fixation radius
+    [Header("EyePositionTrackers")]
     public EyePositionTracker LeftEyeTracker;
     public EyePositionTracker RightEyeTracker;
     private int fixationMeasurementCounter = 0; // Counter for number of fixation measurements
@@ -101,7 +109,6 @@ public class ExperimentManager : MonoBehaviour
     // Input parameters
     private bool isInputEnabled = false; // Input is accepted
     private bool isInputReset = true; // Flag to prevent input being held down
-    public bool RequireFixation = true; // Require participant to be fixation on center before trial begins
     private InputState lastInputState; // Prior frame input state
 
     // Input button slider GameObjects and variables
@@ -148,6 +155,7 @@ public class ExperimentManager : MonoBehaviour
 
         // Create a UXF `Block` for each part of the experiment, corresponding to `BlockSequence` enum
         // Use UXF `Session` to generate experiment timeline from shuffled "Training_" and "Main_" timelines
+        session.CreateBlock((int)TrialCount.Fit); // Pre-experiment headset fit
         session.CreateBlock((int)TrialCount.Setup); // Pre-experiment setup
         session.CreateBlock((int)TrialCount.Pre_Instructions); // Pre-experiment instructions
         session.CreateBlock(trainingTimeline.Count); // Training trials
@@ -159,7 +167,7 @@ public class ExperimentManager : MonoBehaviour
         stimulusManager = GetComponent<StimulusManager>();
         uiManager = GetComponent<UIManager>();
         cameraManager = GetComponent<CameraManager>();
-        calibrationManager = GetComponent<CalibrationManager>();
+        setupManager = GetComponent<SetupManager>();
 
         // Update the CameraManager value for the aperture offset to be the stimulus radius
         cameraManager.SetStimulusWidth(stimulusManager.GetApertureWidth());
@@ -189,7 +197,6 @@ public class ExperimentManager : MonoBehaviour
         Application.Quit();
     }
 
-
     /// <summary>
     /// Get trials of a specific `TrialType` and `VisualField` from a `Block`. Used primarily to filter a set of `Trial`s
     /// for calculation of coherence values that are specific to the search parameters.
@@ -201,7 +208,6 @@ public class ExperimentManager : MonoBehaviour
     private List<Trial> GetTrialsByType(TrialType trialType, CameraManager.VisualField visualField, BlockSequence blockIndex)
     {
         List<Trial> result = new();
-
         Block searchBlock = Session.instance.GetBlock((int)blockIndex);
         if (searchBlock.trials.Count > 0)
         {
@@ -216,7 +222,6 @@ public class ExperimentManager : MonoBehaviour
                 }
             }
         }
-
         return result;
     }
 
@@ -265,7 +270,6 @@ public class ExperimentManager : MonoBehaviour
         bool currentTrialAccuracy = (bool)currentTrial.result["correct_selection"];
         int currentTrialIndex = currentTrial.numberInBlock;
         float currentTrialCoherence = (float)currentTrial.result["active_coherence"];
-
         if (currentTrialAccuracy == true)
         {
             // Search for previous trial of matching `TrialType` for comparison
@@ -371,9 +375,8 @@ public class ExperimentManager : MonoBehaviour
         // Setup the UI manager with instructions
         uiManager.EnablePagination(true);
         List<string> Instructions = new List<string>{
-            "Before continuing, ensure you are able to read this text easily.\n\nIf not, go ahead and adjust the headset placement. The rear of the headset should sit higher than the front of the headset, and the front pad above the lenses should be resting on your forehead.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue.",
-            "During the task, a small cross will be visible in the center of the screen.\n\nYou must maintain focus on this cross whenever it is visible.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue, or press <b>Left Trigger</b> to select <b>Back</b>.",
-            "While focusing on the cross, a field of moving dots will appear very briefly around the cross.\n\nSome of the dots will move only up or only down, and the rest of the dots will move randomly as a distraction.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue, or press <b>Left Trigger</b> to select <b>Back</b>.",
+            "Before continuing, ensure you are able to read this text easily.\n\nDuring the trials, you must maintain focus on the central fixation cross whenever it is visible, otherwise the next trial will not begin.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue.",
+            "While focusing on the cross, a field of moving dots will appear either around the cross or next to the cross for a short period of time. The dots will be visible in either one eye or both eyes at once.\n\nSome of the dots will move only up or only down, and the rest of the dots will move randomly as a distraction.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue, or press <b>Left Trigger</b> to select <b>Back</b>.",
             "After viewing the dots, you will be asked if you thought the dots moving together moved up or down.\n\nYou will have four options to choose from:\n<b>Up - Very Confident (Left Trigger)</b>\n<b>Up - Somewhat Confident (X)</b>\n<b>Down - Somewhat Confident (A)</b>\n<b>Down - Very Confident (Right Trigger)</b>\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue, or press <b>Left Trigger</b> to select <b>Back</b>.",
             "You <b>must</b> select one of the four options, the one which best represents your decision and how confident you were in your decision. You will need to hold the button for an option approximately 1 second to select it.\n\nYou are about to start the task.\n\n\nWhen you are ready and comfortable, press <b>Right Trigger</b> to select <b>Continue</b> and begin."
         };
@@ -521,7 +524,15 @@ public class ExperimentManager : MonoBehaviour
         // Store the current `TrialType`
         Session.instance.CurrentTrial.result["trial_type"] = Enum.GetName(typeof(TrialType), activeTrialType);
 
-        if (block == BlockSequence.Setup)
+        if (block == BlockSequence.Fit)
+        {
+            setupManager.SetViewCalibrationVisibility(true);
+
+            // Input delay
+            yield return StartCoroutine(WaitSeconds(2.0f, true));
+            SetIsInputEnabled(true);
+        }
+        else if (block == BlockSequence.Setup)
         {
             uiManager.SetVisible(true);
             uiManager.SetHeaderText("Eye-Tracking Setup");
@@ -616,6 +627,7 @@ public class ExperimentManager : MonoBehaviour
 
         // Present fixation stimulus
         stimulusManager.SetVisible(StimulusType.Fixation, true);
+
         // Wait either for fixation or a fixed duration if fixation not required
         if (RequireFixation)
         {
@@ -676,8 +688,12 @@ public class ExperimentManager : MonoBehaviour
 
     public void EndTrial()
     {
+        // Store a timestamp and end the trial
         Session.instance.CurrentTrial.result["trial_end"] = Time.time;
         Session.instance.EndCurrentTrial();
+
+        // Reset the active visual field
+        cameraManager.SetActiveField(CameraManager.VisualField.Both, false);
 
         try
         {
@@ -709,33 +725,18 @@ public class ExperimentManager : MonoBehaviour
         // Get gaze estimates and the current world position
         Vector3 leftGaze = LeftEyeTracker.GetGazeEstimate();
         Vector3 rightGaze = RightEyeTracker.GetGazeEstimate();
-        Vector3 worldPosition = stimulusManager.GetAnchor().transform.position;
+        Vector3 worldPosition = stimulusManager.GetFixationAnchor().transform.position;
 
-        // Calculate central gaze position and adjust world position if a lateralized trial
-        float gazeOffset = cameraManager.GetTotalOffset();
-        if (activeTrialType == TrialType.Training_Trials_Lateralized || activeTrialType == TrialType.Main_Trials_Lateralized)
-        {
-            if (cameraManager.GetActiveField() == CameraManager.VisualField.Left)
-            {
-                worldPosition.x += gazeOffset;
-            }
-            else if (cameraManager.GetActiveField() == CameraManager.VisualField.Right)
-            {
-                worldPosition.x -= gazeOffset;
-            }
-        }
-
-        float gazeThreshold = 0.5f; // Error threshold (world units)
         bool isFixated = false; // Fixated state
-        if ((Mathf.Abs(leftGaze.x - worldPosition.x) <= gazeThreshold && Mathf.Abs(leftGaze.y - worldPosition.y) <= gazeThreshold) || (Mathf.Abs(rightGaze.x - worldPosition.x) <= gazeThreshold && Mathf.Abs(rightGaze.y - worldPosition.y) <= gazeThreshold))
+        // If the gaze is directed in fixation, increment the counter to signify a measurement
+        if ((Mathf.Abs(leftGaze.x - worldPosition.x) <= FixationRadius && Mathf.Abs(leftGaze.y - worldPosition.y) <= FixationRadius) || (Mathf.Abs(rightGaze.x - worldPosition.x) <= FixationRadius && Mathf.Abs(rightGaze.y - worldPosition.y) <= FixationRadius))
         {
-            // If the gaze is directed in fixation, increment the counter to signify a measurement
             fixationMeasurementCounter += 1;
         }
 
+        // Register as fixated if the required number of measurements have been taken
         if (fixationMeasurementCounter >= REQUIRED_FIXATION_MEASUREMENTS)
         {
-            // Register as fixated if the required number of measurements have been taken
             isFixated = true;
             fixationMeasurementCounter = 0;
         }
@@ -786,6 +787,11 @@ public class ExperimentManager : MonoBehaviour
     private bool IsSetupScreen()
     {
         return activeBlock == BlockSequence.Setup;
+    }
+
+    private bool IsFitScreen()
+    {
+        return activeBlock == BlockSequence.Fit;
     }
 
     /// <summary>
@@ -989,17 +995,28 @@ public class ExperimentManager : MonoBehaviour
                         uiManager.SetVisible(false);
 
                         // Only provide haptic feedback before calibration is run
-                        if (!calibrationManager.IsCalibrationActive() && !calibrationManager.CalibrationStatus())
+                        if (!setupManager.GetCalibrationActive() && !setupManager.GetCalibrationComplete())
                         {
                             // Trigger controller haptics
                             VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
                         }
 
                         // Trigger eye-tracking calibration the end the trial
-                        calibrationManager.RunCalibration(() =>
+                        setupManager.RunSetup(() =>
                         {
                             EndTrial();
                         });
+                        isInputReset = false;
+                    }
+                    else if (IsFitScreen() && isInputReset)
+                    {
+                        // Hide the fit calibration screen
+                        setupManager.SetViewCalibrationVisibility(false);
+
+                        // Trigger controller haptics
+                        VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
+
+                        EndTrial();
                         isInputReset = false;
                     }
                 }

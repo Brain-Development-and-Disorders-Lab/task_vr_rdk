@@ -1,10 +1,5 @@
 using UnityEngine;
-using System;
 using System.Collections.Generic;
-
-// Custom namespaces
-using Calibration;
-using Utilities;
 
 namespace UXF
 {
@@ -15,21 +10,18 @@ namespace UXF
     public class EyePositionTracker : Tracker
     {
         // Default gaze distance (should be mapped to the "surface" of the furthest 2D stimulus)
-        [SerializeField]
-        private float gazeDistance = 10.0f;
+        private float gazeDistance = 10.0f; // World units
+        public GameObject GazeTargetSurface; // Typically mapped to StimulusAnchor `GameObject`
+        public GameObject GazeSource; // Typically mapped to CenterEyeAnchor under the `OVRCameraRig` prefab
 
         // Fields to enable and manage the gaze indicators
         [SerializeField]
         private bool showIndicator = false;
         private GameObject indicator;
-        private GameObject indicatorCalibrated;
 
         // OVR classes
         private OVREyeGaze eyeGazeComponent;
         private OVRFaceExpressions faceComponent;
-
-        // Calibration class
-        private CalibrationManager calibrationManager;
 
         // Data variables
         public override string MeasurementDescriptor => "gaze";
@@ -37,19 +29,17 @@ namespace UXF
         private string TrackedEye = "left"; // Specify if the left or right eye
         private Vector3 GazeEstimate;
 
-        // Other references
-        private VRLogger logger;
-
         public void Start()
         {
-            logger = FindObjectOfType<VRLogger>();
-
-            // Get calibration component
-            calibrationManager = FindObjectOfType<CalibrationManager>();
-
             // Get OVR components
             eyeGazeComponent = GetComponentInParent<OVREyeGaze>();
             faceComponent = FindObjectOfType<OVRFaceExpressions>();
+
+            // Setup gaze distance
+            if (GazeTargetSurface != null && GazeSource != null)
+            {
+                gazeDistance = GazeTargetSurface.transform.position.z - GazeSource.transform.position.z;
+            }
 
             // Eye gaze setup
             if (eyeGazeComponent)
@@ -78,13 +68,6 @@ namespace UXF
                 indicator = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 indicator.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
 
-                // Indicator to show the position of "corrected" gaze data
-                indicatorCalibrated = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                indicatorCalibrated.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
-                indicatorCalibrated.GetComponent<Renderer>().material = new Material(Shader.Find("Sprites/Default"));
-                indicatorCalibrated.GetComponent<Renderer>().material.SetColor("_Color", Color.green);
-                indicatorCalibrated.SetActive(false);
-
                 // Assign the colour based on left or right eye
                 var indicatorRenderer = indicator.GetComponent<Renderer>();
                 indicatorRenderer.material = new Material(Shader.Find("Sprites/Default"));
@@ -111,41 +94,6 @@ namespace UXF
         }
 
         /// <summary>
-        /// Determine which visual quadrant the gaze is placed in, and dynamically apply the adjustment vector to the
-        /// raw gaze vector to correct for gaze calibration
-        /// </summary>
-        /// <param name="currentGaze"></param>
-        private void ApplyDynamicGazeCorrection(Vector3 currentGaze)
-        {
-            // Calculate the vector angle between the gaze and an origin unit vector (in degrees)
-            float vectorAngle = Vector3.Angle(new Vector3(1.0f, 0.0f), currentGaze);
-
-            // Determine the quadrant the vector is located in
-            string quadrant = "c";
-            Dictionary<string, Tuple<float, float>> quadrants = CalibrationManager.GetQuadrants();
-            foreach (string q in quadrants.Keys)
-            {
-                if (vectorAngle >= quadrants[q].Item1 && vectorAngle < quadrants[q].Item2)
-                {
-                    quadrant = q;
-                    break;
-                }
-            }
-
-            // Get the offset vector for the specific eye
-            Vector3 offsetVector;
-            if (TrackedEye == "left")
-            {
-                offsetVector = (Vector3)calibrationManager.GetDirectionalOffsets()[quadrant].GetLeft();
-            }
-            else
-            {
-                offsetVector = (Vector3)calibrationManager.GetDirectionalOffsets()[quadrant].GetRight();
-            }
-            indicatorCalibrated.transform.position = currentGaze - offsetVector;
-        }
-
-        /// <summary>
         /// Returns current position and rotation values of the eye
         /// </summary>
         /// <returns></returns>
@@ -161,14 +109,6 @@ namespace UXF
             {
                 // Apply the raw position to the primary indicator
                 indicator.transform.position = GetGazeEstimate();
-
-                // If a calibration procedure has taken place, show the adjusted gaze estimate
-                if (calibrationManager && calibrationManager.CalibrationStatus() == true)
-                {
-                    // Note: Removed due to inaccuracy
-                    // indicatorCalibrated.SetActive(true);
-                    // ApplyDynamicGazeCorrection(GetGazeEstimate());
-                }
             }
 
             float LBlinkWeight = -1.0f;

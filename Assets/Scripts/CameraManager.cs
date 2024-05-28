@@ -6,25 +6,27 @@ using Utilities;
 public class CameraManager : MonoBehaviour
 {
     // Left and Right eye cameras
+    [Header("Camera components")]
+    public OVRCameraRig CameraRig;
     public Camera LeftCamera;
     public Camera RightCamera;
-    public OVRCameraRig CameraRig;
 
     // Anchor for stimulus, this is critical for true dichoptic presentation
+    [Header("Anchors")]
     public GameObject StimulusAnchor;
     public GameObject UIAnchor;
     public GameObject FixationAnchor;
 
-    // Visual offset angle to place stimulus in single hemifield
-    public float OffsetAngle = 3.0f; // Degrees
+    [Header("Visual presentation parameters")]
+    [Tooltip("Enable a layer-based mask to provide a full eye-patch effect.")]
+    public bool UseCullingMask = false; // Parameter to use a culling mask for full "eye-patch" effect
+    [Tooltip("Distance (degrees) to offset the outer edge of the stimulus from the central fixation point")]
+    public float OffsetAngle = 3.0f; // Visual offset angle (degrees) to place stimulus in single hemifield
+    [Tooltip("Distance (world units) to translate anchors vertically")]
     public float VerticalOffset = -2.0f;
     private float stimulusWidth = 0.0f; // Additional world-units to offset the stimulus
     private float totalOffset = 0.0f;
     private float stimulusAnchorDistance;
-
-    // Parameter to use a culling mask for full "eye-patch" effect
-    [Tooltip("Enable a layer-based mask to provide a full eye-patch effect.")]
-    public bool UseCullingMask = false;
 
     // Camera presentation modes
     public enum VisualField
@@ -81,11 +83,6 @@ public class CameraManager : MonoBehaviour
     /// <param name="field"></param>
     public void SetActiveField(VisualField field, bool lateralized = true)
     {
-        if (field != activeField)
-        {
-            activeField = field;
-        }
-
         // Update the vertical offset of the fixation cross
         FixationAnchor.transform.localPosition = new Vector3(0.0f, 0.0f + VerticalOffset, stimulusAnchorDistance);
 
