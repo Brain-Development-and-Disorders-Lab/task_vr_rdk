@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 
 // Custom namespaces
-using Calibration;
 using Utilities;
 
 namespace UXF
@@ -29,8 +28,8 @@ namespace UXF
         private OVREyeGaze eyeGazeComponent;
         private OVRFaceExpressions faceComponent;
 
-        // Calibration class
-        private CalibrationManager calibrationManager;
+        // Setup class
+        private SetupManager setupManager;
 
         // Data variables
         public override string MeasurementDescriptor => "gaze";
@@ -40,8 +39,8 @@ namespace UXF
 
         public void Start()
         {
-            // Get calibration component
-            calibrationManager = FindObjectOfType<CalibrationManager>();
+            // Get setup component
+            setupManager = FindObjectOfType<SetupManager>();
 
             // Get OVR components
             eyeGazeComponent = GetComponentInParent<OVREyeGaze>();
@@ -124,7 +123,7 @@ namespace UXF
 
             // Determine the quadrant the vector is located in
             string quadrant = "c";
-            Dictionary<string, Tuple<float, float>> quadrants = CalibrationManager.GetQuadrants();
+            Dictionary<string, Tuple<float, float>> quadrants = SetupManager.GetQuadrants();
             foreach (string q in quadrants.Keys)
             {
                 if (vectorAngle >= quadrants[q].Item1 && vectorAngle < quadrants[q].Item2)
@@ -138,11 +137,11 @@ namespace UXF
             Vector3 offsetVector;
             if (TrackedEye == "left")
             {
-                offsetVector = (Vector3)calibrationManager.GetDirectionalOffsets()[quadrant].GetLeft();
+                offsetVector = (Vector3)setupManager.GetDirectionalOffsets()[quadrant].GetLeft();
             }
             else
             {
-                offsetVector = (Vector3)calibrationManager.GetDirectionalOffsets()[quadrant].GetRight();
+                offsetVector = (Vector3)setupManager.GetDirectionalOffsets()[quadrant].GetRight();
             }
             indicatorCalibrated.transform.position = currentGaze - offsetVector;
         }
@@ -165,7 +164,7 @@ namespace UXF
                 indicator.transform.position = GetGazeEstimate();
 
                 // If a calibration procedure has taken place, show the adjusted gaze estimate
-                if (calibrationManager && calibrationManager.GetCalibrationComplete() == true)
+                if (setupManager && setupManager.GetCalibrationComplete() == true)
                 {
                     // Note: Removed due to inaccuracy
                     // indicatorCalibrated.SetActive(true);

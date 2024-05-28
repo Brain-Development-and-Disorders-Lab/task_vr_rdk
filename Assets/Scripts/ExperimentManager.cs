@@ -8,7 +8,6 @@ using UXF;
 using MathNet.Numerics.Statistics;
 
 // Custom namespaces
-using Calibration;
 using Stimuli;
 using Utilities;
 
@@ -90,7 +89,7 @@ public class ExperimentManager : MonoBehaviour
     private StimulusManager stimulusManager;
     private UIManager uiManager;
     private CameraManager cameraManager;
-    private CalibrationManager calibrationManager;
+    private SetupManager setupManager;
 
     // Store references to EyePositionTracker instances
     [Header("Gaze Fixation Parameters")]
@@ -164,7 +163,7 @@ public class ExperimentManager : MonoBehaviour
         stimulusManager = GetComponent<StimulusManager>();
         uiManager = GetComponent<UIManager>();
         cameraManager = GetComponent<CameraManager>();
-        calibrationManager = GetComponent<CalibrationManager>();
+        setupManager = GetComponent<SetupManager>();
 
         // Update the CameraManager value for the aperture offset to be the stimulus radius
         cameraManager.SetStimulusWidth(stimulusManager.GetApertureWidth());
@@ -372,8 +371,7 @@ public class ExperimentManager : MonoBehaviour
         // Setup the UI manager with instructions
         uiManager.EnablePagination(true);
         List<string> Instructions = new List<string>{
-            "Before continuing, ensure you are able to read this text easily.\n\nIf not, go ahead and adjust the headset placement. The rear of the headset should sit higher than the front of the headset, and the front pad above the lenses should be resting on your forehead.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue.",
-            "During the task, a small cross will be visible in the center of the screen.\n\nYou must maintain focus on this cross whenever it is visible.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue, or press <b>Left Trigger</b> to select <b>Back</b>.",
+            "Before continuing, ensure you are able to read this text easily.\n\nDuring the trials, you must maintain focus on this cross whenever it is visible, otherwise the trial will not begin.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue.",
             "While focusing on the cross, a field of moving dots will appear very briefly around the cross.\n\nSome of the dots will move only up or only down, and the rest of the dots will move randomly as a distraction.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue, or press <b>Left Trigger</b> to select <b>Back</b>.",
             "After viewing the dots, you will be asked if you thought the dots moving together moved up or down.\n\nYou will have four options to choose from:\n<b>Up - Very Confident (Left Trigger)</b>\n<b>Up - Somewhat Confident (X)</b>\n<b>Down - Somewhat Confident (A)</b>\n<b>Down - Very Confident (Right Trigger)</b>\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue, or press <b>Left Trigger</b> to select <b>Back</b>.",
             "You <b>must</b> select one of the four options, the one which best represents your decision and how confident you were in your decision. You will need to hold the button for an option approximately 1 second to select it.\n\nYou are about to start the task.\n\n\nWhen you are ready and comfortable, press <b>Right Trigger</b> to select <b>Continue</b> and begin."
@@ -978,14 +976,14 @@ public class ExperimentManager : MonoBehaviour
                         uiManager.SetVisible(false);
 
                         // Only provide haptic feedback before calibration is run
-                        if (!calibrationManager.GetCalibrationActive() && !calibrationManager.GetCalibrationComplete())
+                        if (!setupManager.GetCalibrationActive() && !setupManager.GetCalibrationComplete())
                         {
                             // Trigger controller haptics
                             VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
                         }
 
                         // Trigger eye-tracking calibration the end the trial
-                        calibrationManager.RunCalibration(() =>
+                        setupManager.RunCalibration(() =>
                         {
                             EndTrial();
                         });
