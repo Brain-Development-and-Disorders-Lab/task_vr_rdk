@@ -682,6 +682,7 @@ public class ExperimentManager : MonoBehaviour
         // Reset the button states and end the current `Trial`
         ResetButtons();
         EndTrial();
+        isInputReset = false;
     }
 
     public void EndTrial()
@@ -922,7 +923,7 @@ public class ExperimentManager : MonoBehaviour
             // Get the current input state across both controllers
             InputState inputs = VRInput.PollAllInput();
 
-            if (IsStimulusScreen())
+            if (IsStimulusScreen() && isInputReset)
             {
                 // Take action as specified by the inputs
                 ApplyInputs(inputs);
@@ -1018,12 +1019,12 @@ public class ExperimentManager : MonoBehaviour
                         isInputReset = false;
                     }
                 }
+            }
 
-                // Reset input state to prevent holding buttons to repeatedly select options
-                if (isInputEnabled && isInputReset == false && !VRInput.AnyInput())
-                {
-                    isInputReset = true;
-                }
+            // Reset input state to prevent holding buttons to repeatedly select options
+            if (isInputReset == false && !VRInput.AnyInput())
+            {
+                isInputReset = true;
             }
         }
     }
