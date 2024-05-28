@@ -368,18 +368,34 @@ public class ExperimentManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Setup the "Instructions" screen presented to participants after headset setup operations.
+    /// Setup the "Instructions" screens presented to participants
     /// </summary>
     private void SetupInstructions()
     {
         // Setup the UI manager with instructions
         uiManager.EnablePagination(true);
-        List<string> Instructions = new List<string>{
-            "Before continuing, ensure you are able to read this text easily.\n\nDuring the trials, you must maintain focus on the central fixation cross whenever it is visible, otherwise the next trial will not begin.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue.",
-            "While focusing on the cross, a field of moving dots will appear either around the cross or next to the cross for a short period of time. The dots will be visible in either one eye or both eyes at once.\n\nSome of the dots will move only up or only down, and the rest of the dots will move randomly as a distraction.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue, or press <b>Left Trigger</b> to select <b>Back</b>.",
-            "After viewing the dots, you will be asked if you thought the dots moving together moved up or down.\n\nYou will have four options to choose from:\n<b>Up - Very Confident (Left Trigger)</b>\n<b>Up - Somewhat Confident (X)</b>\n<b>Down - Somewhat Confident (A)</b>\n<b>Down - Very Confident (Right Trigger)</b>\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue, or press <b>Left Trigger</b> to select <b>Back</b>.",
-            "You <b>must</b> select one of the four options, the one which best represents your decision and how confident you were in your decision. You will need to hold the button for an option approximately 1 second to select it.\n\nYou are about to start the task.\n\n\nWhen you are ready and comfortable, press <b>Right Trigger</b> to select <b>Continue</b> and begin."
-        };
+        List<string> Instructions = new();
+        if (activeBlock == BlockSequence.Pre_Instructions)
+        {
+            Instructions.AddRange(new List<string>{
+                "Before continuing, ensure you are able to read this text easily.\n\nDuring the trials, you must maintain focus on the central fixation cross whenever it is visible, otherwise the next trial will not begin.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue.",
+                "While focusing on the cross, a field of moving dots will appear either around the cross or next to the cross for a short period of time. The dots will be visible in either one eye or both eyes at once.\n\nSome of the dots will move only up or only down, and the rest of the dots will move randomly as a distraction.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue, or press <b>Left Trigger</b> to select <b>Back</b>.",
+                "After viewing the dots, you will be asked if you thought the dots moving together moved up or down.\n\nYou will have four options to choose from:\n<b>Up - Very Confident (Left Trigger)</b>\n<b>Up - Somewhat Confident (X)</b>\n<b>Down - Somewhat Confident (A)</b>\n<b>Down - Very Confident (Right Trigger)</b>\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue, or press <b>Left Trigger</b> to select <b>Back</b>.",
+                "You <b>must</b> select one of the four options, the one which best represents your decision and how confident you were in your decision. You will need to hold the button for an option approximately 1 second to select it.\n\nYou are about to start the task.\n\n\nWhen you are ready and comfortable, press <b>Right Trigger</b> to select <b>Continue</b> and begin."
+            });
+        }
+        else if (activeBlock == BlockSequence.Mid_Instructions)
+        {
+            Instructions.AddRange(new List<string>{
+                "That concludes the practice trials. You will now play " + mainTimeline.Count + " main trials.\n\nYou will not be shown if you answered correctly or not, but sometimes you will be asked whether you were more confident in that trial than in the previous trial.\n\nWhen you are ready and comfortable, press the right controller trigger to select <b>Next</b> and continue.",
+            });
+        }
+        else if (activeBlock == BlockSequence.Post_Instructions)
+        {
+            Instructions.AddRange(new List<string>{
+                "That concludes all the trials of this task. Please notify the experiment facilitator, and you can remove the headset carefully after releasing the rear adjustment wheel.",
+            });
+        }
         uiManager.SetPages(Instructions);
     }
 
@@ -561,6 +577,8 @@ public class ExperimentManager : MonoBehaviour
         }
         else if (block == BlockSequence.Mid_Instructions)
         {
+            SetupInstructions();
+
             // Run calibration calculations
             CalculateCoherences();
 
@@ -569,7 +587,6 @@ public class ExperimentManager : MonoBehaviour
 
             uiManager.SetVisible(true);
             uiManager.SetHeaderText("Main Trials");
-            uiManager.SetBodyText("That concludes the practice trials. You will now play " + mainTimeline.Count + " main trials.\n\nYou will not be shown if you answered correctly or not, but sometimes you will be asked whether you were more confident in that trial than in the previous trial.\n\nWhen you are ready and comfortable, press the right controller trigger to select <b>Next</b> and continue.");
             uiManager.SetLeftButtonState(false, true, "Back");
             uiManager.SetRightButtonState(true, true, "Next");
 
@@ -579,12 +596,12 @@ public class ExperimentManager : MonoBehaviour
         }
         else if (block == BlockSequence.Post_Instructions)
         {
+            SetupInstructions();
             // Override and set the camera to display in both eyes
             cameraManager.SetActiveField(CameraManager.VisualField.Both);
 
             uiManager.SetVisible(true);
             uiManager.SetHeaderText("Complete");
-            uiManager.SetBodyText("That concludes all the trials of this task. Please notify the experiment facilitator, and you can remove the headset carefully after releasing the rear adjustment wheel.");
             uiManager.SetLeftButtonState(false, false, "Back");
             uiManager.SetRightButtonState(true, true, "Finish");
 
