@@ -402,14 +402,12 @@ public class ExperimentManager : MonoBehaviour
         else if (trial == TrialType.Training_Trials_Monocular || trial == TrialType.Main_Trials_Monocular)
         {
             // Activate one camera in monocular mode, without lateralization
-            CameraManager.VisualField TrialVisualField = UnityEngine.Random.value > 0.5 ? CameraManager.VisualField.Left : CameraManager.VisualField.Right;
-            cameraManager.SetActiveField(TrialVisualField, false);
+            cameraManager.SetActiveField(UnityEngine.Random.value > 0.5 ? CameraManager.VisualField.Left : CameraManager.VisualField.Right, false);
         }
         else
         {
             // Activate one camera in lateralized mode, with lateralization enabled
-            CameraManager.VisualField TrialVisualField = UnityEngine.Random.value > 0.5 ? CameraManager.VisualField.Left : CameraManager.VisualField.Right;
-            cameraManager.SetActiveField(TrialVisualField, true);
+            cameraManager.SetActiveField(UnityEngine.Random.value > 0.5 ? CameraManager.VisualField.Left : CameraManager.VisualField.Right, true);
         }
         activeVisualField = cameraManager.GetActiveField();
 
@@ -465,7 +463,7 @@ public class ExperimentManager : MonoBehaviour
             Session.instance.CurrentTrial.result["main_lateralized_coherence_left"] = mainLateralizedCoherenceLeft.Item1 + "," + mainLateralizedCoherenceLeft.Item2;
             Session.instance.CurrentTrial.result["main_lateralized_coherence_right"] = mainLateralizedCoherenceRight.Item1 + "," + mainLateralizedCoherenceRight.Item2;
         }
-        Session.instance.CurrentTrial.result["active_visual_field"] = activeVisualField;
+        Session.instance.CurrentTrial.result["active_visual_field"] = activeVisualField.ToString();
         Session.instance.CurrentTrial.result["motion_duration"] = DISPLAY_DURATION;
     }
 
