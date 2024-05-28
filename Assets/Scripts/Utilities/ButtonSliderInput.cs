@@ -53,7 +53,17 @@ public class ButtonSliderInput : MonoBehaviour
     /// <param name="value">[0.0, 1.0]</param>
     public void SetSliderValue(float value)
     {
-        if (HasSetup && value >= 0.0f && value <= 1.0f)
+        if (value < 0.0f)
+        {
+            // Value must be positive
+            ButtonSliderComponent.value = 0.0f;
+        }
+        else if (value > 1.0f)
+        {
+            // Value must be less than or equal to `1.0f`
+            ButtonSliderComponent.value = 1.0f;
+        }
+        else
         {
             ButtonSliderComponent.value = value;
         }
