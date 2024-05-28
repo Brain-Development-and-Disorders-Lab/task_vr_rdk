@@ -409,7 +409,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2834388984357925155, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 42705
+      value: 51870
       objectReference: {fileID: 0}
     - target: {fileID: 2896031059644693069, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_IsActive
@@ -445,7 +445,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4267567203292169432, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 79680
+      value: 96600
       objectReference: {fileID: 0}
     - target: {fileID: 4612929069887686480, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_AnchorMax.y
@@ -697,9 +697,9 @@ GameObject:
   m_Component:
   - component: {fileID: 215276328}
   - component: {fileID: 215276329}
+  - component: {fileID: 215276332}
   - component: {fileID: 215276331}
   - component: {fileID: 215276334}
-  - component: {fileID: 215276332}
   - component: {fileID: 215276336}
   - component: {fileID: 215276333}
   - component: {fileID: 215276335}
@@ -738,9 +738,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LoadingScreen: {fileID: 439538600}
+  RequireFixation: 1
+  FixationRadius: 0.5
   LeftEyeTracker: {fileID: 567733400}
   RightEyeTracker: {fileID: 1593745115}
-  RequireFixation: 1
 --- !u!114 &215276331
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -753,15 +754,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d17935f09e0454357b619c2e3bad4671, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  CameraRig: {fileID: 440981525}
   LeftCamera: {fileID: 1568580416}
   RightCamera: {fileID: 440981524}
-  CameraRig: {fileID: 440981525}
   StimulusAnchor: {fileID: 1762882801}
   UIAnchor: {fileID: 1149117689}
   FixationAnchor: {fileID: 223726298}
+  UseCullingMask: 1
   OffsetAngle: 3
   VerticalOffset: -1.5
-  UseCullingMask: 1
 --- !u!114 &215276332
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -834,9 +835,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 039d6a55cb8e84b4192545808705b2a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  leftEyeTracker: {fileID: 567733400}
-  rightEyeTracker: {fileID: 1593745115}
+  ViewCalibrationPrefab: {fileID: 9049305647374640026, guid: 8550bc875980e4c53a493cafc55b1d6f, type: 3}
   StimulusAnchor: {fileID: 1762882801}
+  LeftEyeTracker: {fileID: 567733400}
+  RightEyeTracker: {fileID: 1593745115}
 --- !u!1 &223726298
 GameObject:
   m_ObjectHideFlags: 0
@@ -1270,7 +1272,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   objectName: lefteyeactive
   updateType: 0
-  gazeDistance: 10
+  GazeTargetSurface: {fileID: 1762882801}
+  GazeSource: {fileID: 1578397158}
   showIndicator: 0
 --- !u!1 &656792538
 GameObject:
@@ -6363,7 +6366,7 @@ MonoBehaviour:
   m_fontSizeMax: 72
   m_fontStyle: 1
   m_HorizontalAlignment: 2
-  m_VerticalAlignment: 256
+  m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -6683,6 +6686,11 @@ Camera:
   m_CorrespondingSourceObject: {fileID: 20000012175207052, guid: 126d619cf4daa52469682f85c1378b4a, type: 3}
   m_PrefabInstance: {fileID: 440981520}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1578397158 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 100002, guid: 126d619cf4daa52469682f85c1378b4a, type: 3}
+  m_PrefabInstance: {fileID: 440981520}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1593745112
 GameObject:
   m_ObjectHideFlags: 0
@@ -6748,7 +6756,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   objectName: righteyeactive
   updateType: 0
-  gazeDistance: 10
+  GazeTargetSurface: {fileID: 1762882801}
+  GazeSource: {fileID: 1578397158}
   showIndicator: 0
 --- !u!224 &1716367616 stripped
 RectTransform:
