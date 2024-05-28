@@ -19,21 +19,23 @@ public class ExperimentManager : MonoBehaviour
     // Define the types of trials that occur during the experiment timeline
     public enum TrialType
     {
-        Setup = 1,
-        Pre_Instructions = 2,
-        Training_Trials_Binocular = 3,
-        Training_Trials_Monocular = 4,
-        Training_Trials_Lateralized = 5,
-        Mid_Instructions = 6,
-        Main_Trials_Binocular = 7,
-        Main_Trials_Monocular = 8,
-        Main_Trials_Lateralized = 9,
-        Post_Instructions = 10,
+        Fit = 1,
+        Setup = 2,
+        Pre_Instructions = 3,
+        Training_Trials_Binocular = 4,
+        Training_Trials_Monocular = 5,
+        Training_Trials_Lateralized = 6,
+        Mid_Instructions = 7,
+        Main_Trials_Binocular = 8,
+        Main_Trials_Monocular = 9,
+        Main_Trials_Lateralized = 10,
+        Post_Instructions = 11,
     };
 
     // Set the number of trials within a specific block in the experiment timeline
     private enum TrialCount
     {
+        Fit = 1,
         Setup = 1,
         Pre_Instructions = 1, // Welcome instructions, includes tutorial instructions
         Training_Trials_Binocular = 30, // Training trials, central presentation to both eyes
@@ -49,12 +51,13 @@ public class ExperimentManager : MonoBehaviour
     // Define the order of UXF `Blocks` and their expected block numbers (non-zero indexed)
     private enum BlockSequence
     {
-        Setup = 1,
-        Pre_Instructions = 2,
-        Training = 3,
-        Mid_Instructions = 4,
-        Main = 5,
-        Post_Instructions = 6
+        Fit = 1,
+        Setup = 2,
+        Pre_Instructions = 3,
+        Training = 4,
+        Mid_Instructions = 5,
+        Main = 6,
+        Post_Instructions = 7
     };
 
     // List to populate with
@@ -152,6 +155,7 @@ public class ExperimentManager : MonoBehaviour
 
         // Create a UXF `Block` for each part of the experiment, corresponding to `BlockSequence` enum
         // Use UXF `Session` to generate experiment timeline from shuffled "Training_" and "Main_" timelines
+        session.CreateBlock((int)TrialCount.Fit); // Pre-experiment headset fit
         session.CreateBlock((int)TrialCount.Setup); // Pre-experiment setup
         session.CreateBlock((int)TrialCount.Pre_Instructions); // Pre-experiment instructions
         session.CreateBlock(trainingTimeline.Count); // Training trials
@@ -520,7 +524,15 @@ public class ExperimentManager : MonoBehaviour
         // Store the current `TrialType`
         Session.instance.CurrentTrial.result["trial_type"] = Enum.GetName(typeof(TrialType), activeTrialType);
 
-        if (block == BlockSequence.Setup)
+        if (block == BlockSequence.Fit)
+        {
+            setupManager.SetViewCalibrationVisibility(true);
+
+            // Input delay
+            yield return StartCoroutine(WaitSeconds(2.0f, true));
+            SetIsInputEnabled(true);
+        }
+        else if (block == BlockSequence.Setup)
         {
             uiManager.SetVisible(true);
             uiManager.SetHeaderText("Eye-Tracking Setup");
@@ -777,6 +789,11 @@ public class ExperimentManager : MonoBehaviour
         return activeBlock == BlockSequence.Setup;
     }
 
+    private bool IsFitScreen()
+    {
+        return activeBlock == BlockSequence.Fit;
+    }
+
     /// <summary>
     /// Input function to handle `InputState` object and update button presentation or take action depending on
     /// the active `TrialType`
@@ -983,10 +1000,21 @@ public class ExperimentManager : MonoBehaviour
                         }
 
                         // Trigger eye-tracking calibration the end the trial
-                        setupManager.RunCalibration(() =>
+                        setupManager.RunSetup(() =>
                         {
                             EndTrial();
                         });
+                        isInputReset = false;
+                    }
+                    else if (IsFitScreen() && isInputReset)
+                    {
+                        // Hide the fit calibration screen
+                        setupManager.SetViewCalibrationVisibility(false);
+
+                        // Trigger controller haptics
+                        VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
+
+                        EndTrial();
                         isInputReset = false;
                     }
                 }

@@ -939,7 +939,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5639143463998284336}
   m_Layer: 0
-  m_Name: CalibrationPresentation
+  m_Name: ViewCalibration
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

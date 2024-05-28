@@ -1,9 +1,5 @@
 using UnityEngine;
-using System;
 using System.Collections.Generic;
-
-// Custom namespaces
-using Utilities;
 
 namespace UXF
 {
@@ -22,14 +18,10 @@ namespace UXF
         [SerializeField]
         private bool showIndicator = false;
         private GameObject indicator;
-        private GameObject indicatorCalibrated;
 
         // OVR classes
         private OVREyeGaze eyeGazeComponent;
         private OVRFaceExpressions faceComponent;
-
-        // Setup class
-        private SetupManager setupManager;
 
         // Data variables
         public override string MeasurementDescriptor => "gaze";
@@ -39,9 +31,6 @@ namespace UXF
 
         public void Start()
         {
-            // Get setup component
-            setupManager = FindObjectOfType<SetupManager>();
-
             // Get OVR components
             eyeGazeComponent = GetComponentInParent<OVREyeGaze>();
             faceComponent = FindObjectOfType<OVRFaceExpressions>();
@@ -79,13 +68,6 @@ namespace UXF
                 indicator = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 indicator.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
 
-                // Indicator to show the position of "corrected" gaze data
-                indicatorCalibrated = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                indicatorCalibrated.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
-                indicatorCalibrated.GetComponent<Renderer>().material = new Material(Shader.Find("Sprites/Default"));
-                indicatorCalibrated.GetComponent<Renderer>().material.SetColor("_Color", Color.green);
-                indicatorCalibrated.SetActive(false);
-
                 // Assign the colour based on left or right eye
                 var indicatorRenderer = indicator.GetComponent<Renderer>();
                 indicatorRenderer.material = new Material(Shader.Find("Sprites/Default"));
@@ -112,41 +94,6 @@ namespace UXF
         }
 
         /// <summary>
-        /// Determine which visual quadrant the gaze is placed in, and dynamically apply the adjustment vector to the
-        /// raw gaze vector to correct for gaze calibration
-        /// </summary>
-        /// <param name="currentGaze"></param>
-        private void ApplyDynamicGazeCorrection(Vector3 currentGaze)
-        {
-            // Calculate the vector angle between the gaze and an origin unit vector (in degrees)
-            float vectorAngle = Vector3.Angle(new Vector3(1.0f, 0.0f), currentGaze);
-
-            // Determine the quadrant the vector is located in
-            string quadrant = "c";
-            Dictionary<string, Tuple<float, float>> quadrants = SetupManager.GetQuadrants();
-            foreach (string q in quadrants.Keys)
-            {
-                if (vectorAngle >= quadrants[q].Item1 && vectorAngle < quadrants[q].Item2)
-                {
-                    quadrant = q;
-                    break;
-                }
-            }
-
-            // Get the offset vector for the specific eye
-            Vector3 offsetVector;
-            if (TrackedEye == "left")
-            {
-                offsetVector = (Vector3)setupManager.GetDirectionalOffsets()[quadrant].GetLeft();
-            }
-            else
-            {
-                offsetVector = (Vector3)setupManager.GetDirectionalOffsets()[quadrant].GetRight();
-            }
-            indicatorCalibrated.transform.position = currentGaze - offsetVector;
-        }
-
-        /// <summary>
         /// Returns current position and rotation values of the eye
         /// </summary>
         /// <returns></returns>
@@ -162,14 +109,6 @@ namespace UXF
             {
                 // Apply the raw position to the primary indicator
                 indicator.transform.position = GetGazeEstimate();
-
-                // If a calibration procedure has taken place, show the adjusted gaze estimate
-                if (setupManager && setupManager.GetCalibrationComplete() == true)
-                {
-                    // Note: Removed due to inaccuracy
-                    // indicatorCalibrated.SetActive(true);
-                    // ApplyDynamicGazeCorrection(GetGazeEstimate());
-                }
             }
 
             float LBlinkWeight = -1.0f;

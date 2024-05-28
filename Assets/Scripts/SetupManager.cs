@@ -13,9 +13,9 @@ using Utilities;
 public class SetupManager : MonoBehaviour
 {
     [Header("Required visual elements")]
-    public GameObject CalibrationPrefab; // Prefab containing visual elements aiding in calibration procedure
+    public GameObject ViewCalibrationPrefab; // Prefab containing visual elements aiding in calibration procedure
     public GameObject StimulusAnchor;
-    private GameObject calibrationPrefabInstance;
+    private GameObject viewCalibrationPrefabInstance;
 
     // Left and right `EyePositionTracker` objects
     [Header("Eye trackers")]
@@ -23,14 +23,14 @@ public class SetupManager : MonoBehaviour
     public EyePositionTracker RightEyeTracker;
 
     // Flags for state management
-    private bool isCalibrationActive = false; // 'true' when running calibration operations
-    private bool isCalibrationComplete = false; // 'true' once operations complete
+    private bool isEyeTrackingSetupActive = false; // 'true' when running calibration operations
+    private bool isEyeTrackingSetupComplete = false; // 'true' once operations complete
 
     // Set of points to be displayed for fixation and the "path" of the fixation object used
-    // for eye-tracking calibration
+    // for eye-tracking setup
     private int unitVectorIndex = 0;
     private Vector2 unitVector; // The active unit vector
-    private readonly float unitDistance = 2.0f;
+    private readonly float unitDistance = 2.4f;
     private readonly Dictionary<string, Vector2> unitVectorsPath = new() {
         {"c", new Vector2(0, 0)},
         {"q_1", new Vector2(1, 1)},
@@ -39,9 +39,9 @@ public class SetupManager : MonoBehaviour
         {"q_4", new Vector2(1, -1)},
     };
     private float updateTimer = 0.0f;
-    private readonly float PathInterval = 1.5f; // Duration of each point being displayed in the path
+    private readonly float PathInterval = 1.6f; // Duration of each point being displayed in the path
     private GameObject FixationObject; // Object moved around the screen
-    private Action CalibrationCallback; // Optional callback function executed after calibration complete
+    private Action SetupCallback; // Optional callback function executed after calibration complete
 
     // Data storage
     private Dictionary<string, List<GazeVector>> GazeData = new() {
@@ -57,9 +57,9 @@ public class SetupManager : MonoBehaviour
     private GazeVector globalOffset;
 
     /// <summary>
-    /// Setup function to initialize the fixation object and movement path of object
+    /// Wrapper function to initialize class and prepare for calibration operations
     /// </summary>
-    private void SetupCalibration()
+    void Start()
     {
         unitVector = unitVectorsPath[unitVectorsPath.Keys.ToList()[unitVectorIndex]];
 
@@ -76,58 +76,55 @@ public class SetupManager : MonoBehaviour
         FixationObject.transform.localPosition = new Vector3(unitVector.x * unitDistance, unitVector.y * unitDistance, 0.0f);
 
         // Setup the calibration prefab instance, initially hidden
-        calibrationPrefabInstance = Instantiate(CalibrationPrefab, StimulusAnchor.transform);
-        calibrationPrefabInstance.SetActive(false);
-    }
-
-    /// <summary>
-    /// Wrapper function to initialize class and prepare for calibration operations
-    /// </summary>
-    void Start()
-    {
-        SetupCalibration();
+        viewCalibrationPrefabInstance = Instantiate(ViewCalibrationPrefab, StimulusAnchor.transform);
+        viewCalibrationPrefabInstance.SetActive(false);
     }
 
     /// <summary>
     /// Public function to externally execute the calibration operations when required
     /// </summary>
     /// <param name="callback">Optional callback function to execute at calibration completion</param>
-    public void RunCalibration(Action callback = null)
+    public void RunSetup(Action callback = null)
     {
-        isCalibrationActive = true;
-        FixationObject.SetActive(isCalibrationActive);
+        isEyeTrackingSetupActive = true;
+        FixationObject.SetActive(isEyeTrackingSetupActive);
 
         // Optional callback function
-        CalibrationCallback = callback;
+        SetupCallback = callback;
     }
 
-    private void EndCalibration()
+    private void EndSetup()
     {
-        isCalibrationActive = false;
-        isCalibrationComplete = true;
-        FixationObject.SetActive(isCalibrationActive);
+        isEyeTrackingSetupActive = false;
+        isEyeTrackingSetupComplete = true;
+        FixationObject.SetActive(isEyeTrackingSetupActive);
 
-        // Run calculation
-        CalculateCalibrationValues();
+        // Run calculation of gaze offset values
+        CalculateOffsetValues();
 
         // Remove the prefab instance
-        Destroy(calibrationPrefabInstance);
+        Destroy(viewCalibrationPrefabInstance);
 
         // Run callback function if specified
-        CalibrationCallback?.Invoke();
+        SetupCallback?.Invoke();
     }
 
     public bool GetCalibrationComplete()
     {
-        return isCalibrationComplete;
+        return isEyeTrackingSetupComplete;
     }
 
     public bool GetCalibrationActive()
     {
-        return isCalibrationActive;
+        return isEyeTrackingSetupActive;
     }
 
-    private void CalculateCalibrationValues()
+    public void SetViewCalibrationVisibility(bool state)
+    {
+        viewCalibrationPrefabInstance.SetActive(state);
+    }
+
+    private void CalculateOffsetValues()
     {
         // Function to examine each point and calculate average vector difference from each point
         foreach (string unitVectorDirection in GazeData.Keys)
@@ -187,7 +184,7 @@ public class SetupManager : MonoBehaviour
 
     void Update()
     {
-        if (isCalibrationActive)
+        if (isEyeTrackingSetupActive)
         {
             updateTimer += Time.deltaTime;
             if (updateTimer >= PathInterval)
@@ -197,7 +194,7 @@ public class SetupManager : MonoBehaviour
                 if (unitVectorIndex > unitVectorsPath.Count - 1)
                 {
                     unitVectorIndex = 0;
-                    EndCalibration();
+                    EndSetup();
                 }
                 unitVector = unitVectorsPath[unitVectorsPath.Keys.ToList()[unitVectorIndex]];
                 FixationObject.transform.localPosition = new Vector3(unitVector.x * unitDistance, unitVector.y * unitDistance, 0.0f);
