@@ -141,12 +141,13 @@ namespace Stimuli
         public void SetPages(List<string> pages)
         {
             pageContent = pages;
+            activePage = 0; // Reset the active page index
             SetPage(activePage);
         }
 
         public void SetPage(int pageIndex)
         {
-            if (usePagination && pageIndex >= 0 && pageIndex < pageContent.Count)
+            if (pageIndex >= 0 && pageIndex < pageContent.Count)
             {
                 activePage = pageIndex;
                 SetBodyText(pageContent[activePage]);
@@ -157,7 +158,7 @@ namespace Stimuli
             }
             else
             {
-                Debug.LogWarning("Pagination not enabled or invalid page index specified");
+                Debug.LogWarning("Invalid page index specified");
             }
         }
 
