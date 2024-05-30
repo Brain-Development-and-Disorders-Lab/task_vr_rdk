@@ -11,7 +11,8 @@ public class CameraManager : MonoBehaviour
     public OVRCameraRig CameraRig;
 
     // Anchor for stimulus, this is critical for true dichoptic presentation
-    public GameObject StimulusAnchor;
+    public GameObject PrimaryStimulusAnchor;
+    public GameObject SecondaryStimulusAnchor;
     public GameObject UIAnchor;
     public GameObject FixationAnchor;
 
@@ -25,6 +26,13 @@ public class CameraManager : MonoBehaviour
     // Parameter to use a culling mask for full "eye-patch" effect
     [Tooltip("Enable a layer-based mask to provide a full eye-patch effect.")]
     public bool UseCullingMask = false;
+
+    // Camera presentation modes
+    public enum ActiveCamera
+    {
+        Left,
+        Right,
+    };
 
     // Camera presentation modes
     public enum VisualField
@@ -43,7 +51,8 @@ public class CameraManager : MonoBehaviour
         if (CameraRig)
         {
             // Set the anchor object for stimuli and UI as a child of the CameraRig
-            StimulusAnchor.transform.SetParent(CameraRig.centerEyeAnchor.transform, false);
+            PrimaryStimulusAnchor.transform.SetParent(CameraRig.centerEyeAnchor.transform, false);
+            SecondaryStimulusAnchor.transform.SetParent(CameraRig.centerEyeAnchor.transform, false);
             UIAnchor.transform.SetParent(CameraRig.centerEyeAnchor.transform, false);
             FixationAnchor.transform.SetParent(CameraRig.centerEyeAnchor.transform, false);
 
@@ -62,7 +71,7 @@ public class CameraManager : MonoBehaviour
         float ipd = Mathf.Abs(LeftCamera.transform.position.x - RightCamera.transform.position.x);
 
         // Step 2: Calculate the distance (d) of the view position to the stimulus, world units
-        stimulusAnchorDistance = Mathf.Abs(LeftCamera.transform.position.z - StimulusAnchor.transform.position.z);
+        stimulusAnchorDistance = Mathf.Abs(LeftCamera.transform.position.z - PrimaryStimulusAnchor.transform.position.z);
 
         // Step 3: Calculate theta (angle between static eye position vector and future offset vector), radians
         float theta = OffsetAngle * Mathf.PI / 180;
@@ -79,54 +88,64 @@ public class CameraManager : MonoBehaviour
     /// Set the active visual field
     /// </summary>
     /// <param name="field"></param>
-    public void SetActiveField(VisualField field, bool lateralized = true)
+    public void SetActiveField()
     {
-        if (field != activeField)
+        // Update the vertical offset of the fixation cross
+        FixationAnchor.transform.localPosition = new Vector3(0.0f, 0.0f + VerticalOffset, stimulusAnchorDistance);
+
+        // Central visual presentation
+        PrimaryStimulusAnchor.transform.localPosition = new Vector3(0.0f, 0.0f + VerticalOffset, stimulusAnchorDistance);
+        SecondaryStimulusAnchor.transform.localPosition = new Vector3(0.0f, 0.0f + VerticalOffset, stimulusAnchorDistance);
+
+        if (UseCullingMask)
         {
-            activeField = field;
+            LeftCamera.cullingMask = ~(1 << 6);
+            RightCamera.cullingMask = ~(1 << 6);
+        }
+    }
+
+    public void SetActiveField(ActiveCamera primaryStimulusCamera, VisualField primaryStimulusVisualField, ActiveCamera secondaryStimulusCamera, VisualField secondaryStimulusVisualField)
+    {
+        if (primaryStimulusCamera == secondaryStimulusCamera)
+        {
+            Debug.LogError("Stimuli are being presented to the same eye");
+            return;
         }
 
         // Update the vertical offset of the fixation cross
         FixationAnchor.transform.localPosition = new Vector3(0.0f, 0.0f + VerticalOffset, stimulusAnchorDistance);
 
-        // Apply local offset adjustments for lateralized presentation and culling mask for eye-patch effect
-        if (field == VisualField.Left)
+        if (primaryStimulusCamera == ActiveCamera.Left)
         {
-            // Left visual presentation
-            if (lateralized == true)
-            {
-                StimulusAnchor.transform.localPosition = new Vector3(0.0f - totalOffset, 0.0f + VerticalOffset, stimulusAnchorDistance);
-            }
-
-            if (UseCullingMask)
-            {
-                LeftCamera.cullingMask = ~(1 << 6);
-                RightCamera.cullingMask = 1 << 6;
-            }
+            LeftCamera.cullingMask = ~(1 << 6);
+            RightCamera.cullingMask = 1 << 6;
         }
-        else if (field == VisualField.Right)
-        {
-            // Right visual presentation
-            if (lateralized == true)
-            {
-                StimulusAnchor.transform.localPosition = new Vector3(0.0f + totalOffset, 0.0f + VerticalOffset, stimulusAnchorDistance);
-            }
 
-            if (UseCullingMask)
-            {
-                LeftCamera.cullingMask = 1 << 6;
-                RightCamera.cullingMask = ~(1 << 6);
-            }
-        }
         else
         {
-            // Central visual presentation
-            StimulusAnchor.transform.localPosition = new Vector3(0.0f, 0.0f + VerticalOffset, stimulusAnchorDistance);
-            if (UseCullingMask)
-            {
-                LeftCamera.cullingMask = ~(1 << 6);
-                RightCamera.cullingMask = ~(1 << 6);
-            }
+            LeftCamera.cullingMask = 1 << 6;
+            RightCamera.cullingMask = ~(1 << 6);
+        }
+
+        // Apply local offset adjustments for lateralized presentation and culling mask for eye-patch effect
+        switch (primaryStimulusVisualField)
+        {
+            case VisualField.Left:
+                PrimaryStimulusAnchor.transform.localPosition = new Vector3(0.0f - totalOffset, 0.0f + VerticalOffset, stimulusAnchorDistance); break;
+            case VisualField.Right:
+                PrimaryStimulusAnchor.transform.localPosition = new Vector3(0.0f + totalOffset, 0.0f + VerticalOffset, stimulusAnchorDistance); break;
+            default:
+                PrimaryStimulusAnchor.transform.localPosition = new Vector3(0.0f, 0.0f + VerticalOffset, stimulusAnchorDistance); break;
+        }
+
+        switch (secondaryStimulusVisualField)
+        {
+            case VisualField.Left:
+                SecondaryStimulusAnchor.transform.localPosition = new Vector3(0.0f - totalOffset, 0.0f + VerticalOffset, stimulusAnchorDistance); break;
+            case VisualField.Right:
+                SecondaryStimulusAnchor.transform.localPosition = new Vector3(0.0f + totalOffset, 0.0f + VerticalOffset, stimulusAnchorDistance); break;
+            default:
+                SecondaryStimulusAnchor.transform.localPosition = new Vector3(0.0f, 0.0f + VerticalOffset, stimulusAnchorDistance); break;
         }
     }
 
