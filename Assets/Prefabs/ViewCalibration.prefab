@@ -439,7 +439,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Upper Boundary
+  m_text: Upper View Limit
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -709,7 +709,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Lower Boundary
+  m_text: Lower View Limit
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -848,8 +848,8 @@ MonoBehaviour:
     The cross below should appear centered in your
     field of view.
 
-    The text "Upper Boundary" and "Lower Boundary" should be
-    visible and readable at the upper and lower edges of your view.
+    The text "Upper View Limit" and "Lower View Limit" should
+    be visible and readable at the upper and lower edges of your view.
 
 
 
