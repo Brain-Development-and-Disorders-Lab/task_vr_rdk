@@ -38,13 +38,13 @@ public class ExperimentManager : MonoBehaviour
         Fit = 1,
         Setup = 1,
         Pre_Instructions = 1, // Welcome instructions, includes tutorial instructions
-        Training_Trials_Binocular = 30, // Training trials, central presentation to both eyes
-        Training_Trials_Monocular = 30, // Training trials, central presentation to one eye
-        Training_Trials_Lateralized = 60, // Training trials, lateralized presentation to one eye
+        Training_Trials_Binocular = 20, // Training trials, central presentation to both eyes
+        Training_Trials_Monocular = 20, // Training trials, central presentation to one eye
+        Training_Trials_Lateralized = 20, // Training trials, lateralized presentation to one eye
         Mid_Instructions = 1,
-        Main_Trials_Binocular = 50,
-        Main_Trials_Monocular = 50,
-        Main_Trials_Lateralized = 100,
+        Main_Trials_Binocular = 10, // Main trials, central presentation to both eyes
+        Main_Trials_Monocular = 10, // Main trials, central presentation to one eye
+        Main_Trials_Lateralized = 20, // Main trials, lateralized presentation to one eye
         Post_Instructions = 1,
     };
 
@@ -85,7 +85,7 @@ public class ExperimentManager : MonoBehaviour
     private Tuple<float, float> mainLateralizedCoherenceRight;
 
     // Timing variables
-    private readonly float PRE_DISPLAY_DURATION = 0.5f;
+    private readonly float PRE_DISPLAY_DURATION = 0.5f; // 500 milliseconds
     private readonly float DISPLAY_DURATION = 0.180f; // 180 milliseconds
 
     // Store references to Manager classes
