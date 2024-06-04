@@ -113,11 +113,13 @@ public class ExperimentManager : MonoBehaviour
 
     // Input button slider GameObjects and variables
     private readonly float TRIGGER_THRESHOLD = 0.8f;
+    private readonly float JOYSTICK_THRESHOLD = 0.6f;
     private readonly float BUTTON_SLIDER_THRESHOLD = 0.99f;
     private readonly float BUTTON_HOLD_FACTOR = 2.0f;
 
     // Selected button state
-    private int selectedButtonIndex = 0; // 0, 1, 2, 3 from top to bottom
+    private int selectedButtonIndex = 1; // Starting index of 1, actual range [0, 3]
+    private bool hasMovedSelection = false; // Initially `false` until first movement made
 
     /// <summary>
     /// Generate the experiment flow
@@ -666,6 +668,9 @@ public class ExperimentManager : MonoBehaviour
 
         // Present decision stimulus and wait for response
         Session.instance.CurrentTrial.result["decision_start"] = Time.time;
+        stimulusManager.ResetCursor();
+        stimulusManager.SetCursorSide(activeVisualField == CameraManager.VisualField.Left ? StimulusManager.CursorSide.Left : StimulusManager.CursorSide.Right);
+        stimulusManager.SetCursorVisiblity(true);
         stimulusManager.SetVisible(StimulusType.Decision, true);
         yield return StartCoroutine(WaitSeconds(0.1f, true));
     }
@@ -699,7 +704,9 @@ public class ExperimentManager : MonoBehaviour
             UpdateCoherences();
         }
 
-        // Reset the button states and end the current `Trial`
+        // Reset the button and UI states and end the current `Trial`
+        hasMovedSelection = false;
+        stimulusManager.SetCursorVisiblity(false);
         ResetButtons();
         EndTrial();
         isInputReset = false;
@@ -823,21 +830,27 @@ public class ExperimentManager : MonoBehaviour
         ButtonSliderInput[] buttonControllers = stimulusManager.GetButtonSliders();
 
         // Increment button selection
-        if (inputs.L_J_State.y > 0.0f && isInputReset)
+        if ((inputs.L_J_State.y > JOYSTICK_THRESHOLD || inputs.R_J_State.y > JOYSTICK_THRESHOLD) && isInputReset)
         {
             DecrementButtonSelection();
             isInputReset = false;
+
+            // Update the cursor position
+            stimulusManager.SetCursorIndex(selectedButtonIndex);
         }
 
         // Decrement button selection
-        if (inputs.L_J_State.y < 0.0f && isInputReset)
+        if ((inputs.L_J_State.y < -JOYSTICK_THRESHOLD || inputs.R_J_State.y < -JOYSTICK_THRESHOLD) && isInputReset)
         {
             IncrementButtonSelection();
             isInputReset = false;
+
+            // Update the cursor position
+            stimulusManager.SetCursorIndex(selectedButtonIndex);
         }
 
-        // Apply trigger input if trigger inputs are active
-        if (VRInput.LeftTrigger() || VRInput.RightTrigger())
+        // Apply trigger input if trigger inputs are active and a selection has been made
+        if ((VRInput.LeftTrigger() || VRInput.RightTrigger()) && hasMovedSelection)
         {
             buttonControllers[selectedButtonIndex].SetSliderValue(buttonControllers[selectedButtonIndex].GetSliderValue() + BUTTON_HOLD_FACTOR * Time.deltaTime);
 
@@ -908,7 +921,13 @@ public class ExperimentManager : MonoBehaviour
     /// </summary>
     private void IncrementButtonSelection()
     {
-        if (selectedButtonIndex < 3)
+        if (hasMovedSelection == false)
+        {
+            // Initial button press
+            selectedButtonIndex = 2;
+            hasMovedSelection = true;
+        }
+        else if (selectedButtonIndex < 3)
         {
             selectedButtonIndex += 1;
         }
@@ -919,7 +938,13 @@ public class ExperimentManager : MonoBehaviour
     /// </summary>
     private void DecrementButtonSelection()
     {
-        if (selectedButtonIndex > 0)
+        if (hasMovedSelection == false)
+        {
+            // Initial button press
+            selectedButtonIndex = 1;
+            hasMovedSelection = true;
+        }
+        else if (selectedButtonIndex > 0)
         {
             selectedButtonIndex -= 1;
         }
