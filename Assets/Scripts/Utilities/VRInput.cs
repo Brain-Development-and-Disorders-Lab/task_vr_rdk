@@ -160,9 +160,9 @@ namespace Utilities
         public static bool AnyInput()
         {
             InputState inputs = PollAllInput();
-            return inputs.L_T_State == 1.0f || inputs.L_J_State.x != 0.0f || inputs.L_J_State.y != 0.0f ||
+            return inputs.L_T_State != 0.0f || inputs.L_J_State.x != 0.0f || inputs.L_J_State.y != 0.0f ||
                 inputs.Y_Pressed || inputs.X_Pressed ||
-                inputs.R_T_State == 1.0f || inputs.R_J_State.x != 0.0f || inputs.R_J_State.y != 0.0f ||
+                inputs.R_T_State != 0.0f || inputs.R_J_State.x != 0.0f || inputs.R_J_State.y != 0.0f ||
                 inputs.B_Pressed || inputs.A_Pressed;
         }
     }

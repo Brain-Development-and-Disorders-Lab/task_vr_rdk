@@ -388,7 +388,7 @@ public class ExperimentManager : MonoBehaviour
                 "Before continuing, ensure you are able to read this text easily.\n\nDuring the trials, you must maintain focus on the central fixation cross whenever it is visible, otherwise the next trial will not begin.\n\n\nPress the <b>Trigger</b> to select <b>Next</b> and continue.",
                 "While focusing on the cross, a field of moving dots will appear either around the cross or next to the cross for a short period of time. The dots will be visible in either one eye or both eyes at once.\n\nSome of the dots will move only up or only down, and the rest of the dots will move randomly as a distraction.\n\n\nPress the <b>Trigger</b> to select <b>Next</b> and continue.",
                 "After viewing the dots, you will be asked if you thought the dots moving together moved up or down.\n\nYou will have four options to choose from:\n<b>Up - Very Confident</b>\n<b>Up - Somewhat Confident</b>\n<b>Down - Somewhat Confident</b>\n<b>Down - Very Confident</b>\n\nPress the <b>Trigger</b> to select <b>Next</b> and continue.",
-                "You <b>must</b> select one of the four options, the one which best represents your decision and how confident you were in your decision. Use the <b>Joystick</b> to move the cursor across options, and hold the <b>Trigger</b> approximately 1 second to select an option.\n\n\nPress the <b>Trigger</b> to select <b>Next</b> and continue.",
+                "You <b>must</b> select one of the four options, the one which best represents your decision and how confident you were in your decision.\n\nUse the <b>Joystick</b> to move the cursor across options, and hold the <b>Trigger</b> approximately 1 second to select an option.\n\n\nPress the <b>Trigger</b> to select <b>Next</b> and continue.",
                 "You will first play <b>" + trainingTimeline.Count + " training trials</b> to practice. After the training trials, you will be shown a screen so you can take a short break before continuing with the main trials.\n\nYou are about to start the training trials.\n\n\nWhen you are ready and comfortable, press the <b>Trigger</b> to select <b>Continue</b> and begin.",
             });
         }
@@ -705,11 +705,11 @@ public class ExperimentManager : MonoBehaviour
         }
 
         // Reset the button and UI states and end the current `Trial`
+        isInputReset = false;
         hasMovedSelection = false;
         stimulusManager.SetCursorVisiblity(false);
         ResetButtons();
         EndTrial();
-        isInputReset = false;
     }
 
     public void EndTrial()
@@ -866,7 +866,7 @@ public class ExperimentManager : MonoBehaviour
         if (buttonControllers[selectedButtonIndex].GetSliderValue() >= BUTTON_SLIDER_THRESHOLD)
         {
             // Provide haptic feedback
-            VRInput.SetHaptics(15.0f, 0.4f, 0.1f, VRInput.LeftTrigger(), VRInput.RightTrigger());
+            VRInput.SetHaptics(15.0f, 0.4f, 0.1f, true, true);
             Session.instance.CurrentTrial.result["last_keypress_end"] = Time.time;
 
             // Store selected button response
@@ -892,17 +892,6 @@ public class ExperimentManager : MonoBehaviour
 
         // Update the prior input state
         lastInputState = inputs;
-    }
-
-    /// <summary>
-    /// Utility function to reduce the value of all active `ButtonSliderInput` instances back to `0.0f` when inactive.
-    /// </summary>
-    private void ButtonCooldown()
-    {
-        foreach (ButtonSliderInput button in stimulusManager.GetButtonSliders())
-        {
-            button.SetSliderValue(button.GetSliderValue() - BUTTON_HOLD_FACTOR / 3.0f * Time.deltaTime);
-        }
     }
 
     /// <summary>
@@ -985,7 +974,7 @@ public class ExperimentManager : MonoBehaviour
                             SetIsInputEnabled(true);
 
                             // Trigger controller haptics
-                            VRInput.SetHaptics(15.0f, 0.4f, 0.1f, VRInput.LeftTrigger(), VRInput.RightTrigger());
+                            VRInput.SetHaptics(15.0f, 0.4f, 0.1f, true, true);
 
                             // Update the "Next" button if the last page
                             if (!uiManager.HasNextPage())
@@ -996,7 +985,7 @@ public class ExperimentManager : MonoBehaviour
                         else
                         {
                             // Trigger controller haptics
-                            VRInput.SetHaptics(15.0f, 0.4f, 0.1f, VRInput.LeftTrigger(), VRInput.RightTrigger());
+                            VRInput.SetHaptics(15.0f, 0.4f, 0.1f, true, true);
 
                             EndTrial();
                         }
@@ -1011,7 +1000,7 @@ public class ExperimentManager : MonoBehaviour
                         if (!setupManager.GetCalibrationActive() && !setupManager.GetCalibrationComplete())
                         {
                             // Trigger controller haptics
-                            VRInput.SetHaptics(15.0f, 0.4f, 0.1f, VRInput.LeftTrigger(), VRInput.RightTrigger());
+                            VRInput.SetHaptics(15.0f, 0.4f, 0.1f, true, true);
                         }
 
                         // Trigger eye-tracking calibration the end the trial
@@ -1027,7 +1016,7 @@ public class ExperimentManager : MonoBehaviour
                         setupManager.SetViewCalibrationVisibility(false);
 
                         // Trigger controller haptics
-                        VRInput.SetHaptics(15.0f, 0.4f, 0.1f, VRInput.LeftTrigger(), VRInput.RightTrigger());
+                        VRInput.SetHaptics(15.0f, 0.4f, 0.1f, true, true);
 
                         EndTrial();
                         isInputReset = false;
