@@ -38,13 +38,13 @@ public class ExperimentManager : MonoBehaviour
         Fit = 1,
         Setup = 1,
         Pre_Instructions = 1, // Welcome instructions, includes tutorial instructions
-        Training_Trials_Binocular = 30, // Training trials, central presentation to both eyes
-        Training_Trials_Monocular = 30, // Training trials, central presentation to one eye
-        Training_Trials_Lateralized = 60, // Training trials, lateralized presentation to one eye
+        Training_Trials_Binocular = 20, // Training trials, central presentation to both eyes
+        Training_Trials_Monocular = 20, // Training trials, central presentation to one eye
+        Training_Trials_Lateralized = 20, // Training trials, lateralized presentation to one eye
         Mid_Instructions = 1,
-        Main_Trials_Binocular = 50,
-        Main_Trials_Monocular = 50,
-        Main_Trials_Lateralized = 100,
+        Main_Trials_Binocular = 10, // Main trials, central presentation to both eyes
+        Main_Trials_Monocular = 10, // Main trials, central presentation to one eye
+        Main_Trials_Lateralized = 20, // Main trials, lateralized presentation to one eye
         Post_Instructions = 1,
     };
 
@@ -85,7 +85,7 @@ public class ExperimentManager : MonoBehaviour
     private Tuple<float, float> mainLateralizedCoherenceRight;
 
     // Timing variables
-    private readonly float PRE_DISPLAY_DURATION = 0.5f;
+    private readonly float PRE_DISPLAY_DURATION = 0.5f; // 500 milliseconds
     private readonly float DISPLAY_DURATION = 0.180f; // 180 milliseconds
 
     // Store references to Manager classes
@@ -229,7 +229,7 @@ public class ExperimentManager : MonoBehaviour
     /// Search within a block to find the index of the previous occurence of that `TrialType` with a matching active
     /// `VisualField`.
     /// </summary>
-    /// <returns>`int` > `0` if found, `-1` if no matching `TrialType` found</returns>
+    /// <returns>`int` >= `1` if found, `-1` if no matching `TrialType` found</returns>
     private int GetPreviousTrialIndex(TrialType searchType, CameraManager.VisualField visualField, int currentIndex)
     {
         if (currentIndex <= 1)
@@ -522,23 +522,21 @@ public class ExperimentManager : MonoBehaviour
 
         // Define the active `TrialType` depending on the active `Block`
         activeTrialType = TrialType.Pre_Instructions;
-        if (block == BlockSequence.Training)
-        {
-            // Set the `activeTrialType` depending on the position within the `trainingTimeline`
-            activeTrialType = trainingTimeline[RelativeTrialNumber];
-        }
-        else if (block == BlockSequence.Mid_Instructions)
-        {
-            activeTrialType = TrialType.Mid_Instructions;
-        }
-        else if (block == BlockSequence.Main)
-        {
-            // Set the `activeTrialType` depending on the position within the `mainTimeline`
-            activeTrialType = mainTimeline[RelativeTrialNumber];
-        }
-        else if (block == BlockSequence.Post_Instructions)
-        {
-            activeTrialType = TrialType.Post_Instructions;
+        switch (block) {
+            case BlockSequence.Training:
+                // Set the `activeTrialType` depending on the position within the `trainingTimeline`
+                activeTrialType = trainingTimeline[RelativeTrialNumber];
+                break;
+            case BlockSequence.Mid_Instructions:
+                activeTrialType = TrialType.Mid_Instructions;
+                break;
+            case BlockSequence.Main:
+                // Set the `activeTrialType` depending on the position within the `mainTimeline`
+                activeTrialType = mainTimeline[RelativeTrialNumber];
+                break;
+            case BlockSequence.Post_Instructions:
+                activeTrialType = TrialType.Post_Instructions;
+                break;
         }
 
         // Reset all displayed stimuli and UI
@@ -548,76 +546,69 @@ public class ExperimentManager : MonoBehaviour
         // Store the current `TrialType`
         Session.instance.CurrentTrial.result["trial_type"] = Enum.GetName(typeof(TrialType), activeTrialType);
 
-        if (block == BlockSequence.Fit)
-        {
-            setupManager.SetViewCalibrationVisibility(true);
+        switch (block) {
+            case BlockSequence.Fit:
+                setupManager.SetViewCalibrationVisibility(true);
 
-            // Input delay
-            yield return StartCoroutine(WaitSeconds(2.0f, true));
-            SetIsInputEnabled(true);
-        }
-        else if (block == BlockSequence.Setup)
-        {
-            uiManager.SetVisible(true);
-            uiManager.SetHeaderText("Eye-Tracking Setup");
-            uiManager.SetBodyText("You will be shown a red dot in front of you. Follow the dot movement with your eyes. After a brief series of movements, the calibration will automatically end and you will be shown the task instructions.\n\nPress the right controller trigger to select <b>Start</b>.");
-            uiManager.SetLeftButtonState(false, false, "");
-            uiManager.SetRightButtonState(true, true, "Start");
+                // Input delay
+                yield return StartCoroutine(WaitSeconds(2.0f, true));
+                break;
+            case BlockSequence.Setup:
+                uiManager.SetVisible(true);
+                uiManager.SetHeaderText("Eye-Tracking Setup");
+                uiManager.SetBodyText("You will be shown a red dot in front of you. Follow the dot movement with your eyes. After a brief series of movements, the calibration will automatically end and you will be shown the task instructions.\n\nPress the right controller trigger to select <b>Start</b>.");
+                uiManager.SetLeftButtonState(false, false, "");
+                uiManager.SetRightButtonState(true, true, "Start");
 
-            // Input delay
-            yield return StartCoroutine(WaitSeconds(0.25f, true));
-            SetIsInputEnabled(true);
-        }
-        else if (block == BlockSequence.Pre_Instructions)
-        {
-            SetupInstructions();
-            uiManager.SetVisible(true);
-            uiManager.SetHeaderText("Instructions");
-            uiManager.SetLeftButtonState(false, true, "Back");
-            uiManager.SetRightButtonState(true, true, "Next");
+                // Input delay
+                yield return StartCoroutine(WaitSeconds(0.25f, true));
+                break;
+            case BlockSequence.Pre_Instructions:
+                SetupInstructions();
+                uiManager.SetVisible(true);
+                uiManager.SetHeaderText("Instructions");
+                uiManager.SetLeftButtonState(false, true, "Back");
+                uiManager.SetRightButtonState(true, true, "Next");
 
-            // Input delay
-            yield return StartCoroutine(WaitSeconds(0.25f, true));
-        }
-        else if (block == BlockSequence.Training || block == BlockSequence.Main)
-        {
-            // Run setup for the motion stimuli
-            SetupMotion(activeTrialType);
-            yield return StartCoroutine(DisplayMotion());
-        }
-        else if (block == BlockSequence.Mid_Instructions)
-        {
-            SetupInstructions();
+                // Input delay
+                yield return StartCoroutine(WaitSeconds(0.25f, true));
+                break;
+            case BlockSequence.Training:
+            case BlockSequence.Main:
+                // Run setup for the motion stimuli
+                SetupMotion(activeTrialType);
+                yield return StartCoroutine(DisplayMotion());
+                break;
+            case BlockSequence.Mid_Instructions:
+                SetupInstructions();
 
-            // Run calibration calculations
-            CalculateCoherences();
+                // Run calibration calculations
+                CalculateCoherences();
 
-            // Override and set the camera to display in both eyes
-            cameraManager.SetActiveField(CameraManager.VisualField.Both);
+                // Override and set the camera to display in both eyes
+                cameraManager.SetActiveField(CameraManager.VisualField.Both);
 
-            uiManager.SetVisible(true);
-            uiManager.SetHeaderText("Main Trials");
-            uiManager.SetLeftButtonState(false, false, "Back");
-            uiManager.SetRightButtonState(true, true, "Continue");
+                uiManager.SetVisible(true);
+                uiManager.SetHeaderText("Main Trials");
+                uiManager.SetLeftButtonState(false, false, "Back");
+                uiManager.SetRightButtonState(true, true, "Continue");
 
-            // Input delay
-            yield return StartCoroutine(WaitSeconds(0.15f, true));
-            SetIsInputEnabled(true);
-        }
-        else if (block == BlockSequence.Post_Instructions)
-        {
-            SetupInstructions();
-            // Override and set the camera to display in both eyes
-            cameraManager.SetActiveField(CameraManager.VisualField.Both);
+                // Input delay
+                yield return StartCoroutine(WaitSeconds(0.15f, true));
+                break;
+            case BlockSequence.Post_Instructions:
+                SetupInstructions();
+                // Override and set the camera to display in both eyes
+                cameraManager.SetActiveField(CameraManager.VisualField.Both);
 
-            uiManager.SetVisible(true);
-            uiManager.SetHeaderText("Complete");
-            uiManager.SetLeftButtonState(false, false, "Back");
-            uiManager.SetRightButtonState(true, true, "Finish");
+                uiManager.SetVisible(true);
+                uiManager.SetHeaderText("Complete");
+                uiManager.SetLeftButtonState(false, false, "Back");
+                uiManager.SetRightButtonState(true, true, "Finish");
 
-            // Input delay
-            yield return StartCoroutine(WaitSeconds(1.0f, true));
-            SetIsInputEnabled(true);
+                // Input delay
+                yield return StartCoroutine(WaitSeconds(1.0f, true));
+                break;
         }
     }
 
@@ -674,7 +665,6 @@ public class ExperimentManager : MonoBehaviour
         Session.instance.CurrentTrial.result["decision_start"] = Time.time;
         stimulusManager.SetVisible(StimulusType.Decision, true);
         yield return StartCoroutine(WaitSeconds(0.1f, true));
-        SetIsInputEnabled(true);
     }
 
     /// <summary>
@@ -834,7 +824,7 @@ public class ExperimentManager : MonoBehaviour
         {
             if (inputs.L_T_State >= TRIGGER_THRESHOLD)
             {
-                // Very confident up
+                // "Very Confident Up" pressed
                 buttonControllers[0].SetSliderValue(buttonControllers[0].GetSliderValue() + BUTTON_HOLD_FACTOR * Time.deltaTime);
                 if (lastInputState.L_T_State < TRIGGER_THRESHOLD)
                 {
@@ -843,7 +833,7 @@ public class ExperimentManager : MonoBehaviour
             }
             else
             {
-                // Somewhat confident up
+                // "Somewhat Confident Up" pressed
                 buttonControllers[1].SetSliderValue(buttonControllers[1].GetSliderValue() + BUTTON_HOLD_FACTOR * Time.deltaTime);
                 if (lastInputState.X_Pressed == false)
                 {
@@ -861,13 +851,13 @@ public class ExperimentManager : MonoBehaviour
                 // Store appropriate response
                 if (buttonControllers[0].GetSliderValue() >= BUTTON_SLIDER_THRESHOLD)
                 {
-                    // "Very Confident Up" selected
+                    // "Very Confident Up" held for duration
                     HandleSelection("vc_u");
                     buttonControllers[0].SetSliderValue(0.0f);
                 }
                 else if (buttonControllers[1].GetSliderValue() >= BUTTON_SLIDER_THRESHOLD)
                 {
-                    // "Somewhat Confident Up" selected
+                    // "Somewhat Confident Up" held for duration
                     HandleSelection("sc_u");
                     buttonControllers[1].SetSliderValue(0.0f);
                 }
@@ -879,7 +869,7 @@ public class ExperimentManager : MonoBehaviour
         {
             if (inputs.R_T_State >= TRIGGER_THRESHOLD)
             {
-                // Very confident down
+                // "Very Confident Down" pressed
                 buttonControllers[2].SetSliderValue(buttonControllers[2].GetSliderValue() + BUTTON_HOLD_FACTOR * Time.deltaTime);
                 if (lastInputState.R_T_State < TRIGGER_THRESHOLD)
                 {
@@ -888,7 +878,7 @@ public class ExperimentManager : MonoBehaviour
             }
             else
             {
-                // Somewhat confident down
+                // "Somewhat Confident Down" pressed
                 buttonControllers[3].SetSliderValue(buttonControllers[3].GetSliderValue() + BUTTON_HOLD_FACTOR * Time.deltaTime);
                 if (lastInputState.A_Pressed == false)
                 {
@@ -904,13 +894,13 @@ public class ExperimentManager : MonoBehaviour
                 // Store appropriate response
                 if (buttonControllers[2].GetSliderValue() >= BUTTON_SLIDER_THRESHOLD)
                 {
-                    // "Very Confident Down" selected
+                    // "Very Confident Down" held for duration
                     HandleSelection("vc_d");
                     buttonControllers[2].SetSliderValue(0.0f);
                 }
                 else if (buttonControllers[3].GetSliderValue() >= BUTTON_SLIDER_THRESHOLD)
                 {
-                    // "Somewhat Confident Down" selected
+                    // "Somewhat Confident Down" held for duration
                     HandleSelection("sc_d");
                     buttonControllers[3].SetSliderValue(0.0f);
                 }

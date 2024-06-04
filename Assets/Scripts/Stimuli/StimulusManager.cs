@@ -25,7 +25,7 @@ namespace Stimuli
         private GameObject fixationAnchor;
 
         // Calculated dimensions of stimuli
-        [Tooltip("Global scaling factor used to increase or decrease size of stimuli")]
+        [Tooltip("Global scaling factor used to increase or decrease size of all stimuli relatively")]
         public float ScalingFactor = 1.5f;
         private float stimulusDistance;
         private readonly float APERTURE_WIDTH = 8.0f; // Degrees
@@ -62,7 +62,7 @@ namespace Stimuli
         // Initialize StimulusManager
         void Start()
         {
-            CalculateValues(); // Run pre-component calculations to ensure consistent world sizing
+            CalculateWorldSizing(); // Run pre-component calculations to ensure consistent world sizing
             fixationCross = CreateFixationCross();
 
             foreach (StimulusType stimuli in Enum.GetValues(typeof(StimulusType)))
@@ -76,58 +76,60 @@ namespace Stimuli
         /// <summary>
         /// Setup function resposible for calculations to convert all degree-based sizes into world units
         /// </summary>
-        private void CalculateValues()
+        private void CalculateWorldSizing()
         {
+            // Store stimulus distance for calculations
             stimulusDistance = Mathf.Abs(transform.position.z - stimulusAnchor.transform.position.z);
+
+            // Aperture dimensions
             apertureWorldWidth = ScalingFactor * stimulusDistance * Mathf.Tan(APERTURE_WIDTH * (Mathf.PI / 180.0f));
             apertureWorldHeight = apertureWorldWidth * 2.0f;
+
+            // Line-related dimensions
             lineWorldWidth = ScalingFactor * LINE_WIDTH;
             fixationWorldRadius = ScalingFactor * stimulusDistance * Mathf.Tan(FIXATION_DIAMETER / 2.0f * (Mathf.PI / 180.0f));
+
+            // Dot dimensions and count, scaled for desired density
             dotWorldRadius = ScalingFactor * stimulusDistance * Mathf.Tan(DOT_DIAMETER / 2.0f * (Mathf.PI / 180.0f));
             dotCount = Mathf.RoundToInt(ScalingFactor * DOT_DENSITY * APERTURE_WIDTH * APERTURE_WIDTH * 2.0f * stimulusDistance * Mathf.Tan(Mathf.PI / 180.0f));
         }
 
         /// <summary>
-        /// Switch-like function that takes a `StimulusType` and returns a `GameObject` containing that stimulus
+        /// Function that takes a `StimulusType` and returns a list of `GameObject`s containing that stimulus
         /// </summary>
         /// <param name="stimulus">A `StimulusType` value</param>
-        /// <returns>Stimulus encased in a `GameObject`</returns>
+        /// <returns>Stimulus represented by a list of `GameObject`s</returns>
         public List<GameObject> CreateStimulus(StimulusType stimulus)
         {
             List<GameObject> StaticComponents = new();
-            // "Fixation" stimulus
-            if (stimulus == StimulusType.Fixation)
-            {
-                // Generate aperture
-                StaticComponents.Add(CreateRectangle(apertureWorldWidth, apertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
-            }
-            else if (stimulus == StimulusType.Decision)
-            {
-                // Generate aperture
-                StaticComponents.Add(CreateRectangle(apertureWorldWidth, apertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
-                // Add selection buttons
-                StaticComponents.Add(CreateDecisionButtons());
-            }
-            else if (stimulus == StimulusType.Motion)
-            {
-                // Generate aperture
-                StaticComponents.Add(CreateRectangle(apertureWorldWidth, apertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
-                // Add dots
-                CreateDots();
-            }
-            else if (stimulus == StimulusType.Feedback_Correct)
-            {
-                // Generate aperture
-                StaticComponents.Add(CreateRectangle(apertureWorldWidth, apertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
-            }
-            else if (stimulus == StimulusType.Feedback_Incorrect)
-            {
-                // Generate aperture
-                StaticComponents.Add(CreateRectangle(apertureWorldWidth, apertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
-            }
-            else
-            {
-                Debug.LogError("Unknown Stimulus type: " + stimulus);
+            switch (stimulus) {
+                case StimulusType.Fixation:
+                    // Generate aperture
+                    StaticComponents.Add(CreateRectangle(apertureWorldWidth, apertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
+                    break;
+                case StimulusType.Decision:
+                    // Generate aperture
+                    StaticComponents.Add(CreateRectangle(apertureWorldWidth, apertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
+                    // Add selection buttons
+                    StaticComponents.Add(CreateDecisionButtons());
+                    break;
+                case StimulusType.Motion:
+                    // Generate aperture
+                    StaticComponents.Add(CreateRectangle(apertureWorldWidth, apertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
+                    // Add dots
+                    CreateDots();
+                    break;
+                case StimulusType.Feedback_Correct:
+                    // Generate aperture
+                    StaticComponents.Add(CreateRectangle(apertureWorldWidth, apertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
+                    break;
+                case StimulusType.Feedback_Incorrect:
+                    // Generate aperture
+                    StaticComponents.Add(CreateRectangle(apertureWorldWidth, apertureWorldHeight, new Vector2(0.0f, 0.0f), Color.white));
+                    break;
+                default:
+                    Debug.LogError("Unknown Stimulus type: " + stimulus);
+                    break;
             }
             return StaticComponents;
         }
@@ -221,10 +223,10 @@ namespace Stimuli
             rectangleLine.useWorldSpace = false;
             rectangleLine.positionCount = 4;
             Vector3[] linePositions = {
-                new Vector3(position.x - xOffset, position.y - yOffset, 0.0f),
-                new Vector3(position.x - xOffset + width, position.y - yOffset, 0.0f),
-                new Vector3(position.x - xOffset + width, position.y - yOffset + height, 0.0f),
-                new Vector3(position.x - xOffset, position.y - yOffset + height, 0.0f)
+                new(position.x - xOffset, position.y - yOffset, 0.0f),
+                new(position.x - xOffset + width, position.y - yOffset, 0.0f),
+                new(position.x - xOffset + width, position.y - yOffset + height, 0.0f),
+                new(position.x - xOffset, position.y - yOffset + height, 0.0f)
             };
             rectangleLine.SetPositions(linePositions);
             rectangleLine.material = new Material(Resources.Load<Material>("Materials/DefaultWhite"));
@@ -235,6 +237,11 @@ namespace Stimuli
             return rectangleObject;
         }
 
+        /// <summary>
+        /// Instantiate a fixation cross `GameObject` and optionally specify a color
+        /// </summary>
+        /// <param name="color">Color of the cross, namely "white", "red", or "green"</param>
+        /// <returns>Fixation cross `GameObject`</returns>
         public GameObject CreateFixationCross(string color = "white")
         {
             Color CrossColor = Color.white;
