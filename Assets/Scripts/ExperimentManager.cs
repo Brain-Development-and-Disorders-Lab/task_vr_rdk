@@ -335,10 +335,13 @@ public class ExperimentManager : MonoBehaviour
     {
         List<float> coherences = trialSet.Select(trial => (float)trial.result[coherenceFieldName]).ToList();
         coherences.Reverse();
+
+        // Restrict `kMed` value [0.12f, 0.5f]
         float kMed = coherences.Take(20).Median();
-        float kMedLow = 0.5f * kMed < 0.12f ? 0.12f : 0.5f * kMed;
-        float kMedHigh = 2.0f * kMed > 0.5f ? 0.5f : 2.0f * kMed;
-        return new Tuple<float, float>(kMedLow, kMedHigh);
+        kMed = kMed < 0.12f ? 0.12f : kMed;
+        kMed = kMed > 0.5f ? 0.5f : kMed;
+
+        return new Tuple<float, float>(0.5f * kMed, 2.0f * kMed);
     }
 
     /// <summary>
