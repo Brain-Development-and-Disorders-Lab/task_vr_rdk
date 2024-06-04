@@ -669,7 +669,7 @@ public class ExperimentManager : MonoBehaviour
         // Present decision stimulus and wait for response
         Session.instance.CurrentTrial.result["decision_start"] = Time.time;
         stimulusManager.ResetCursor();
-        stimulusManager.SetCursorSide(activeVisualField == CameraManager.VisualField.Left ? StimulusManager.CursorSide.Left : StimulusManager.CursorSide.Right);
+        stimulusManager.SetCursorSide(activeVisualField == CameraManager.VisualField.Left ? StimulusManager.CursorSide.Right : StimulusManager.CursorSide.Left);
         stimulusManager.SetCursorVisiblity(true);
         stimulusManager.SetVisible(StimulusType.Decision, true);
         yield return StartCoroutine(WaitSeconds(0.1f, true));
@@ -996,7 +996,7 @@ public class ExperimentManager : MonoBehaviour
                         else
                         {
                             // Trigger controller haptics
-                            VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
+                            VRInput.SetHaptics(15.0f, 0.4f, 0.1f, VRInput.LeftTrigger(), VRInput.RightTrigger());
 
                             EndTrial();
                         }
@@ -1011,7 +1011,7 @@ public class ExperimentManager : MonoBehaviour
                         if (!setupManager.GetCalibrationActive() && !setupManager.GetCalibrationComplete())
                         {
                             // Trigger controller haptics
-                            VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
+                            VRInput.SetHaptics(15.0f, 0.4f, 0.1f, VRInput.LeftTrigger(), VRInput.RightTrigger());
                         }
 
                         // Trigger eye-tracking calibration the end the trial
@@ -1027,7 +1027,7 @@ public class ExperimentManager : MonoBehaviour
                         setupManager.SetViewCalibrationVisibility(false);
 
                         // Trigger controller haptics
-                        VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
+                        VRInput.SetHaptics(15.0f, 0.4f, 0.1f, VRInput.LeftTrigger(), VRInput.RightTrigger());
 
                         EndTrial();
                         isInputReset = false;

@@ -389,12 +389,12 @@ namespace Stimuli
             Vector3 updatedPosition = cursor.transform.localPosition;
             if (activeCursorSide == CursorSide.Left) {
                 cursor.GetComponent<SpriteRenderer>().flipX = true;
-                updatedPosition.x = -1.0f * apertureWorldWidth;
+                updatedPosition.x = -1.0f * apertureWorldWidth * 0.8f;
             }
             else
             {
                 cursor.GetComponent<SpriteRenderer>().flipX = false;
-                updatedPosition.x = apertureWorldWidth;
+                updatedPosition.x = apertureWorldWidth * 0.8f;
             }
             cursor.transform.localPosition = updatedPosition;
         }
