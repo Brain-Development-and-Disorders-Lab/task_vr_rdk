@@ -116,6 +116,9 @@ public class ExperimentManager : MonoBehaviour
     private readonly float BUTTON_SLIDER_THRESHOLD = 0.99f;
     private readonly float BUTTON_HOLD_FACTOR = 2.0f;
 
+    // Selected button state
+    private int selectedButtonIndex = 0; // 0, 1, 2, 3 from top to bottom
+
     /// <summary>
     /// Generate the experiment flow
     /// </summary>
@@ -381,9 +384,9 @@ public class ExperimentManager : MonoBehaviour
             // Instructions shown to the participant before the start of the experiment
             Instructions.AddRange(new List<string>{
                 "Before continuing, ensure you are able to read this text easily.\n\nDuring the trials, you must maintain focus on the central fixation cross whenever it is visible, otherwise the next trial will not begin.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue.",
-                "While focusing on the cross, a field of moving dots will appear either around the cross or next to the cross for a short period of time. The dots will be visible in either one eye or both eyes at once.\n\nSome of the dots will move only up or only down, and the rest of the dots will move randomly as a distraction.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue, or press <b>Left Trigger</b> to select <b>Back</b>.",
-                "After viewing the dots, you will be asked if you thought the dots moving together moved up or down.\n\nYou will have four options to choose from:\n<b>Up - Very Confident (Left Trigger)</b>\n<b>Up - Somewhat Confident (X)</b>\n<b>Down - Somewhat Confident (A)</b>\n<b>Down - Very Confident (Right Trigger)</b>\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue, or press <b>Left Trigger</b> to select <b>Back</b>.",
-                "You <b>must</b> select one of the four options, the one which best represents your decision and how confident you were in your decision. You will need to hold the button for an option approximately 1 second to select it.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue, or press <b>Left Trigger</b> to select <b>Back</b>.",
+                "While focusing on the cross, a field of moving dots will appear either around the cross or next to the cross for a short period of time. The dots will be visible in either one eye or both eyes at once.\n\nSome of the dots will move only up or only down, and the rest of the dots will move randomly as a distraction.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue.",
+                "After viewing the dots, you will be asked if you thought the dots moving together moved up or down.\n\nYou will have four options to choose from:\n<b>Up - Very Confident (Left Trigger)</b>\n<b>Up - Somewhat Confident (X)</b>\n<b>Down - Somewhat Confident (A)</b>\n<b>Down - Very Confident (Right Trigger)</b>\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue.",
+                "You <b>must</b> select one of the four options, the one which best represents your decision and how confident you were in your decision. You will need to hold the button for an option approximately 1 second to select it.\n\n\nPress <b>Right Trigger</b> to select <b>Next</b> and continue.",
                 "You will first play <b>" + trainingTimeline.Count + " training trials</b> to practice. After the training trials, you will be shown a screen so you can take a short break before continuing with the main trials.\n\nYou are about to start the training trials.\n\n\nWhen you are ready and comfortable, press <b>Right Trigger</b> to select <b>Continue</b> and begin.",
             });
         }
@@ -567,7 +570,7 @@ public class ExperimentManager : MonoBehaviour
                 SetupInstructions();
                 uiManager.SetVisible(true);
                 uiManager.SetHeaderText("Instructions");
-                uiManager.SetLeftButtonState(false, true, "Back");
+                uiManager.SetLeftButtonState(false, false, "Back");
                 uiManager.SetRightButtonState(true, true, "Next");
 
                 // Input delay
@@ -819,92 +822,59 @@ public class ExperimentManager : MonoBehaviour
     {
         ButtonSliderInput[] buttonControllers = stimulusManager.GetButtonSliders();
 
-        // Left controller inputs
-        if (inputs.L_T_State >= TRIGGER_THRESHOLD || inputs.X_Pressed)
+        // Increment button selection
+        if (inputs.L_J_State.y > 0.0f && isInputReset)
         {
-            if (inputs.L_T_State >= TRIGGER_THRESHOLD)
-            {
-                // "Very Confident Up" pressed
-                buttonControllers[0].SetSliderValue(buttonControllers[0].GetSliderValue() + BUTTON_HOLD_FACTOR * Time.deltaTime);
-                if (lastInputState.L_T_State < TRIGGER_THRESHOLD)
-                {
-                    Session.instance.CurrentTrial.result["last_keypress_start"] = Time.time;
-                }
-            }
-            else
-            {
-                // "Somewhat Confident Up" pressed
-                buttonControllers[1].SetSliderValue(buttonControllers[1].GetSliderValue() + BUTTON_HOLD_FACTOR * Time.deltaTime);
-                if (lastInputState.X_Pressed == false)
-                {
-                    Session.instance.CurrentTrial.result["last_keypress_start"] = Time.time;
-                }
-            }
+            DecrementButtonSelection();
+            isInputReset = false;
+        }
 
-            // Check if a button has been completely held down, and continue if so
-            if (buttonControllers[0].GetSliderValue() >= BUTTON_SLIDER_THRESHOLD || buttonControllers[1].GetSliderValue() >= BUTTON_SLIDER_THRESHOLD)
-            {
-                // Provide haptic feedback
-                VRInput.SetHaptics(15.0f, 0.4f, 0.1f, true, false);
-                Session.instance.CurrentTrial.result["last_keypress_end"] = Time.time;
+        // Decrement button selection
+        if (inputs.L_J_State.y < 0.0f && isInputReset)
+        {
+            IncrementButtonSelection();
+            isInputReset = false;
+        }
 
-                // Store appropriate response
-                if (buttonControllers[0].GetSliderValue() >= BUTTON_SLIDER_THRESHOLD)
-                {
-                    // "Very Confident Up" held for duration
-                    HandleSelection("vc_u");
-                    buttonControllers[0].SetSliderValue(0.0f);
-                }
-                else if (buttonControllers[1].GetSliderValue() >= BUTTON_SLIDER_THRESHOLD)
-                {
-                    // "Somewhat Confident Up" held for duration
-                    HandleSelection("sc_u");
-                    buttonControllers[1].SetSliderValue(0.0f);
-                }
+        // Apply trigger input if trigger inputs are active
+        if (VRInput.LeftTrigger() || VRInput.RightTrigger())
+        {
+            buttonControllers[selectedButtonIndex].SetSliderValue(buttonControllers[selectedButtonIndex].GetSliderValue() + BUTTON_HOLD_FACTOR * Time.deltaTime);
+
+            // Signify that these inputs are new, store `last_keypress_start` timestamp
+            if ((lastInputState.L_T_State < TRIGGER_THRESHOLD && VRInput.LeftTrigger()) ||
+                (lastInputState.R_T_State < TRIGGER_THRESHOLD && VRInput.RightTrigger()))
+            {
+                Session.instance.CurrentTrial.result["last_keypress_start"] = Time.time;
             }
         }
 
-        // Right controller inputs
-        else if (inputs.R_T_State >= TRIGGER_THRESHOLD || inputs.A_Pressed)
+        // Audit button state and handle a button selection if the button has been selected for the required duration
+        if (buttonControllers[selectedButtonIndex].GetSliderValue() >= BUTTON_SLIDER_THRESHOLD)
         {
-            if (inputs.R_T_State >= TRIGGER_THRESHOLD)
-            {
-                // "Very Confident Down" pressed
-                buttonControllers[2].SetSliderValue(buttonControllers[2].GetSliderValue() + BUTTON_HOLD_FACTOR * Time.deltaTime);
-                if (lastInputState.R_T_State < TRIGGER_THRESHOLD)
-                {
-                    Session.instance.CurrentTrial.result["last_keypress_start"] = Time.time;
-                }
-            }
-            else
-            {
-                // "Somewhat Confident Down" pressed
-                buttonControllers[3].SetSliderValue(buttonControllers[3].GetSliderValue() + BUTTON_HOLD_FACTOR * Time.deltaTime);
-                if (lastInputState.A_Pressed == false)
-                {
-                    Session.instance.CurrentTrial.result["last_keypress_start"] = Time.time;
-                }
-            }
+            // Provide haptic feedback
+            VRInput.SetHaptics(15.0f, 0.4f, 0.1f, VRInput.LeftTrigger(), VRInput.RightTrigger());
+            Session.instance.CurrentTrial.result["last_keypress_end"] = Time.time;
 
-            if (buttonControllers[2].GetSliderValue() >= BUTTON_SLIDER_THRESHOLD || buttonControllers[3].GetSliderValue() >= BUTTON_SLIDER_THRESHOLD)
+            // Store selected button response
+            switch (selectedButtonIndex)
             {
-                VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
-                Session.instance.CurrentTrial.result["last_keypress_end"] = Time.time;
-
-                // Store appropriate response
-                if (buttonControllers[2].GetSliderValue() >= BUTTON_SLIDER_THRESHOLD)
-                {
-                    // "Very Confident Down" held for duration
-                    HandleSelection("vc_d");
-                    buttonControllers[2].SetSliderValue(0.0f);
-                }
-                else if (buttonControllers[3].GetSliderValue() >= BUTTON_SLIDER_THRESHOLD)
-                {
-                    // "Somewhat Confident Down" held for duration
+                case 0:
+                    HandleSelection("vc_u");
+                    break;
+                case 1:
+                    HandleSelection("sc_u");
+                    break;
+                case 2:
                     HandleSelection("sc_d");
-                    buttonControllers[3].SetSliderValue(0.0f);
-                }
+                    break;
+                case 3:
+                    HandleSelection("vc_d");
+                    break;
             }
+
+            // Reset the slider value of the selected button
+            buttonControllers[selectedButtonIndex].SetSliderValue(0.0f);
         }
 
         // Update the prior input state
@@ -933,13 +903,39 @@ public class ExperimentManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Increment the selected button, based on input from the controller joystick
+    /// </summary>
+    private void IncrementButtonSelection()
+    {
+        if (selectedButtonIndex < 3)
+        {
+            selectedButtonIndex += 1;
+        }
+    }
+
+    /// <summary>
+    /// Decrement the selected button, based on input from the controller joystick
+    /// </summary>
+    private void DecrementButtonSelection()
+    {
+        if (selectedButtonIndex > 0)
+        {
+            selectedButtonIndex -= 1;
+        }
+    }
+
     void Update()
     {
+        // Inputs:
+        // - Trigger (any controller): Advance instructions page, (hold) select button
+        // - Joystick (any controller): Directional selection of buttons
         if (isInputEnabled)
         {
             // Get the current input state across both controllers
             InputState inputs = VRInput.PollAllInput();
 
+            // Handle input on a stimulus screen
             if (IsStimulusScreen() && isInputReset)
             {
                 // Take action as specified by the inputs
@@ -952,32 +948,8 @@ public class ExperimentManager : MonoBehaviour
             }
             else
             {
-                // Left-side controls
-                if (inputs.L_T_State > TRIGGER_THRESHOLD || inputs.X_Pressed)
-                {
-                    if (IsInstructionsScreen() && isInputReset)
-                    {
-                        if (uiManager.HasPreviousPage())
-                        {
-                            // If pagination has previous page, go back
-                            uiManager.PreviousPage();
-                            SetIsInputEnabled(true);
-
-                            // Trigger controller haptics
-                            VRInput.SetHaptics(15.0f, 0.4f, 0.1f, true, false);
-
-                            // Update the "Next" button if the last page
-                            if (uiManager.HasNextPage())
-                            {
-                                uiManager.SetRightButtonState(true, true, "Next");
-                            }
-                        }
-                    }
-                    isInputReset = false;
-                }
-
-                // Right-side controls
-                if (inputs.R_T_State > TRIGGER_THRESHOLD || inputs.A_Pressed)
+                // Trigger controls
+                if (VRInput.LeftTrigger() || VRInput.RightTrigger())
                 {
                     if (IsInstructionsScreen() && isInputReset)
                     {
@@ -988,7 +960,7 @@ public class ExperimentManager : MonoBehaviour
                             SetIsInputEnabled(true);
 
                             // Trigger controller haptics
-                            VRInput.SetHaptics(15.0f, 0.4f, 0.1f, false, true);
+                            VRInput.SetHaptics(15.0f, 0.4f, 0.1f, VRInput.LeftTrigger(), VRInput.RightTrigger());
 
                             // Update the "Next" button if the last page
                             if (!uiManager.HasNextPage())
