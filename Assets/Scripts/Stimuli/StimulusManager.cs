@@ -373,12 +373,12 @@ namespace Stimuli
             S_D_Slider.SetBackgroundColor(new Color(123f/255f, 190f/255f, 248f/255f)); // 50% lighter
             S_D_Slider.SetFillColor(new Color(149f/255f, 203f/255f, 249f/255f)); // 20% lighter
 
-            // Store the slider controllers
+            // Store the slider controllers in display order (top to bottom)
             buttonSliders = new ButtonSliderInput[] {
                 V_U_Slider,
                 S_U_Slider,
+                S_D_Slider,
                 V_D_Slider,
-                S_D_Slider
             };
 
             return buttonDecisionObject;
