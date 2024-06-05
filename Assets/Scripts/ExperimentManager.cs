@@ -385,25 +385,25 @@ public class ExperimentManager : MonoBehaviour
         {
             // Instructions shown to the participant before the start of the experiment
             Instructions.AddRange(new List<string>{
-                "Before continuing, ensure you are able to read this text easily.\n\nDuring the trials, you must maintain focus on the central fixation cross whenever it is visible, otherwise the next trial will not begin.\n\n\nPress the <b>Trigger</b> to select <b>Next</b> and continue.",
-                "While focusing on the cross, a field of moving dots will appear either around the cross or next to the cross for a short period of time. The dots will be visible in either one eye or both eyes at once.\n\nSome of the dots will move only up or only down, and the rest of the dots will move randomly as a distraction.\n\n\nPress the <b>Trigger</b> to select <b>Next</b> and continue.",
-                "After viewing the dots, you will be asked if you thought the dots moving together moved up or down.\n\nYou will have four options to choose from:\n<b>Up - Very Confident</b>\n<b>Up - Somewhat Confident</b>\n<b>Down - Somewhat Confident</b>\n<b>Down - Very Confident</b>\n\nPress the <b>Trigger</b> to select <b>Next</b> and continue.",
+                "Before continuing, ensure you are able to read this text easily.\n\nDuring this task, you will be presented a field of moving dots and a fixation cross. The dot movement will be visible for only a short period of time and will appear either around the cross or next to the cross.\n\n\nPress the <b>Trigger</b> to select <b>Next</b> and continue.",
+                "During the trials, you <b>must maintain focus on the central fixation cross</b> whenever it is visible and during dot motion. The dots will be visible in either one eye or both eyes at once.\n\nSome of the dots will move only up or only down, and the rest of the dots will move randomly as a distraction.\n\n\nPress the <b>Trigger</b> to select <b>Next</b> and continue.",
+                "After viewing the dot movement, you will be asked if you thought the dots moving together moved up or down.\n\nYou will have four options to choose from:\n<b>Up - Very Confident</b>\n<b>Up - Somewhat Confident</b>\n<b>Down - Somewhat Confident</b>\n<b>Down - Very Confident</b>\n\nPress the <b>Trigger</b> to select <b>Next</b> and continue.",
                 "You <b>must</b> select one of the four options, the one which best represents your decision and how confident you were in your decision.\n\nUse the <b>Joystick</b> to move the cursor across options, and hold the <b>Trigger</b> approximately 1 second to select an option.\n\n\nPress the <b>Trigger</b> to select <b>Next</b> and continue.",
-                "You will first play <b>" + trainingTimeline.Count + " training trials</b> to practice. After the training trials, you will be shown a screen so you can take a short break before continuing with the main trials.\n\nYou are about to start the training trials.\n\n\nWhen you are ready and comfortable, press the <b>Trigger</b> to select <b>Continue</b> and begin.",
+                "You will play <b>" + trainingTimeline.Count + " training trials</b> first. After the training trials, you will be shown an instructions screen before continuing to the main trials.\n\nYou are about to start the training trials.\n\n\nWhen you are ready and comfortable, press the <b>Trigger</b> to select <b>Continue</b> and begin.",
             });
         }
         else if (activeBlock == BlockSequence.Mid_Instructions)
         {
             // Instructions shown to the participant between the training trials and the main trials
             Instructions.AddRange(new List<string>{
-                "That concludes all the training trials. You will now play <b>" + mainTimeline.Count + " trials</b>.\n\nWhen you are ready and comfortable, press the <b>Trigger</b> to select <b>Next</b> and continue.",
+                "That concludes all the training trials. You will now play <b>" + mainTimeline.Count + " main trials</b>.\n\nWhen you are ready and comfortable, press the <b>Trigger</b> to select <b>Next</b> and continue.",
             });
         }
         else if (activeBlock == BlockSequence.Post_Instructions)
         {
             // Instructions shown to the participant after they have completed all the trials
             Instructions.AddRange(new List<string>{
-                "That concludes all the trials of this task. Please notify the experiment facilitator, and you can remove the headset carefully after releasing the rear adjustment wheel.",
+                "That concludes all the trials for this task. Please notify the experiment facilitator, and you can remove the headset carefully after releasing the rear adjustment wheel.",
             });
         }
 
@@ -561,7 +561,7 @@ public class ExperimentManager : MonoBehaviour
             case BlockSequence.Setup:
                 uiManager.SetVisible(true);
                 uiManager.SetHeaderText("Eye-Tracking Setup");
-                uiManager.SetBodyText("You will be shown a red dot in front of you. Follow the dot movement with your eyes. After a brief series of movements, the calibration will automatically end and you will be shown the task instructions.\n\n\nWhen you are ready and comfortable, press the <b>Trigger</b> to select <b>Continue</b> and begin.");
+                uiManager.SetBodyText("You will be shown a red dot in front of you. Follow the dot movement with your gaze.\n\nAfter a brief series of dot movements, the headset setup will be complete and you will be shown further instructions.\n\n\nWhen you are ready and comfortable, press <b>Right Trigger</b> to select <b>Continue</b> and begin.");
                 uiManager.SetLeftButtonState(false, false, "");
                 uiManager.SetRightButtonState(true, true, "Continue");
 
