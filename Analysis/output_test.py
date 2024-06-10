@@ -44,7 +44,7 @@ def start():
   t_m_r_acc = round(((t_m_r_df["correct_selection"] == True).sum() / t_m_r_df.shape[0]) * 100, 3)
   print("Training (Monocular, Right) Accuracy %:", t_m_r_acc)
   t_l_l_acc = round(((t_l_l_df["correct_selection"] == True).sum() / t_l_l_df.shape[0]) * 100, 3)
-  print("Training (Lateralized, Right) Accuracy %:", t_l_l_acc)
+  print("Training (Lateralized, Left) Accuracy %:", t_l_l_acc)
   t_l_r_acc = round(((t_l_r_df["correct_selection"] == True).sum() / t_l_r_df.shape[0]) * 100, 3)
   print("Training (Lateralized, Right) Accuracy %:", t_l_r_acc)
 
@@ -55,7 +55,7 @@ def start():
   m_m_r_acc = round(((m_m_r_df["correct_selection"] == True).sum() / m_m_r_df.shape[0]) * 100, 3)
   print("Main (Monocular, Right) Accuracy %:", m_m_r_acc)
   m_l_l_acc = round(((m_l_l_df["correct_selection"] == True).sum() / m_l_l_df.shape[0]) * 100, 3)
-  print("Main (Lateralized, Right) Accuracy %:", m_l_l_acc)
+  print("Main (Lateralized, Left) Accuracy %:", m_l_l_acc)
   m_l_r_acc = round(((m_l_r_df["correct_selection"] == True).sum() / m_l_r_df.shape[0]) * 100, 3)
   print("Main (Lateralized, Right) Accuracy %:", m_l_r_acc)
 
