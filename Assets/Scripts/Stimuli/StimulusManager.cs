@@ -54,6 +54,15 @@ namespace Stimuli
         private Dictionary<StimulusType, bool> stimuliVisibility = new();
         private GameObject fixationCross; // Fixation cross parent GameObject
 
+        // UI cursor for selecting buttons
+        public enum CursorSide
+        {
+            Left,
+            Right,
+        }
+        private GameObject cursor; // Cursor parent GameObject
+        private CursorSide activeCursorSide = CursorSide.Left;
+
         // Slider-based button prefab
         [Header("Prefabs")]
         public GameObject ButtonPrefab;
@@ -63,7 +72,10 @@ namespace Stimuli
         void Start()
         {
             CalculateWorldSizing(); // Run pre-component calculations to ensure consistent world sizing
+
+            // Additional UI elements to be controlled outside the stimuli
             fixationCross = CreateFixationCross();
+            cursor = CreateCursor();
 
             foreach (StimulusType stimuli in Enum.GetValues(typeof(StimulusType)))
             {
@@ -333,6 +345,80 @@ namespace Stimuli
             }
         }
 
+        public GameObject CreateCursor()
+        {
+            GameObject cursorObject = new GameObject();
+            cursorObject.name = "rdk_cursor_object";
+            cursorObject.transform.SetParent(stimulusAnchor.transform, false);
+            cursorObject.transform.localPosition = new Vector3(0.0f, 0.0f, 0.0f);
+            cursorObject.transform.localScale = new Vector2(0.2f, 0.2f);
+            cursorObject.SetActive(false);
+
+            cursorObject.AddComponent<SpriteRenderer>();
+            cursorObject.GetComponent<SpriteRenderer>().sprite = Resources.Load<Sprite>("Sprites/Cursor");
+
+            // Flip sprite if displayed to the left of the aperture
+            if (activeCursorSide == CursorSide.Left)
+            {
+                cursorObject.GetComponent<SpriteRenderer>().flipX = true;
+            }
+
+            return cursorObject;
+        }
+
+        public void ResetCursor()
+        {
+            // Reset the vertical position of the cursor
+            Vector3 updatedPosition = cursor.transform.localPosition;
+            updatedPosition.y = 0.0f;
+            cursor.transform.localPosition = updatedPosition;
+
+            SetCursorSide(CursorSide.Right);
+            cursor.GetComponent<SpriteRenderer>().material.SetColor("_Color", Color.gray);
+        }
+
+        public void SetCursorVisiblity(bool state)
+        {
+            cursor.SetActive(state);
+        }
+
+        public void SetCursorSide(CursorSide side)
+        {
+            // Update the side and flip if required
+            activeCursorSide = side;
+            Vector3 updatedPosition = cursor.transform.localPosition;
+            if (activeCursorSide == CursorSide.Left) {
+                cursor.GetComponent<SpriteRenderer>().flipX = true;
+                updatedPosition.x = -1.0f * apertureWorldWidth * 0.8f;
+            }
+            else
+            {
+                cursor.GetComponent<SpriteRenderer>().flipX = false;
+                updatedPosition.x = apertureWorldWidth * 0.8f;
+            }
+            cursor.transform.localPosition = updatedPosition;
+        }
+
+        public void SetCursorIndex(int index)
+        {
+            // Update cursor color to show it is active
+            cursor.GetComponent<SpriteRenderer>().material.SetColor("_Color", Color.white);
+
+            // Local Y positions of each of the button sliders
+            float[] sliderY = { 2.95f, 2.25f, -2.25f, -2.95f };
+
+            // Check for an invalid index
+            if (index >= 0 && index < sliderY.Length)
+            {
+                // Update the vertical position of the cursor
+                Vector3 updatedPosition = cursor.transform.localPosition;
+                updatedPosition.y = sliderY[index];
+
+                // Update the cursor position
+                cursor.transform.localPosition = updatedPosition;
+            }
+        }
+
         public GameObject CreateDecisionButtons()
         {
             GameObject buttonDecisionObject = new GameObject();
@@ -373,12 +459,12 @@ namespace Stimuli
             S_D_Slider.SetBackgroundColor(new Color(123f/255f, 190f/255f, 248f/255f)); // 50% lighter
             S_D_Slider.SetFillColor(new Color(149f/255f, 203f/255f, 249f/255f)); // 20% lighter
 
-            // Store the slider controllers
+            // Store the slider controllers in display order (top to bottom)
             buttonSliders = new ButtonSliderInput[] {
                 V_U_Slider,
                 S_U_Slider,
+                S_D_Slider,
                 V_D_Slider,
-                S_D_Slider
             };
 
             return buttonDecisionObject;
