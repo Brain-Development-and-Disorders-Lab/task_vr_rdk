@@ -25,7 +25,39 @@ def start():
   t_m_r_c_pair = validate_training_coherence(t_m_r_df, "training_monocular_coherence_right")
   validate_main_coherences(m_m_r_df, "main_monocular_coherence_right", t_m_r_c_pair)
 
-  t_b_acc = (t_b_df["correct_selection"] == True).sum()
+  # Lateralized - left
+  t_l_l_df = global_df.loc[(global_df["trial_type"] == "Training_Trials_Lateralized") & (global_df["active_visual_field"] == "Left")]
+  m_l_l_df = global_df.loc[(global_df["trial_type"] == "Main_Trials_Lateralized") & (global_df["active_visual_field"] == "Left")]
+  t_l_l_c_pair = validate_training_coherence(t_l_l_df, "training_lateralized_coherence_left")
+  validate_main_coherences(m_l_l_df, "main_lateralized_coherence_left", t_l_l_c_pair)
+
+  # Lateralized - right
+  t_l_r_df = global_df.loc[(global_df["trial_type"] == "Training_Trials_Lateralized") & (global_df["active_visual_field"] == "Right")]
+  m_l_r_df = global_df.loc[(global_df["trial_type"] == "Main_Trials_Lateralized") & (global_df["active_visual_field"] == "Right")]
+  t_l_r_c_pair = validate_training_coherence(t_l_r_df, "training_lateralized_coherence_right")
+  validate_main_coherences(m_l_r_df, "main_lateralized_coherence_right", t_l_r_c_pair)
+
+  t_b_acc = round(((t_b_df["correct_selection"] == True).sum() / t_b_df.shape[0]) * 100, 3)
+  print("Training (Binocular) Accuracy %:", t_b_acc)
+  t_m_l_acc = round(((t_m_l_df["correct_selection"] == True).sum() / t_m_l_df.shape[0]) * 100, 3)
+  print("Training (Monocular, Left) Accuracy %:", t_m_l_acc)
+  t_m_r_acc = round(((t_m_r_df["correct_selection"] == True).sum() / t_m_r_df.shape[0]) * 100, 3)
+  print("Training (Monocular, Right) Accuracy %:", t_m_r_acc)
+  t_l_l_acc = round(((t_l_l_df["correct_selection"] == True).sum() / t_l_l_df.shape[0]) * 100, 3)
+  print("Training (Lateralized, Right) Accuracy %:", t_l_l_acc)
+  t_l_r_acc = round(((t_l_r_df["correct_selection"] == True).sum() / t_l_r_df.shape[0]) * 100, 3)
+  print("Training (Lateralized, Right) Accuracy %:", t_l_r_acc)
+
+  m_b_acc = round(((m_b_df["correct_selection"] == True).sum() / m_b_df.shape[0]) * 100, 3)
+  print("Main (Binocular) Accuracy %:", m_b_acc)
+  m_m_l_acc = round(((m_m_l_df["correct_selection"] == True).sum() / m_m_l_df.shape[0]) * 100, 3)
+  print("Main (Monocular, Left) Accuracy %:", m_m_l_acc)
+  m_m_r_acc = round(((m_m_r_df["correct_selection"] == True).sum() / m_m_r_df.shape[0]) * 100, 3)
+  print("Main (Monocular, Right) Accuracy %:", m_m_r_acc)
+  m_l_l_acc = round(((m_l_l_df["correct_selection"] == True).sum() / m_l_l_df.shape[0]) * 100, 3)
+  print("Main (Lateralized, Right) Accuracy %:", m_l_l_acc)
+  m_l_r_acc = round(((m_l_r_df["correct_selection"] == True).sum() / m_l_r_df.shape[0]) * 100, 3)
+  print("Main (Lateralized, Right) Accuracy %:", m_l_r_acc)
 
 def validate_training_coherence(df, c_column):
   print("Validating:", c_column)
@@ -50,7 +82,7 @@ def validate_training_coherence(df, c_column):
       # Check previous responses
       if (curr_acc == True and prev_acc == True and curr_c == prev_c):
         c_estimate -= 0.01
-    c_estimate = round(c_estimate, 3)
+    c_estimate = round(c_estimate, 4)
     c_vals.append(curr_c)
 
     # Update current as "previous" row
@@ -59,14 +91,14 @@ def validate_training_coherence(df, c_column):
   print("\tFinal coherence:", c_estimate)
 
   # Generate kMed values and compare
-  kMed = statistics.median(c_vals)
+  kMed = round(statistics.median(c_vals), 4)
   print("\tkMed:", kMed)
   if kMed < 0.12:
     kMed = 0.12
   elif kMed > 0.5:
     kMed = 0.5
-  kLow = 0.5 * kMed
-  kHigh = 2.0 * kMed
+  kLow = round(0.5 * kMed, 4)
+  kHigh = round(2.0 * kMed, 4)
   print("\tkLow:", kLow)
   print("\tkHigh:", kHigh)
   return (kLow, kHigh)
