@@ -414,14 +414,14 @@ public class ExperimentManager : MonoBehaviour
             // Instructions shown to the participant before the start of the experiment
             Instructions.AddRange(new List<string>{
                 "After viewing the dot movement, you will be asked if you thought the dots moving together moved up or down.\n\nYou will have four options to choose from:\n<b>Up - Very Confident\t\t\t</b>\n<b>Up - Somewhat Confident\t\t</b>\n<b>Down - Somewhat Confident\t</b>\n<b>Down - Very Confident\t\t</b>\n\nPress the <b>Trigger</b> to select <b>Next</b> and continue.",
-                "You <b>must</b> select one of the four options, the one which best represents your decision and how confident you were in your decision.\n\nUse the <b>Joystick</b> to move the cursor across options, and hold the <b>Trigger</b> approximately 1 second to select an option.\n\n\nPress the <b>Trigger</b> to select <b>Next</b> and practice making a selection.",
+                "You <b>must</b> select one of the four options. Please choose the one that best represents your conclusion about how the dots were moving and your confidence in that conclusion.\n\nUse the <b>Joystick</b> to move the cursor between options, and hold the <b>Trigger</b> for approximately 1 second to select an option.\n\n\nPress the <b>Trigger</b> to select <b>Next</b> and practice making a selection.",
             });
         }
         else if (activeBlock == BlockSequence.Instructions_Training)
         {
             // Instructions shown to the participant before the start of the experiment
             Instructions.AddRange(new List<string>{
-                "You will play <b>" + trainingTimeline.Count + " training trials</b> first. After the training trials, you will be shown an instructions screen before continuing to the main trials.\n\nYou are about to start the training trials.\n\n\nWhen you are ready and comfortable, press the <b>Trigger</b> to select <b>Continue</b> and begin.",
+                "You will first play <b>" + trainingTimeline.Count + " training trials</b>. After the training trials, you will be shown an instruction screen before continuing to the main trials.\n\nYou are about to start the training trials.\n\n\nWhen you are ready and comfortable, press the <b>Trigger</b> to select <b>Continue</b> and begin.",
             });
         }
         else if (activeBlock == BlockSequence.Mid_Instructions)
