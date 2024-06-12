@@ -413,7 +413,7 @@ public class ExperimentManager : MonoBehaviour
         {
             // Instructions shown to the participant before the start of the experiment
             Instructions.AddRange(new List<string>{
-                "After viewing the dot movement, you will be asked if you thought the dots moving together moved up or down.\n\nYou will have four options to choose from:\n<b>Up - Very Confident</b>\n<b>Up - Somewhat Confident</b>\n<b>Down - Somewhat Confident</b>\n<b>Down - Very Confident</b>\n\nPress the <b>Trigger</b> to select <b>Next</b> and continue.",
+                "After viewing the dot movement, you will be asked if you thought the dots moving together moved up or down.\n\nYou will have four options to choose from:\n<b>Up - Very Confident\t\t\t</b>\n<b>Up - Somewhat Confident\t\t</b>\n<b>Down - Somewhat Confident\t</b>\n<b>Down - Very Confident\t\t</b>\n\nPress the <b>Trigger</b> to select <b>Next</b> and continue.",
                 "You <b>must</b> select one of the four options, the one which best represents your decision and how confident you were in your decision.\n\nUse the <b>Joystick</b> to move the cursor across options, and hold the <b>Trigger</b> approximately 1 second to select an option.\n\n\nPress the <b>Trigger</b> to select <b>Next</b> and practice making a selection.",
             });
         }
