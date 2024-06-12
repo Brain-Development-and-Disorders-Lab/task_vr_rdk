@@ -102,7 +102,7 @@ namespace UXF
             // Eye position and rotation
             Vector3 p = transform.position;
             Vector3 r = transform.eulerAngles;
-            GazeEstimate = p + transform.forward * gazeDistance;
+            GazeEstimate = (p + transform.forward) * gazeDistance;
 
             // If using indicators, update the position
             if (showIndicator == true && indicator != null)
@@ -124,9 +124,9 @@ namespace UXF
             var values = new UXFDataRow()
             {
                 ("eye", TrackedEye),
-                ("pos_x", p.x),
-                ("pos_y", p.y),
-                ("pos_z", p.z),
+                ("pos_x", GazeEstimate.x),
+                ("pos_y", GazeEstimate.y),
+                ("pos_z", GazeEstimate.z),
                 ("rot_x", r.x),
                 ("rot_y", r.y),
                 ("rot_z", r.z),
