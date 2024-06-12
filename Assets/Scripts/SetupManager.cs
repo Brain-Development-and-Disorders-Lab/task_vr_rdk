@@ -32,11 +32,12 @@ public class SetupManager : MonoBehaviour
     private Vector2 unitVector; // The active unit vector
     private readonly float unitDistance = 2.4f;
     private readonly Dictionary<string, Vector2> unitVectorsPath = new() {
-        {"c", new Vector2(0, 0)},
+        {"c_start", new Vector2(0, 0)},
         {"q_1", new Vector2(1, 1)},
         {"q_2", new Vector2(-1, 1)},
         {"q_3", new Vector2(-1, -1)},
         {"q_4", new Vector2(1, -1)},
+        {"c_end", new Vector2(0, 0)}, // Return to center
     };
     private float updateTimer = 0.0f;
     private readonly float PathInterval = 1.6f; // Duration of each point being displayed in the path
@@ -45,11 +46,12 @@ public class SetupManager : MonoBehaviour
 
     // Data storage
     private Dictionary<string, List<GazeVector>> GazeData = new() {
-        {"c", new List<GazeVector>() },
+        {"c_start", new List<GazeVector>() },
         {"q_1", new List<GazeVector>() },
         {"q_2", new List<GazeVector>() },
         {"q_3", new List<GazeVector>() },
         {"q_4", new List<GazeVector>() },
+        {"c_end", new List<GazeVector>() },
     };
 
     // Calculated offset vectors
@@ -169,7 +171,7 @@ public class SetupManager : MonoBehaviour
 
     public GazeVector GetCentralOffset()
     {
-        return DirectionalOffsets["c"];
+        return DirectionalOffsets["c_start"];
     }
 
     public static Dictionary<string, Tuple<float, float>> GetQuadrants()

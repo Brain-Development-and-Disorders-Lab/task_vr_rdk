@@ -583,8 +583,6 @@ public class ExperimentManager : MonoBehaviour
         // Store the current `TrialType`
         Session.instance.CurrentTrial.result["trial_type"] = Enum.GetName(typeof(TrialType), activeTrialType);
 
-        Debug.Log("Block: " + block);
-
         switch (block) {
             case BlockSequence.Fit:
                 setupManager.SetViewCalibrationVisibility(true);
