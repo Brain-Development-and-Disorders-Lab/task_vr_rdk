@@ -21,15 +21,19 @@ public class ExperimentManager : MonoBehaviour
     {
         Fit = 1,
         Setup = 2,
-        Pre_Instructions = 3,
-        Training_Trials_Binocular = 4,
-        Training_Trials_Monocular = 5,
-        Training_Trials_Lateralized = 6,
-        Mid_Instructions = 7,
-        Main_Trials_Binocular = 8,
-        Main_Trials_Monocular = 9,
-        Main_Trials_Lateralized = 10,
-        Post_Instructions = 11,
+        Instructions_Motion = 3,
+        Instructions_Demo_Motion = 4,
+        Instructions_Selection = 5,
+        Instructions_Demo_Selection = 6,
+        Instructions_Training = 7,
+        Training_Trials_Binocular = 8,
+        Training_Trials_Monocular = 9,
+        Training_Trials_Lateralized = 10,
+        Mid_Instructions = 11,
+        Main_Trials_Binocular = 12,
+        Main_Trials_Monocular = 13,
+        Main_Trials_Lateralized = 14,
+        Post_Instructions = 15,
     };
 
     // Set the number of trials within a specific block in the experiment timeline
@@ -37,7 +41,11 @@ public class ExperimentManager : MonoBehaviour
     {
         Fit = 1,
         Setup = 1,
-        Pre_Instructions = 1, // Welcome instructions, includes tutorial instructions
+        Instructions_Motion = 1, // Welcome instructions, includes tutorial instructions
+        Instructions_Demo_Motion = 1,
+        Instructions_Selection = 1,
+        Instructions_Demo_Selection = 1,
+        Instructions_Training = 1,
         Training_Trials_Binocular = 20, // Training trials, central presentation to both eyes
         Training_Trials_Monocular = 20, // Training trials, central presentation to one eye
         Training_Trials_Lateralized = 20, // Training trials, lateralized presentation to one eye
@@ -53,11 +61,15 @@ public class ExperimentManager : MonoBehaviour
     {
         Fit = 1,
         Setup = 2,
-        Pre_Instructions = 3,
-        Training = 4,
-        Mid_Instructions = 5,
-        Main = 6,
-        Post_Instructions = 7
+        Instructions_Motion = 3,
+        Instructions_Demo_Motion = 4,
+        Instructions_Selection = 5,
+        Instructions_Demo_Selection = 6,
+        Instructions_Training = 7,
+        Training = 8,
+        Mid_Instructions = 9,
+        Main = 10,
+        Post_Instructions = 11
     };
 
     // List to populate with
@@ -85,6 +97,7 @@ public class ExperimentManager : MonoBehaviour
     private Tuple<float, float> mainLateralizedCoherenceRight;
 
     // Timing variables
+    private readonly float POST_FIXATION_DURATION = 0.1f; // 500 milliseconds
     private readonly float PRE_DISPLAY_DURATION = 0.5f; // 500 milliseconds
     private readonly float DISPLAY_DURATION = 0.180f; // 180 milliseconds
 
@@ -162,7 +175,11 @@ public class ExperimentManager : MonoBehaviour
         // Use UXF `Session` to generate experiment timeline from shuffled "Training_" and "Main_" timelines
         session.CreateBlock((int)TrialCount.Fit); // Pre-experiment headset fit
         session.CreateBlock((int)TrialCount.Setup); // Pre-experiment setup
-        session.CreateBlock((int)TrialCount.Pre_Instructions); // Pre-experiment instructions
+        session.CreateBlock((int)TrialCount.Instructions_Motion); // Pre-experiment instructions
+        session.CreateBlock((int)TrialCount.Instructions_Demo_Motion); // Pre-experiment motion demo
+        session.CreateBlock((int)TrialCount.Instructions_Selection); // Pre-experiment selection instructions
+        session.CreateBlock((int)TrialCount.Instructions_Demo_Selection); // Pre-experiment selection demo
+        session.CreateBlock((int)TrialCount.Instructions_Training); // Pre-experiment training instructions
         session.CreateBlock(trainingTimeline.Count); // Training trials
         session.CreateBlock((int)TrialCount.Mid_Instructions); // Mid-experiment instructions
         session.CreateBlock(mainTimeline.Count); // Main trials
@@ -384,15 +401,27 @@ public class ExperimentManager : MonoBehaviour
         List<string> Instructions = new();
 
         // Configure the list of instructions depending on the instruction block
-        if (activeBlock == BlockSequence.Pre_Instructions)
+        if (activeBlock == BlockSequence.Instructions_Motion)
         {
             // Instructions shown to the participant before the start of the experiment
             Instructions.AddRange(new List<string>{
-                "Before continuing, ensure you are able to read this text easily.\n\nDuring this task, you will be presented a field of moving dots and a fixation cross. The dot movement will be visible for only a short period of time and will appear either around the cross or next to the cross.\n\n\nPress the <b>Trigger</b> to select <b>Next</b> and continue.",
-                "During the trials, you <b>must maintain focus on the central fixation cross</b> whenever it is visible and during dot motion. The dots will be visible in either one eye or both eyes at once.\n\nSome of the dots will move only up or only down, and the rest of the dots will move randomly as a distraction.\n\n\nPress the <b>Trigger</b> to select <b>Next</b> and continue.",
-                "After viewing the dot movement, you will be asked if you thought the dots moving together moved up or down.\n\nYou will have four options to choose from:\n<b>Up - Very Confident</b>\n<b>Up - Somewhat Confident</b>\n<b>Down - Somewhat Confident</b>\n<b>Down - Very Confident</b>\n\nPress the <b>Trigger</b> to select <b>Next</b> and continue.",
-                "You <b>must</b> select one of the four options, the one which best represents your decision and how confident you were in your decision.\n\nUse the <b>Joystick</b> to move the cursor across options, and hold the <b>Trigger</b> approximately 1 second to select an option.\n\n\nPress the <b>Trigger</b> to select <b>Next</b> and continue.",
-                "You will play <b>" + trainingTimeline.Count + " training trials</b> first. After the training trials, you will be shown an instructions screen before continuing to the main trials.\n\nYou are about to start the training trials.\n\n\nWhen you are ready and comfortable, press the <b>Trigger</b> to select <b>Continue</b> and begin.",
+                "During this task, you will be presented with a field of moving dots and a fixation cross. The dot movement will be visible for only a short period of time and will appear either around the cross or next to the cross.\n\n\nPress the <b>Trigger</b> to select <b>Next</b> and continue.",
+                "During the trials, you <b>must maintain focus on the central fixation cross</b> whenever it is visible and during dot motion. The dots will be visible in either one eye or both eyes at once.\n\nSome of the dots will move only up or only down, and the rest of the dots will move randomly as a distraction.\n\n\nPress the <b>Trigger</b> to select <b>Next</b> and preview the dot movement.",
+            });
+        }
+        else if (activeBlock == BlockSequence.Instructions_Selection)
+        {
+            // Instructions shown to the participant before the start of the experiment
+            Instructions.AddRange(new List<string>{
+                "After viewing the dot movement, you will be asked if you thought the dots moving together moved up or down.\n\nYou will have four options to choose from:\n<b>Up - Very Confident\t\t\t</b>\n<b>Up - Somewhat Confident\t\t</b>\n<b>Down - Somewhat Confident\t</b>\n<b>Down - Very Confident\t\t</b>\n\nPress the <b>Trigger</b> to select <b>Next</b> and continue.",
+                "You <b>must</b> select one of the four options. Please choose the one that best represents your conclusion about how the dots were moving and your confidence in that conclusion.\n\nUse the <b>Joystick</b> to move the cursor between options, and hold the <b>Trigger</b> for approximately 1 second to select an option.\n\n\nPress the <b>Trigger</b> to select <b>Next</b> and practice making a selection.",
+            });
+        }
+        else if (activeBlock == BlockSequence.Instructions_Training)
+        {
+            // Instructions shown to the participant before the start of the experiment
+            Instructions.AddRange(new List<string>{
+                "You will first play <b>" + trainingTimeline.Count + " training trials</b>. After the training trials, you will be shown an instruction screen before continuing to the main trials.\n\nYou are about to start the training trials.\n\n\nWhen you are ready and comfortable, press the <b>Trigger</b> to select <b>Continue</b> and begin.",
             });
         }
         else if (activeBlock == BlockSequence.Mid_Instructions)
@@ -529,7 +558,7 @@ public class ExperimentManager : MonoBehaviour
         int RelativeTrialNumber = Session.instance.CurrentTrial.numberInBlock - 1;
 
         // Define the active `TrialType` depending on the active `Block`
-        activeTrialType = TrialType.Pre_Instructions;
+        activeTrialType = TrialType.Instructions_Motion;
         switch (block) {
             case BlockSequence.Training:
                 // Set the `activeTrialType` depending on the position within the `trainingTimeline`
@@ -564,14 +593,45 @@ public class ExperimentManager : MonoBehaviour
             case BlockSequence.Setup:
                 uiManager.SetVisible(true);
                 uiManager.SetHeaderText("Eye-Tracking Setup");
-                uiManager.SetBodyText("You will be shown a red dot in front of you. Follow the dot movement with your gaze.\n\nAfter a brief series of dot movements, the headset setup will be complete and you will be shown further instructions.\n\n\nWhen you are ready and comfortable, press <b>Right Trigger</b> to select <b>Continue</b> and begin.");
+                uiManager.SetBodyText("You will be shown a red dot in front of you. Follow the dot movement with your gaze.\n\nAfter a brief series of dot movements, the headset setup will be complete and you will be shown further instructions.\n\n\nWhen you are ready and comfortable, press the <b>Trigger</b> to select <b>Continue</b> and begin.");
                 uiManager.SetLeftButtonState(false, false, "");
                 uiManager.SetRightButtonState(true, true, "Continue");
 
                 // Input delay
                 yield return StartCoroutine(WaitSeconds(0.25f, true));
                 break;
-            case BlockSequence.Pre_Instructions:
+            case BlockSequence.Instructions_Motion:
+                SetupInstructions();
+                uiManager.SetVisible(true);
+                uiManager.SetHeaderText("Instructions");
+                uiManager.SetLeftButtonState(false, false, "Back");
+                uiManager.SetRightButtonState(true, true, "Next");
+
+                // Input delay
+                yield return StartCoroutine(WaitSeconds(0.25f, true));
+                break;
+            case BlockSequence.Instructions_Demo_Motion:
+                // Run setup for the motion stimuli
+                SetupMotion(TrialType.Training_Trials_Binocular);
+                yield return StartCoroutine(DisplayMotion(3.0f));
+                EndTrial();
+                break;
+            case BlockSequence.Instructions_Selection:
+                SetupInstructions();
+                uiManager.SetVisible(true);
+                uiManager.SetHeaderText("Instructions");
+                uiManager.SetLeftButtonState(false, false, "Back");
+                uiManager.SetRightButtonState(true, true, "Next");
+
+                // Input delay
+                yield return StartCoroutine(WaitSeconds(0.25f, true));
+                break;
+            case BlockSequence.Instructions_Demo_Selection:
+                // Run setup for the decision stimuli
+                SetupMotion(TrialType.Training_Trials_Binocular);
+                yield return StartCoroutine(DisplaySelection());
+                break;
+            case BlockSequence.Instructions_Training:
                 SetupInstructions();
                 uiManager.SetVisible(true);
                 uiManager.SetHeaderText("Instructions");
@@ -585,7 +645,8 @@ public class ExperimentManager : MonoBehaviour
             case BlockSequence.Main:
                 // Run setup for the motion stimuli
                 SetupMotion(activeTrialType);
-                yield return StartCoroutine(DisplayMotion());
+                yield return StartCoroutine(DisplayMotion(DISPLAY_DURATION));
+                yield return StartCoroutine(DisplaySelection());
                 break;
             case BlockSequence.Mid_Instructions:
                 SetupInstructions();
@@ -639,7 +700,7 @@ public class ExperimentManager : MonoBehaviour
     /// Utility function to display the dot motion stimulus and wait for a response, used in all trial types
     /// </summary>
     /// <returns></returns>
-    private IEnumerator DisplayMotion()
+    private IEnumerator DisplayMotion(float duration)
     {
         // Disable input and wait for fixation if enabled
         SetIsInputEnabled(false);
@@ -648,6 +709,7 @@ public class ExperimentManager : MonoBehaviour
         {
             yield return new WaitUntil(() => IsFixated());
         }
+        yield return StartCoroutine(WaitSeconds(POST_FIXATION_DURATION, true));
 
         // Present fixation stimulus
         stimulusManager.SetVisible(StimulusType.Fixation, true);
@@ -665,10 +727,13 @@ public class ExperimentManager : MonoBehaviour
 
         // Present motion stimulus
         stimulusManager.SetVisible(StimulusType.Motion, true);
-        yield return StartCoroutine(WaitSeconds(DISPLAY_DURATION, true));
+        yield return StartCoroutine(WaitSeconds(duration, true));
         stimulusManager.SetVisible(StimulusType.Motion, false);
         stimulusManager.SetFixationCrossVisibility(false);
+    }
 
+    private IEnumerator DisplaySelection()
+    {
         // Present decision stimulus and wait for response
         Session.instance.CurrentTrial.result["decision_start"] = Time.time;
         stimulusManager.ResetCursor();
@@ -802,15 +867,19 @@ public class ExperimentManager : MonoBehaviour
     // Functions to bulk-classify TrialType values
     private bool IsInstructionsScreen()
     {
-        return activeBlock == BlockSequence.Pre_Instructions ||
+        return activeBlock == BlockSequence.Instructions_Motion ||
+            activeBlock == BlockSequence.Instructions_Selection ||
+            activeBlock == BlockSequence.Instructions_Training ||
             activeBlock == BlockSequence.Mid_Instructions ||
             activeBlock == BlockSequence.Post_Instructions;
     }
 
     private bool IsStimulusScreen()
     {
-        return activeBlock == BlockSequence.Training ||
-                activeBlock == BlockSequence.Main;
+        return activeBlock == BlockSequence.Instructions_Demo_Motion ||
+            activeBlock == BlockSequence.Instructions_Demo_Selection ||
+            activeBlock == BlockSequence.Training ||
+            activeBlock == BlockSequence.Main;
     }
 
     private bool IsSetupScreen()
