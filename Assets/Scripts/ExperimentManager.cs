@@ -593,7 +593,7 @@ public class ExperimentManager : MonoBehaviour
             case BlockSequence.Setup:
                 uiManager.SetVisible(true);
                 uiManager.SetHeaderText("Eye-Tracking Setup");
-                uiManager.SetBodyText("You will be shown a red dot in front of you. Follow the dot movement with your gaze.\n\nAfter a brief series of dot movements, the headset setup will be complete and you will be shown further instructions.\n\n\nWhen you are ready and comfortable, press <b>Right Trigger</b> to select <b>Continue</b> and begin.");
+                uiManager.SetBodyText("You will be shown a red dot in front of you. Follow the dot movement with your gaze.\n\nAfter a brief series of dot movements, the headset setup will be complete and you will be shown further instructions.\n\n\nWhen you are ready and comfortable, press the <b>Trigger</b> to select <b>Continue</b> and begin.");
                 uiManager.SetLeftButtonState(false, false, "");
                 uiManager.SetRightButtonState(true, true, "Continue");
 
