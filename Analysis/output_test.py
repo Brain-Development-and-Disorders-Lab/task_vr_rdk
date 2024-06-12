@@ -1,39 +1,52 @@
 import pandas as pd
 import statistics
 
-CSV_PATH = "/Users/henryburgess/Downloads/class-fa180e9a-e0fc-4340-a357-5fe44c8d505e/S001/trial_results.csv"
+FOLDER_PATH = "/Users/henryburgess/Downloads"
+RESULTS_PATH = FOLDER_PATH + "/spend-31b486b3-20c1-4361-bff6-b7b2187f9b6c/S001/trial_results.csv"
 
 def start():
   # Read in CSV and group trials by active visual field and type (monocular, binocular, lateralized)
-  global_df = pd.read_csv(CSV_PATH)
+  results_df = pd.read_csv(RESULTS_PATH)
+  run_results(results_df)
+  run_eye_tracking(results_df);
 
+
+def run_eye_tracking(results_df):
+  for _, row in results_df.iterrows():
+    left_eye_file = "/" + "/".join(str(row["lefteyeactive_gaze_location_0"]).split("/")[1:])
+    right_eye_file = "/" + "/".join(str(row["righteyeactive_gaze_location_0"]).split("/")[1:])
+    left_eye_df = pd.read_csv(FOLDER_PATH + left_eye_file)
+    right_eye_df = pd.read_csv(FOLDER_PATH + right_eye_file)
+
+
+def run_results(results_df):
   # Binocular
-  t_b_df = global_df.loc[(global_df["trial_type"] == "Training_Trials_Binocular")]
-  m_b_df = global_df.loc[(global_df["trial_type"] == "Main_Trials_Binocular")]
+  t_b_df = results_df.loc[(results_df["trial_type"] == "Training_Trials_Binocular")]
+  m_b_df = results_df.loc[(results_df["trial_type"] == "Main_Trials_Binocular")]
   t_b_c_pair = validate_training_coherence(t_b_df, "training_binocular_coherence")
   validate_main_coherences(m_b_df, "main_binocular_coherence", t_b_c_pair)
 
   # Monocular - left
-  t_m_l_df = global_df.loc[(global_df["trial_type"] == "Training_Trials_Monocular") & (global_df["active_visual_field"] == "Left")]
-  m_m_l_df = global_df.loc[(global_df["trial_type"] == "Main_Trials_Monocular") & (global_df["active_visual_field"] == "Left")]
+  t_m_l_df = results_df.loc[(results_df["trial_type"] == "Training_Trials_Monocular") & (results_df["active_visual_field"] == "Left")]
+  m_m_l_df = results_df.loc[(results_df["trial_type"] == "Main_Trials_Monocular") & (results_df["active_visual_field"] == "Left")]
   t_m_l_c_pair = validate_training_coherence(t_m_l_df, "training_monocular_coherence_left")
   validate_main_coherences(m_m_l_df, "main_monocular_coherence_left", t_m_l_c_pair)
 
   # Monocular - right
-  t_m_r_df = global_df.loc[(global_df["trial_type"] == "Training_Trials_Monocular") & (global_df["active_visual_field"] == "Right")]
-  m_m_r_df = global_df.loc[(global_df["trial_type"] == "Main_Trials_Monocular") & (global_df["active_visual_field"] == "Right")]
+  t_m_r_df = results_df.loc[(results_df["trial_type"] == "Training_Trials_Monocular") & (results_df["active_visual_field"] == "Right")]
+  m_m_r_df = results_df.loc[(results_df["trial_type"] == "Main_Trials_Monocular") & (results_df["active_visual_field"] == "Right")]
   t_m_r_c_pair = validate_training_coherence(t_m_r_df, "training_monocular_coherence_right")
   validate_main_coherences(m_m_r_df, "main_monocular_coherence_right", t_m_r_c_pair)
 
   # Lateralized - left
-  t_l_l_df = global_df.loc[(global_df["trial_type"] == "Training_Trials_Lateralized") & (global_df["active_visual_field"] == "Left")]
-  m_l_l_df = global_df.loc[(global_df["trial_type"] == "Main_Trials_Lateralized") & (global_df["active_visual_field"] == "Left")]
+  t_l_l_df = results_df.loc[(results_df["trial_type"] == "Training_Trials_Lateralized") & (results_df["active_visual_field"] == "Left")]
+  m_l_l_df = results_df.loc[(results_df["trial_type"] == "Main_Trials_Lateralized") & (results_df["active_visual_field"] == "Left")]
   t_l_l_c_pair = validate_training_coherence(t_l_l_df, "training_lateralized_coherence_left")
   validate_main_coherences(m_l_l_df, "main_lateralized_coherence_left", t_l_l_c_pair)
 
   # Lateralized - right
-  t_l_r_df = global_df.loc[(global_df["trial_type"] == "Training_Trials_Lateralized") & (global_df["active_visual_field"] == "Right")]
-  m_l_r_df = global_df.loc[(global_df["trial_type"] == "Main_Trials_Lateralized") & (global_df["active_visual_field"] == "Right")]
+  t_l_r_df = results_df.loc[(results_df["trial_type"] == "Training_Trials_Lateralized") & (results_df["active_visual_field"] == "Right")]
+  m_l_r_df = results_df.loc[(results_df["trial_type"] == "Main_Trials_Lateralized") & (results_df["active_visual_field"] == "Right")]
   t_l_r_c_pair = validate_training_coherence(t_l_r_df, "training_lateralized_coherence_right")
   validate_main_coherences(m_l_r_df, "main_lateralized_coherence_right", t_l_r_c_pair)
 
@@ -58,6 +71,7 @@ def start():
   print("Main (Lateralized, Left) Accuracy %:", m_l_l_acc)
   m_l_r_acc = round(((m_l_r_df["correct_selection"] == True).sum() / m_l_r_df.shape[0]) * 100, 3)
   print("Main (Lateralized, Right) Accuracy %:", m_l_r_acc)
+
 
 def validate_training_coherence(df, c_column):
   print("Validating:", c_column)
@@ -102,6 +116,7 @@ def validate_training_coherence(df, c_column):
   print("\tkLow:", kLow)
   print("\tkHigh:", kHigh)
   return (kLow, kHigh)
+
 
 def validate_main_coherences(df, c_column, c_pair):
   print("Validating:", c_column)
