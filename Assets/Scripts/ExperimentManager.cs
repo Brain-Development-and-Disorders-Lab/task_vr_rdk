@@ -10,6 +10,7 @@ using MathNet.Numerics.Statistics;
 // Custom namespaces
 using Stimuli;
 using Utilities;
+using UnityEngine.Networking;
 
 public class ExperimentManager : MonoBehaviour
 {
