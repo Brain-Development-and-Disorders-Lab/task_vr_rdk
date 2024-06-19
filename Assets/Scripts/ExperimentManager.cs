@@ -686,6 +686,15 @@ public class ExperimentManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Return the value of the currently active Block, stored as `activeBlock`
+    /// </summary>
+    /// <returns>String representation of the value</returns>
+    public string GetActiveBlock()
+    {
+        return activeBlock.ToString();
+    }
+
+    /// <summary>
     /// Utility function to display "Feedback_"-type stimuli
     /// </summary>
     /// <param name="correct">`true` to display green cross, `false` to display red cross</param>

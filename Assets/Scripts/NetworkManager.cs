@@ -11,12 +11,16 @@ using System.Linq;
 public class NetworkManager : MonoBehaviour
 {
   public CaptureManager[] CaptureSources;
+  private ExperimentManager Experiment;
   private HttpListener listener;
   private Thread listenerThread;
   private Queue<string> logQueue;
 
   void Start()
   {
+    Experiment = GetComponent<ExperimentManager>();
+
+    // Setup logging capture
     logQueue = new();
     Application.logMessageReceived += AddMessage;
 
@@ -73,9 +77,15 @@ public class NetworkManager : MonoBehaviour
       else if (context.Request.Url.LocalPath == "/status")
       {
         string responseValue = JsonConvert.SerializeObject(new Dictionary<string, string>(){
-          { "active_block", "1" },
-          { "elapsed_time", "1000.023" },
+          { "active_block", "-1" },
         });
+        if (Experiment != null)
+        {
+          string activeBlock = Experiment.GetActiveBlock();
+          responseValue = JsonConvert.SerializeObject(new Dictionary<string, string>(){
+            { "active_block", activeBlock },
+          });
+        }
         buffer = System.Text.Encoding.UTF8.GetBytes(responseValue);
       }
       else if (context.Request.Url.LocalPath == "/logs")
