@@ -15,6 +15,7 @@ public class CaptureManager : MonoBehaviour
   // 4k = 3840 x 2160   1080p = 1920 x 1080
   public int captureWidth = 1920;
   public int captureHeight = 1080;
+  public bool saveCapture = false;
 
   // optional game object to hide during screenshots (usually your scene canvas hud)
   public GameObject hideGameObject;
@@ -153,15 +154,18 @@ public class CaptureManager : MonoBehaviour
       lastScreenshot = fileData;
 
       // create new thread to save the image to file (only operation that can be done in background)
-      new System.Threading.Thread(() =>
+      if (saveCapture)
       {
-        // create file and write optional header with image bytes
-        var f = System.IO.File.Create(filename);
-        if (fileHeader != null) f.Write(fileHeader, 0, fileHeader.Length);
-        f.Write(fileData, 0, fileData.Length);
-        f.Close();
-        Debug.Log(string.Format("Wrote screenshot {0} of size {1}", filename, fileData.Length));
-      }).Start();
+        new System.Threading.Thread(() =>
+        {
+          // create file and write optional header with image bytes
+          var f = System.IO.File.Create(filename);
+          if (fileHeader != null) f.Write(fileHeader, 0, fileHeader.Length);
+          f.Write(fileData, 0, fileData.Length);
+          f.Close();
+          Debug.Log(string.Format("Wrote screenshot {0} of size {1}", filename, fileData.Length));
+        }).Start();
+      }
 
       // unhide optional game object if set
       if (hideGameObject != null) hideGameObject.SetActive(true);
