@@ -170,10 +170,10 @@ public class CaptureManager : MonoBehaviour
         }).Start();
       }
 
-      // unhide optional game object if set
+      // Unhide optional game object if set
       if (hideGameObject != null) hideGameObject.SetActive(true);
 
-      // cleanup if needed
+      // Cleanup if needed
       if (optimizeForManyScreenshots == false)
       {
         Destroy(renderTexture);
