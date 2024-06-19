@@ -1,25 +1,49 @@
 import pandas as pd
 import statistics
 
-FOLDER_PATH = "/Users/henryburgess/Downloads"
-RESULTS_PATH = FOLDER_PATH + "/spend-31b486b3-20c1-4361-bff6-b7b2187f9b6c/S001/trial_results.csv"
+PARENT_FOLDERS = [
+  "spend-31b486b3-20c1-4361-bff6-b7b2187f9b6c",
+  "onion-4fc70b19-2dea-4cac-bbb7-560420834c9f",
+  "coke-a18b3b61-6893-4c97-9f98-12c377371e41",
+  "trash-5d7cbbf0-96d1-418d-bd83-b32c065d0511",
+  "thong-46f9f994-f350-41ad-ac85-5d26764be430",
+  "xerox-ecc12ee5-5203-4143-91dd-dffe0dfbc516",
+  "moody-86d1c3fd-dc49-4f32-8ec0-8e9ea84df009",
+  "class-fa180e9a-e0fc-4340-a357-5fe44c8d505e",
+  "geek-a7cfca63-8e46-4ef8-8dc0-695621620269"
+]
 
 def start():
+  data_struct = []
   # Read in CSV and group trials by active visual field and type (monocular, binocular, lateralized)
-  results_df = pd.read_csv(RESULTS_PATH)
-  run_results(results_df)
-  run_eye_tracking(results_df);
+  for parent_folder in PARENT_FOLDERS:
+    print("Running:", parent_folder)
+    results_df = pd.read_csv("/Users/henryburgess/Desktop/RDK_VR_test_datasets/" + parent_folder + "/trial_results.csv")
+    row = run_results(results_df)
+    row["id"] = parent_folder
+    data_struct.append(row)
+    print("Done\n")
+    # run_eye_tracking(results_df);
+
+  # Construct and output data
+  df_acc = pd.DataFrame(data_struct)
+  df_acc.to_csv("./output.csv")
+  print("Generated \"output.csv\"")
 
 
 def run_eye_tracking(results_df):
   for _, row in results_df.iterrows():
     left_eye_file = "/" + "/".join(str(row["lefteyeactive_gaze_location_0"]).split("/")[1:])
     right_eye_file = "/" + "/".join(str(row["righteyeactive_gaze_location_0"]).split("/")[1:])
-    left_eye_df = pd.read_csv(FOLDER_PATH + left_eye_file)
-    right_eye_df = pd.read_csv(FOLDER_PATH + right_eye_file)
+    # left_eye_df = pd.read_csv(FOLDER_PATH + left_eye_file)
+    # right_eye_df = pd.read_csv(FOLDER_PATH + right_eye_file)
 
 
 def run_results(results_df):
+  # Blocks
+  t_df = results_df.loc[(results_df["trial_type"].str.startswith("Training_"))]
+  m_df = results_df.loc[(results_df["trial_type"].str.startswith("Main_"))]
+
   # Binocular
   t_b_df = results_df.loc[(results_df["trial_type"] == "Training_Trials_Binocular")]
   m_b_df = results_df.loc[(results_df["trial_type"] == "Main_Trials_Binocular")]
@@ -50,6 +74,7 @@ def run_results(results_df):
   t_l_r_c_pair = validate_training_coherence(t_l_r_df, "training_lateralized_coherence_right")
   validate_main_coherences(m_l_r_df, "main_lateralized_coherence_right", t_l_r_c_pair)
 
+  # Accuracy - training
   t_b_acc = round(((t_b_df["correct_selection"] == True).sum() / t_b_df.shape[0]) * 100, 3)
   print("Training (Binocular) Accuracy %:", t_b_acc)
   t_m_l_acc = round(((t_m_l_df["correct_selection"] == True).sum() / t_m_l_df.shape[0]) * 100, 3)
@@ -60,7 +85,10 @@ def run_results(results_df):
   print("Training (Lateralized, Left) Accuracy %:", t_l_l_acc)
   t_l_r_acc = round(((t_l_r_df["correct_selection"] == True).sum() / t_l_r_df.shape[0]) * 100, 3)
   print("Training (Lateralized, Right) Accuracy %:", t_l_r_acc)
+  t_acc = round(((t_df["correct_selection"] == True).sum() / t_df.shape[0]) * 100, 3)
+  print("Training (Overall) Accuracy %:", t_acc)
 
+  # Accuracy - main
   m_b_acc = round(((m_b_df["correct_selection"] == True).sum() / m_b_df.shape[0]) * 100, 3)
   print("Main (Binocular) Accuracy %:", m_b_acc)
   m_m_l_acc = round(((m_m_l_df["correct_selection"] == True).sum() / m_m_l_df.shape[0]) * 100, 3)
@@ -71,6 +99,28 @@ def run_results(results_df):
   print("Main (Lateralized, Left) Accuracy %:", m_l_l_acc)
   m_l_r_acc = round(((m_l_r_df["correct_selection"] == True).sum() / m_l_r_df.shape[0]) * 100, 3)
   print("Main (Lateralized, Right) Accuracy %:", m_l_r_acc)
+  m_acc = round(((m_df["correct_selection"] == True).sum() / m_df.shape[0]) * 100, 3)
+  print("Main (Overall) Accuracy %:", m_acc)
+
+  return {
+    "t_b_acc": t_b_acc,
+    "t_b_c": t_b_c_pair,
+    "t_m_l_acc": t_m_l_acc,
+    "t_m_l_c": t_m_l_c_pair,
+    "t_m_r_acc": t_m_r_acc,
+    "t_m_r_c": t_m_r_c_pair,
+    "t_l_l_acc": t_l_l_acc,
+    "t_l_l_c": t_l_l_c_pair,
+    "t_l_r_acc": t_l_r_acc,
+    "t_l_r_c": t_l_r_c_pair,
+    "t_acc": t_acc,
+    "m_b_acc": m_b_acc,
+    "m_m_l_acc": m_m_l_acc,
+    "m_m_r_acc": m_m_r_acc,
+    "m_l_l_acc": m_l_l_acc,
+    "m_l_r_acc": m_l_r_acc,
+    "m_acc": m_acc
+  }
 
 
 def validate_training_coherence(df, c_column):
