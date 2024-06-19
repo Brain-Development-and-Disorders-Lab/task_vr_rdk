@@ -577,6 +577,9 @@ public class ExperimentManager : MonoBehaviour
                 break;
         }
 
+        // Debugging information
+        Debug.Log("Block: " + block + ", Trial: " + activeTrialType);
+
         // Reset all displayed stimuli and UI
         stimulusManager.SetVisibleAll(false);
         uiManager.SetVisible(false);

@@ -10,7 +10,7 @@ using System.Linq;
 
 public class NetworkManager : MonoBehaviour
 {
-  public CaptureManager CaptureSource;
+  public CaptureManager[] CaptureSources;
   private HttpListener listener;
   private Thread listenerThread;
   private Queue<string> logQueue;
@@ -32,7 +32,7 @@ public class NetworkManager : MonoBehaviour
 
   private void AddMessage(string condition, string stackTrace, LogType type)
   {
-    logQueue.Enqueue(stackTrace);
+    logQueue.Enqueue(condition);
   }
 
   private IEnumerable<string> GetLogChunk(int maxLength)
@@ -72,10 +72,11 @@ public class NetworkManager : MonoBehaviour
       }
       else if (context.Request.Url.LocalPath == "/status")
       {
-        buffer = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new Dictionary<string, string>(){
+        string responseValue = JsonConvert.SerializeObject(new Dictionary<string, string>(){
           { "active_block", "1" },
           { "elapsed_time", "1000.023" },
-        }));
+        });
+        buffer = System.Text.Encoding.UTF8.GetBytes(responseValue);
       }
       else if (context.Request.Url.LocalPath == "/logs")
       {
@@ -84,15 +85,16 @@ public class NetworkManager : MonoBehaviour
       }
       else if (context.Request.Url.LocalPath == "/screen")
       {
-        if (CaptureSource)
+        List<string> sourceCaptures = new();
+        foreach (CaptureManager source in CaptureSources)
         {
-          CaptureSource.CaptureScreenshot();
-          buffer = CaptureSource.GetLastScreenshot();
+          source.CaptureScreenshot();
+          byte[] screenshot = source.GetLastScreenshot();
+          string bufferContents = Convert.ToBase64String(screenshot);
+          sourceCaptures.Add(bufferContents);
         }
-        else
-        {
-          buffer = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject("Capture source configuration error"));
-        }
+
+        buffer = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(sourceCaptures));
       }
       else
       {
