@@ -10,6 +10,7 @@ using MathNet.Numerics.Statistics;
 // Custom namespaces
 using Stimuli;
 using Utilities;
+using UnityEngine.Networking;
 
 public class ExperimentManager : MonoBehaviour
 {
@@ -134,12 +135,21 @@ public class ExperimentManager : MonoBehaviour
     private int selectedButtonIndex = 1; // Starting index of 1, actual range [0, 3]
     private bool hasMovedSelection = false; // Initially `false` until first movement made
 
+    // System information
+    private string deviceName = "";
+    private string deviceModel = "";
+    private float deviceBattery = 100.0f;
+
     /// <summary>
     /// Generate the experiment flow
     /// </summary>
     /// <param name="session"></param>
     public void GenerateExperiment(Session session)
     {
+        deviceName = SystemInfo.deviceName;
+        deviceModel = SystemInfo.deviceModel;
+        deviceBattery = SystemInfo.batteryLevel;
+
         // Generate the experiment timeline
         // Generate all "Training_"-type trials and shuffle timeline
         for (int i = 0; i < (int)TrialCount.Training_Trials_Binocular; i++)
@@ -554,6 +564,9 @@ public class ExperimentManager : MonoBehaviour
     /// <returns></returns>
     private IEnumerator DisplayTrial(BlockSequence block)
     {
+        // Update system status
+        deviceBattery = SystemInfo.batteryLevel;
+
         // Get the relative position of the current trial in the block
         int RelativeTrialNumber = Session.instance.CurrentTrial.numberInBlock - 1;
 
@@ -575,6 +588,9 @@ public class ExperimentManager : MonoBehaviour
                 activeTrialType = TrialType.Post_Instructions;
                 break;
         }
+
+        // Debugging information
+        Debug.Log("Block: " + block + ", Trial: " + activeTrialType);
 
         // Reset all displayed stimuli and UI
         stimulusManager.SetVisibleAll(false);
@@ -682,6 +698,27 @@ public class ExperimentManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Return the value of the currently active Block, stored as `activeBlock`
+    /// </summary>
+    /// <returns>String representation of the value</returns>
+    public string GetActiveBlock()
+    {
+        return activeBlock.ToString();
+    }
+
+    public Dictionary<string, string> GetExperimentStatus()
+    {
+        return new Dictionary<string, string>{
+            { "active_block", activeBlock.ToString() },
+            { "current_trial", Session.instance.currentTrialNum.ToString() },
+            { "total_trials", Session.instance.Trials.Count().ToString() },
+            { "device_name", deviceName },
+            { "device_model", deviceModel },
+            { "device_battery", deviceBattery.ToString() }
+        };
+    }
+
+    /// <summary>
     /// Utility function to display "Feedback_"-type stimuli
     /// </summary>
     /// <param name="correct">`true` to display green cross, `false` to display red cross</param>
@@ -707,7 +744,9 @@ public class ExperimentManager : MonoBehaviour
         stimulusManager.SetFixationCrossVisibility(true);
         if (RequireFixation)
         {
+            Debug.Log("Waiting for fixation...");
             yield return new WaitUntil(() => IsFixated());
+            Debug.Log("Fixated, continuing...");
         }
         yield return StartCoroutine(WaitSeconds(POST_FIXATION_DURATION, true));
 
@@ -717,7 +756,9 @@ public class ExperimentManager : MonoBehaviour
         // Wait either for fixation or a fixed duration if fixation not required
         if (RequireFixation)
         {
+            Debug.Log("Waiting for fixation...");
             yield return new WaitUntil(() => IsFixated());
+            Debug.Log("Fixated, continuing...");
         }
         else
         {
