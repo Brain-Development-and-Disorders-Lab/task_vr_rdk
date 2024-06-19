@@ -10,7 +10,7 @@ using System.Linq;
 
 public class NetworkManager : MonoBehaviour
 {
-
+  public CaptureManager CaptureSource;
   private HttpListener listener;
   private Thread listenerThread;
   private Queue<string> logQueue;
@@ -65,30 +65,40 @@ public class NetworkManager : MonoBehaviour
 
     if (context.Request.HttpMethod == "GET")
     {
-      string responseMessage;
+      byte[] buffer;
       if (context.Request.Url.LocalPath == "/active")
       {
-        responseMessage = JsonConvert.SerializeObject(true);
+        buffer = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(true));
       }
       else if (context.Request.Url.LocalPath == "/status")
       {
-        responseMessage = JsonConvert.SerializeObject(new Dictionary<string, string>(){
+        buffer = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new Dictionary<string, string>(){
           { "active_block", "1" },
           { "elapsed_time", "1000.023" },
-        });
+        }));
       }
       else if (context.Request.Url.LocalPath == "/logs")
       {
         List<string> messages = GetLogChunk(10).ToList();
-        responseMessage = JsonConvert.SerializeObject(messages);
+        buffer = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(messages));
+      }
+      else if (context.Request.Url.LocalPath == "/screen")
+      {
+        if (CaptureSource)
+        {
+          CaptureSource.CaptureScreenshot();
+          buffer = CaptureSource.GetLastScreenshot();
+        }
+        else
+        {
+          buffer = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject("Capture source configuration error"));
+        }
       }
       else
       {
-        responseMessage = "Invalid path";
+        buffer = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject("Invalid path"));
       }
 
-      string responseString = JsonConvert.SerializeObject(responseMessage);
-      byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
       context.Response.ContentLength64 = buffer.Length;
       Stream output = context.Response.OutputStream;
       output.Write(buffer, 0, buffer.Length);
