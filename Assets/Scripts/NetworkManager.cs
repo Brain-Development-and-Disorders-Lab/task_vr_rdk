@@ -6,17 +6,21 @@ using System.Net;
 using System.Threading;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using System.Linq;
 
 public class NetworkManager : MonoBehaviour
 {
 
   private HttpListener listener;
   private Thread listenerThread;
+  private Queue<string> logQueue;
 
   void Start()
   {
+    logQueue = new();
+    Application.logMessageReceived += AddMessage;
+
     listener = new HttpListener();
-    // listener.Prefixes.Add("http://localhost:4444/");
     listener.Prefixes.Add("http://*:4444/");
     listener.AuthenticationSchemes = AuthenticationSchemes.Anonymous;
     listener.Start();
@@ -26,9 +30,17 @@ public class NetworkManager : MonoBehaviour
     Debug.Log("Server Started");
   }
 
-  void Update ()
+  private void AddMessage(string condition, string stackTrace, LogType type)
   {
+    logQueue.Enqueue(stackTrace);
+  }
 
+  private IEnumerable<string> GetLogChunk(int maxLength)
+  {
+    for (int i = 0; i < maxLength && logQueue.Count > 0; i++)
+    {
+        yield return logQueue.Dequeue();
+    }
   }
 
   private void startListener()
@@ -43,9 +55,6 @@ public class NetworkManager : MonoBehaviour
   {
     var context = listener.EndGetContext(result);
 
-    Debug.Log("Method: " + context.Request.HttpMethod);
-    Debug.Log("LocalUrl: " + context.Request.Url.LocalPath);
-
     if (context.Request.HttpMethod == "OPTIONS")
     {
         context.Response.AddHeader("Access-Control-Allow-Headers", "*");
@@ -56,8 +65,6 @@ public class NetworkManager : MonoBehaviour
 
     if (context.Request.HttpMethod == "GET")
     {
-      Debug.Log("Received GET request...");
-
       string responseMessage;
       if (context.Request.Url.LocalPath == "/active")
       {
@@ -70,6 +77,11 @@ public class NetworkManager : MonoBehaviour
           { "elapsed_time", "1000.023" },
         });
       }
+      else if (context.Request.Url.LocalPath == "/logs")
+      {
+        List<string> messages = GetLogChunk(10).ToList();
+        responseMessage = JsonConvert.SerializeObject(messages);
+      }
       else
       {
         responseMessage = "Invalid path";
@@ -77,7 +89,6 @@ public class NetworkManager : MonoBehaviour
 
       string responseString = JsonConvert.SerializeObject(responseMessage);
       byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
-      Debug.Log(responseString);
       context.Response.ContentLength64 = buffer.Length;
       Stream output = context.Response.OutputStream;
       output.Write(buffer, 0, buffer.Length);
