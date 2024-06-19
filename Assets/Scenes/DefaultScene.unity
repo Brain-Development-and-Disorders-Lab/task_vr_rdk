@@ -409,7 +409,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2834388984357925155, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 60970
+      value: 62400
       objectReference: {fileID: 0}
     - target: {fileID: 2896031059644693069, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_IsActive
@@ -445,7 +445,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4267567203292169432, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 113400
+      value: 116040
       objectReference: {fileID: 0}
     - target: {fileID: 4612929069887686480, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_AnchorMax.y
@@ -739,7 +739,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LoadingScreen: {fileID: 439538600}
-  RequireFixation: 0
+  RequireFixation: 1
   FixationRadius: 0.5
   LeftEyeTracker: {fileID: 567733400}
   RightEyeTracker: {fileID: 1593745115}
@@ -6727,6 +6727,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   captureWidth: 1920
   captureHeight: 1080
+  saveCapture: 0
   hideGameObject: {fileID: 0}
   optimizeForManyScreenshots: 1
   format: 1
@@ -6962,6 +6963,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   captureWidth: 1920
   captureHeight: 1080
+  saveCapture: 0
   hideGameObject: {fileID: 0}
   optimizeForManyScreenshots: 1
   format: 1

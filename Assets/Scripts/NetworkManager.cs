@@ -15,6 +15,7 @@ public class NetworkManager : MonoBehaviour
   private HttpListener listener;
   private Thread listenerThread;
   private Queue<string> logQueue;
+  private bool isListening = false;
 
   void Start()
   {
@@ -29,9 +30,15 @@ public class NetworkManager : MonoBehaviour
     listener.AuthenticationSchemes = AuthenticationSchemes.Anonymous;
     listener.Start();
 
-    listenerThread = new Thread (startListener);
+    isListening = true;
+    listenerThread = new Thread(startListener);
     listenerThread.Start();
     Debug.Log("Server Started");
+  }
+
+  void OnDestroy()
+  {
+    isListening = false;
   }
 
   private void AddMessage(string condition, string stackTrace, LogType type)
@@ -43,13 +50,13 @@ public class NetworkManager : MonoBehaviour
   {
     for (int i = 0; i < maxLength && logQueue.Count > 0; i++)
     {
-        yield return logQueue.Dequeue();
+      yield return logQueue.Dequeue();
     }
   }
 
   private void startListener()
   {
-    while (true) {
+    while (isListening) {
       var result = listener.BeginGetContext(ListenerCallback, listener);
       result.AsyncWaitHandle.WaitOne();
     }
@@ -59,6 +66,7 @@ public class NetworkManager : MonoBehaviour
   {
     var context = listener.EndGetContext(result);
 
+    // Enable CORS
     if (context.Request.HttpMethod == "OPTIONS")
     {
         context.Response.AddHeader("Access-Control-Allow-Headers", "*");
@@ -67,24 +75,25 @@ public class NetworkManager : MonoBehaviour
     }
     context.Response.AppendHeader("Access-Control-Allow-Origin", "*");
 
+    // Handle request methods
     if (context.Request.HttpMethod == "GET")
     {
       byte[] buffer;
       if (context.Request.Url.LocalPath == "/active")
       {
+        // Return active status, "true" if responsive
         buffer = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(true));
       }
       else if (context.Request.Url.LocalPath == "/status")
       {
+        // Return experiment status information
         string responseValue = JsonConvert.SerializeObject(new Dictionary<string, string>(){
           { "active_block", "-1" },
         });
         if (Experiment != null)
         {
-          string activeBlock = Experiment.GetActiveBlock();
-          responseValue = JsonConvert.SerializeObject(new Dictionary<string, string>(){
-            { "active_block", activeBlock },
-          });
+          Dictionary<string, string> status = Experiment.GetExperimentStatus();
+          responseValue = JsonConvert.SerializeObject(status);
         }
         buffer = System.Text.Encoding.UTF8.GetBytes(responseValue);
       }

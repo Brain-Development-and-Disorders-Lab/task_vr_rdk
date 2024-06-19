@@ -135,12 +135,21 @@ public class ExperimentManager : MonoBehaviour
     private int selectedButtonIndex = 1; // Starting index of 1, actual range [0, 3]
     private bool hasMovedSelection = false; // Initially `false` until first movement made
 
+    // System information
+    private string deviceName = "";
+    private string deviceModel = "";
+    private float deviceBattery = 100.0f;
+
     /// <summary>
     /// Generate the experiment flow
     /// </summary>
     /// <param name="session"></param>
     public void GenerateExperiment(Session session)
     {
+        deviceName = SystemInfo.deviceName;
+        deviceModel = SystemInfo.deviceModel;
+        deviceBattery = SystemInfo.batteryLevel;
+
         // Generate the experiment timeline
         // Generate all "Training_"-type trials and shuffle timeline
         for (int i = 0; i < (int)TrialCount.Training_Trials_Binocular; i++)
@@ -555,6 +564,9 @@ public class ExperimentManager : MonoBehaviour
     /// <returns></returns>
     private IEnumerator DisplayTrial(BlockSequence block)
     {
+        // Update system status
+        deviceBattery = SystemInfo.batteryLevel;
+
         // Get the relative position of the current trial in the block
         int RelativeTrialNumber = Session.instance.CurrentTrial.numberInBlock - 1;
 
@@ -692,6 +704,18 @@ public class ExperimentManager : MonoBehaviour
     public string GetActiveBlock()
     {
         return activeBlock.ToString();
+    }
+
+    public Dictionary<string, string> GetExperimentStatus()
+    {
+        return new Dictionary<string, string>{
+            { "active_block", activeBlock.ToString() },
+            { "current_trial", Session.instance.currentTrialNum.ToString() },
+            { "total_trials", Session.instance.Trials.Count().ToString() },
+            { "device_name", deviceName },
+            { "device_model", deviceModel },
+            { "device_battery", deviceBattery.ToString() }
+        };
     }
 
     /// <summary>
