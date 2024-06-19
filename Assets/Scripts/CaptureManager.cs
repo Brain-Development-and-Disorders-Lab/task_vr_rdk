@@ -1,47 +1,50 @@
+/**
+  File: CaptureManager.cs
+  Author: Henry Burgess <henry.burgess@wustl.edu>
+  Description: `CaptureManager` will save individual images of active scene in any resolution and of a specific image
+  format including jpg and png.
+
+  Adapted from https://discussions.unity.com/t/how-to-save-a-picture-take-screenshot-from-a-camera-in-game/5792/8
+*/
 using UnityEngine;
 using System.Collections;
 using System.IO;
 
-// Screen Recorder will save individual images of active scene in any resolution and of a specific image format
-// including raw, jpg, png, and ppm.  Raw and PPM are the fastest image formats for saving.
-//
-// You can compile these images into a video using ffmpeg:
-// ffmpeg -i screen_3840x2160_%d.ppm -y test.avi
-//
-// Adapted from https://discussions.unity.com/t/how-to-save-a-picture-take-screenshot-from-a-camera-in-game/5792/8
-
 public class CaptureManager : MonoBehaviour
 {
-  // 4k = 3840 x 2160   1080p = 1920 x 1080
+  // Capture dimensions
   public int captureWidth = 1920;
   public int captureHeight = 1080;
   public bool saveCapture = false;
 
-  // optional game object to hide during screenshots (usually your scene canvas hud)
+  // Optional game object to hide during screenshots
   public GameObject hideGameObject;
 
-  // optimize for many screenshots will not destroy any objects so future screenshots will be fast
+  // Optimize for many screenshots will not destroy any objects so future screenshots will be fast
   public bool optimizeForManyScreenshots = true;
 
-  // configure with raw, jpg, png, or ppm (simple raw format)
-  public enum Format { RAW, JPG, PNG, PPM };
+  public enum Format { JPG, PNG };
   public Format format = Format.JPG;
 
-  // folder to write output (defaults to data path)
+  // Folder to write output (defaults to data path)
   public string folder;
 
-  // private vars for screenshot
+  // Private variables for screenshot generation
   private Rect rect;
   private RenderTexture renderTexture;
   private Texture2D screenShot;
-  private int counter = 0; // image #
+  private int counter = 0;
   private byte[] lastScreenshot;
 
-  // commands
+  // Command flags
   private bool captureScreenshot = false;
-  private bool captureVideo = false;
 
-  // create a unique filename using a one-up variable
+  /// <summary>
+  /// Create a unique filename for images
+  /// </summary>
+  /// <param name="width">Image pixel width</param>
+  /// <param name="height">Image pixel height</param>
+  /// <returns></returns>
   private string uniqueFilename(int width, int height)
   {
     // if folder not specified by now use a good default
@@ -74,12 +77,18 @@ public class CaptureManager : MonoBehaviour
     return filename;
   }
 
+  /// <summary>
+  /// Utility function to externally trigger screenshot capture
+  /// </summary>
   public void CaptureScreenshot()
   {
-    Debug.Log("Capturing screenshot...");
     captureScreenshot = true;
   }
 
+  /// <summary>
+  /// Retrieve the most recent screenshot captured
+  /// </summary>
+  /// <returns>Array of bytes representing the screenshot data</returns>
   public byte[] GetLastScreenshot()
   {
     if (lastScreenshot != null && lastScreenshot.Length > 0) {
@@ -93,50 +102,50 @@ public class CaptureManager : MonoBehaviour
 
   void Update()
   {
-    // check keyboard 'k' for one time screenshot capture and holding down 'v' for continious screenshots
+    // Check keyboard 'k' for one time screenshot capture
     captureScreenshot |= Input.GetKeyDown("k");
-    captureVideo = Input.GetKey("v");
 
-    if (captureScreenshot || captureVideo)
+    if (captureScreenshot)
     {
       captureScreenshot = false;
 
-      // hide optional game object if set
-      if (hideGameObject != null) hideGameObject.SetActive(false);
+      // Hide optional game object if set
+      if (hideGameObject != null)
+      {
+        hideGameObject.SetActive(false);
+      }
 
-      // create screenshot objects if needed
+      // Create screenshot objects if needed
       if (renderTexture == null)
       {
-        // creates off-screen render texture that can rendered into
+        // Creates off-screen render texture that can rendered into
         rect = new Rect(0, 0, captureWidth, captureHeight);
         renderTexture = new RenderTexture(captureWidth, captureHeight, 24);
         screenShot = new Texture2D(captureWidth, captureHeight, TextureFormat.RGB24, false);
       }
 
-      // get main camera and manually render scene into rt
-      Camera camera = this.GetComponent<Camera>(); // NOTE: added because there was no reference to camera in original script; must add this script to Camera
+      // Get main camera and manually render scene to the render texture
+      Camera camera = this.GetComponent<Camera>();
       camera.targetTexture = renderTexture;
       camera.Render();
 
-      // read pixels will read from the currently active render texture so make our offscreen
-      // render texture active and then read the pixels
+      // Read pixels will read from the currently active render texture so make the offscreen render texture active and
+      // then read the pixels
       RenderTexture.active = renderTexture;
       screenShot.ReadPixels(rect, 0, 0);
 
-      // reset active camera texture and render texture
+      // Reset active camera texture and render texture
       camera.targetTexture = null;
       RenderTexture.active = null;
 
-      // get our unique filename
+      // Get our unique filename
       string filename = uniqueFilename((int) rect.width, (int) rect.height);
-      // pull in our file header/data bytes for the specified image format (has to be done from main thread)
+
+      // Pull in our file header/data bytes for the specified image format
+      // Note: This has to be done from main thread
       byte[] fileHeader = null;
       byte[] fileData = null;
-      if (format == Format.RAW)
-      {
-        fileData = screenShot.GetRawTextureData();
-      }
-      else if (format == Format.PNG)
+      if (format == Format.PNG)
       {
         fileData = screenShot.EncodeToPNG();
       }
@@ -144,21 +153,15 @@ public class CaptureManager : MonoBehaviour
       {
         fileData = screenShot.EncodeToJPG();
       }
-      else // ppm
-      {
-        // create a file header for ppm formatted file
-        string headerStr = string.Format("P6{0} {1}255", rect.width, rect.height);
-        fileHeader = System.Text.Encoding.ASCII.GetBytes(headerStr);
-        fileData = screenShot.GetRawTextureData();
-      }
       lastScreenshot = fileData;
 
-      // create new thread to save the image to file (only operation that can be done in background)
+      // Optionally save the captured screenshot
       if (saveCapture)
       {
+        // Create new thread to save the image to file (only operation that can be done in background)
         new System.Threading.Thread(() =>
         {
-          // create file and write optional header with image bytes
+          // Create file and write optional header with image bytes
           var f = System.IO.File.Create(filename);
           if (fileHeader != null) f.Write(fileHeader, 0, fileHeader.Length);
           f.Write(fileData, 0, fileData.Length);

@@ -744,7 +744,9 @@ public class ExperimentManager : MonoBehaviour
         stimulusManager.SetFixationCrossVisibility(true);
         if (RequireFixation)
         {
+            Debug.Log("Waiting for fixation...");
             yield return new WaitUntil(() => IsFixated());
+            Debug.Log("Fixated, continuing...");
         }
         yield return StartCoroutine(WaitSeconds(POST_FIXATION_DURATION, true));
 
@@ -754,7 +756,9 @@ public class ExperimentManager : MonoBehaviour
         // Wait either for fixation or a fixed duration if fixation not required
         if (RequireFixation)
         {
+            Debug.Log("Waiting for fixation...");
             yield return new WaitUntil(() => IsFixated());
+            Debug.Log("Fixated, continuing...");
         }
         else
         {
