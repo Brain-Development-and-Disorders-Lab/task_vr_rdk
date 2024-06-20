@@ -13,8 +13,8 @@ using System.IO;
 public class CaptureManager : MonoBehaviour
 {
   // Capture dimensions
-  public int captureWidth = 1920;
-  public int captureHeight = 1080;
+  public int captureWidth = 1280;
+  public int captureHeight = 720;
   public bool saveCapture = false;
 
   // Optional game object to hide during screenshots
@@ -102,9 +102,6 @@ public class CaptureManager : MonoBehaviour
 
   void Update()
   {
-    // Check keyboard 'k' for one time screenshot capture
-    captureScreenshot |= Input.GetKeyDown("k");
-
     if (captureScreenshot)
     {
       captureScreenshot = false;
