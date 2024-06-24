@@ -7,7 +7,6 @@
   Adapted from https://discussions.unity.com/t/how-to-save-a-picture-take-screenshot-from-a-camera-in-game/5792/8
 */
 using UnityEngine;
-using System.Collections;
 using System.IO;
 
 public class CaptureManager : MonoBehaviour

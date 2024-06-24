@@ -47,13 +47,13 @@ public class ExperimentManager : MonoBehaviour
         Instructions_Selection = 1,
         Instructions_Demo_Selection = 1,
         Instructions_Training = 1,
-        Training_Trials_Binocular = 20, // Training trials, central presentation to both eyes
-        Training_Trials_Monocular = 20, // Training trials, central presentation to one eye
-        Training_Trials_Lateralized = 20, // Training trials, lateralized presentation to one eye
+        Training_Trials_Binocular = 24, // Training trials, central presentation to both eyes
+        Training_Trials_Monocular = 48, // Training trials, central presentation to one eye
+        Training_Trials_Lateralized = 48, // Training trials, lateralized presentation to one eye
         Mid_Instructions = 1,
-        Main_Trials_Binocular = 10, // Main trials, central presentation to both eyes
-        Main_Trials_Monocular = 10, // Main trials, central presentation to one eye
-        Main_Trials_Lateralized = 20, // Main trials, lateralized presentation to one eye
+        Main_Trials_Binocular = 24, // Main trials, central presentation to both eyes
+        Main_Trials_Monocular = 48, // Main trials, central presentation to one eye
+        Main_Trials_Lateralized = 48, // Main trials, lateralized presentation to one eye
         Post_Instructions = 1,
     };
 
