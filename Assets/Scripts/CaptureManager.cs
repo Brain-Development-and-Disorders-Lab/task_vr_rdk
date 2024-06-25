@@ -1,14 +1,16 @@
 /**
   File: CaptureManager.cs
   Author: Henry Burgess <henry.burgess@wustl.edu>
-  Description: `CaptureManager` will save individual images of active scene in any resolution and of a specific image
-  format including jpg and png.
 
   Adapted from https://discussions.unity.com/t/how-to-save-a-picture-take-screenshot-from-a-camera-in-game/5792/8
 */
 using UnityEngine;
 using System.IO;
 
+/// <summary>
+/// `CaptureManager` will save individual images of active scene in any resolution and of a specific image
+/// format including jpg and png.
+/// </summary>
 public class CaptureManager : MonoBehaviour
 {
   // Capture dimensions

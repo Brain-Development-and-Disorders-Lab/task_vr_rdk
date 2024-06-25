@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 
-// Custom namespaces
-using Utilities;
-
+/// <summary>
+/// Class to manage visual field switching, in-game camera distances, and lateralized presentation.
+/// </summary>
 public class CameraManager : MonoBehaviour
 {
     // Left and Right eye cameras
