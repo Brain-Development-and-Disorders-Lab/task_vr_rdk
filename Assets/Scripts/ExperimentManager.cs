@@ -415,7 +415,7 @@ public class ExperimentManager : MonoBehaviour
             // Instructions shown to the participant before the start of the experiment
             Instructions.AddRange(new List<string>{
                 "During this task, you will be presented with a field of moving dots and a fixation cross. The dot movement will be visible for only a short period of time and will appear either around the cross or next to the cross.\n\n\nPress the <b>Trigger</b> to select <b>Next</b> and continue.",
-                "During the trials, you <b>must maintain focus on the central fixation cross</b> whenever it is visible and during dot motion. The dots will be visible in either one eye or both eyes at once.\n\nSome of the dots will move only up or only down, and the rest of the dots will move randomly as a distraction.\n\n\nPress the <b>Trigger</b> to select <b>Next</b> and preview the dot movement.",
+                "During the trials, you <b>must maintain focus on the central fixation cross</b> whenever it is visible and during dot motion. The dots will be visible in either one eye or both eyes at once.\n\nSome of the dots will move only up or only down, and the rest of the dots will move randomly as a distraction.\n\n\nPress the <b>Trigger</b> to select <b>Continue</b> and preview the dot movement.",
             });
         }
         else if (activeBlock == BlockSequence.Instructions_Selection)
@@ -423,7 +423,7 @@ public class ExperimentManager : MonoBehaviour
             // Instructions shown to the participant before the start of the experiment
             Instructions.AddRange(new List<string>{
                 "After viewing the dot movement, you will be asked if you thought the dots moving together moved up or down.\n\nYou will have four options to choose from:\n<b>Up - Very Confident\t\t\t</b>\n<b>Up - Somewhat Confident\t\t</b>\n<b>Down - Somewhat Confident\t</b>\n<b>Down - Very Confident\t\t</b>\n\nPress the <b>Trigger</b> to select <b>Next</b> and continue.",
-                "You <b>must</b> select one of the four options. Please choose the one that best represents your conclusion about how the dots were moving and your confidence in that conclusion.\n\nUse the <b>Joystick</b> to move the cursor between options, and hold the <b>Trigger</b> for approximately 1 second to select an option.\n\n\nPress the <b>Trigger</b> to select <b>Next</b> and practice making a selection.",
+                "You <b>must</b> select one of the four options. Please choose the one that best represents your conclusion about how the dots were moving and your confidence in that conclusion.\n\nUse the <b>Joystick</b> to move the cursor between options, and hold the <b>Trigger</b> for approximately 1 second to select an option.\n\n\nPress the <b>Trigger</b> to select <b>Continue</b> and practice making a selection.",
             });
         }
         else if (activeBlock == BlockSequence.Instructions_Training)
@@ -449,7 +449,6 @@ public class ExperimentManager : MonoBehaviour
         }
 
         // Enable pagination if > 1 page of instructions, then set the active instructions
-        uiManager.EnablePagination(Instructions.Count > 1);
         uiManager.SetPages(Instructions);
     }
 
@@ -651,7 +650,7 @@ public class ExperimentManager : MonoBehaviour
                 uiManager.SetVisible(true);
                 uiManager.SetHeaderText("Instructions");
                 uiManager.SetLeftButtonState(false, false, "Back");
-                uiManager.SetRightButtonState(true, true, "Next");
+                uiManager.SetRightButtonState(true, true, "Continue");
 
                 // Input delay
                 yield return StartCoroutine(WaitSeconds(0.25f, true));
