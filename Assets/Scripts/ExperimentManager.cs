@@ -942,7 +942,7 @@ public class ExperimentManager : MonoBehaviour
         ButtonSliderInput[] buttonControllers = stimulusManager.GetButtonSliders();
 
         // Increment button selection
-        if ((inputs.L_J_State.y > JOYSTICK_THRESHOLD || inputs.R_J_State.y > JOYSTICK_THRESHOLD) && isInputReset)
+        if (!(VRInput.LeftTrigger() || VRInput.RightTrigger()) && (inputs.L_J_State.y > JOYSTICK_THRESHOLD || inputs.R_J_State.y > JOYSTICK_THRESHOLD) && isInputReset)
         {
             DecrementButtonSelection();
             isInputReset = false;
@@ -952,7 +952,7 @@ public class ExperimentManager : MonoBehaviour
         }
 
         // Decrement button selection
-        if ((inputs.L_J_State.y < -JOYSTICK_THRESHOLD || inputs.R_J_State.y < -JOYSTICK_THRESHOLD) && isInputReset)
+        if (!(VRInput.LeftTrigger() || VRInput.RightTrigger()) && (inputs.L_J_State.y < -JOYSTICK_THRESHOLD || inputs.R_J_State.y < -JOYSTICK_THRESHOLD) && isInputReset)
         {
             IncrementButtonSelection();
             isInputReset = false;
