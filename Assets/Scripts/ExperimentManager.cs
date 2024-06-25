@@ -437,7 +437,7 @@ public class ExperimentManager : MonoBehaviour
         {
             // Instructions shown to the participant between the training trials and the main trials
             Instructions.AddRange(new List<string>{
-                "That concludes all the training trials. You will now play <b>" + mainTimeline.Count + " main trials</b>.\n\nWhen you are ready and comfortable, press the <b>Trigger</b> to select <b>Next</b> and continue.",
+                "That concludes all the training trials. You will now play <b>" + mainTimeline.Count + " main trials</b>.\n\nWhen you are ready and comfortable, press the <b>Trigger</b> to select <b>Continue</b> and start the main trials.",
             });
         }
         else if (activeBlock == BlockSequence.Post_Instructions)
