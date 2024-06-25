@@ -142,6 +142,7 @@ namespace Stimuli
         {
             pageContent = pages;
             activePage = 0; // Reset the active page index
+            usePagination = pages.Count > 1;
             SetPage(activePage);
         }
 

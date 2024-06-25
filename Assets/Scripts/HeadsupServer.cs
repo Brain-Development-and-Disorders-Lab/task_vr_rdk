@@ -1,9 +1,6 @@
 /**
   File: HeadsupServer.cs
   Author: Henry Burgess <henry.burgess@wustl.edu>
-  Description: Server component for Headsup system, enables communication to and from Headsup client over the local
-  network. Listens on defined prefix address, responds to specific paths. Requires an `ExperimentManager` or similar
-  class that can provide experiment status data as a `Dictionary<string, string>` type.
 
   Adapted from https://gist.github.com/amimaro/10e879ccb54b2cacae4b81abea455b10
 */
@@ -16,6 +13,11 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using System.Linq;
 
+/// <summary>
+/// Server component for Headsup system, enables communication to and from Headsup client over the local
+/// network. Listens on defined prefix address, responds to specific paths. Requires an `ExperimentManager` or similar
+/// class that can provide experiment status data as a `Dictionary<string, string>` type.
+/// </summary>
 public class HeadsupServer : MonoBehaviour
 {
   // Collection of `CaptureManager` instances to retrieve screenshots from
