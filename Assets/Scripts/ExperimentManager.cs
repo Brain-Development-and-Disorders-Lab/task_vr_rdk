@@ -98,7 +98,7 @@ public class ExperimentManager : MonoBehaviour
 
     // Timing variables
     private readonly float POST_FIXATION_DURATION = 0.1f; // 100 milliseconds
-    private readonly float PRE_DISPLAY_DURATION = 0.3f; // 300 milliseconds
+    private readonly float PRE_DISPLAY_DURATION = 0.5f; // 500 milliseconds
     private readonly float DISPLAY_DURATION = 0.180f; // 180 milliseconds
 
     // Store references to Manager classes
@@ -758,6 +758,10 @@ public class ExperimentManager : MonoBehaviour
             yield return new WaitUntil(() => IsFixated());
             Debug.Log("Fixated, continuing...");
         }
+        else
+        {
+            Debug.Log("Fixation not required");
+        }
         yield return StartCoroutine(WaitSeconds(POST_FIXATION_DURATION, true));
 
         // Present fixation stimulus
@@ -772,6 +776,7 @@ public class ExperimentManager : MonoBehaviour
         }
         else
         {
+            Debug.Log("Fixation not required");
             yield return StartCoroutine(WaitSeconds(PRE_DISPLAY_DURATION, true));
         }
         stimulusManager.SetVisible(StimulusType.Fixation, false);
