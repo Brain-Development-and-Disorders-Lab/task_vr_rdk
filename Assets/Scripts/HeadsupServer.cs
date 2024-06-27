@@ -145,6 +145,24 @@ public class HeadsupServer : MonoBehaviour
         List<string> messages = GetLogChunk(10).ToList();
         buffer = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(messages));
       }
+      else if (context.Request.Url.LocalPath == "/kill")
+      {
+        // Force the experiment to end
+        Experiment.ForceEnd();
+        buffer = System.Text.Encoding.UTF8.GetBytes("Done");
+      }
+      else if (context.Request.Url.LocalPath == "/fixation/disable")
+      {
+        // Disable the fixation requirement
+        Experiment.SetFixationRequired(false);
+        buffer = System.Text.Encoding.UTF8.GetBytes("Disabled");
+      }
+      else if (context.Request.Url.LocalPath == "/fixation/enable")
+      {
+        // Enable the fixation requirement
+        Experiment.SetFixationRequired(true);
+        buffer = System.Text.Encoding.UTF8.GetBytes("Enabled");
+      }
       else if (context.Request.Url.LocalPath == "/screen")
       {
         // Retrieve screenshots from each of the in-game displays
