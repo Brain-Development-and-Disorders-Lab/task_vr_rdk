@@ -40,7 +40,7 @@ namespace Stimuli
         private readonly float DOT_DIAMETER = 0.12f; // Specified in supplementary materials
         private float dotWorldRadius;
         private List<Dot> dots = new();
-        private float dotCoherence = 0.5f;
+        private float dotCoherence = 0.2f; // Default training coherence
         private float dotDirection = (float)Math.PI; // "reference" dot type direction
         private readonly float DOT_DENSITY = 16.0f;
         private int dotCount = 0;

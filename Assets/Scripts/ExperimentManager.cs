@@ -481,37 +481,40 @@ public class ExperimentManager : MonoBehaviour
         activeVisualField = cameraManager.GetActiveField();
 
         // Set the coherence value depending on the `TrialType`
-        if (activeTrialType == TrialType.Training_Trials_Binocular)
+        if (trial == TrialType.Training_Trials_Binocular)
         {
             activeCoherence = trainingBinocularCoherence;
         }
-        else if (activeTrialType == TrialType.Training_Trials_Monocular)
+        else if (trial == TrialType.Training_Trials_Monocular)
         {
             // Select a coherence value depending on the active `VisualField`
             activeCoherence = activeVisualField == CameraManager.VisualField.Left ? trainingMonocularCoherenceLeft : trainingMonocularCoherenceRight;
         }
-        else if (activeTrialType == TrialType.Training_Trials_Lateralized)
+        else if (trial == TrialType.Training_Trials_Lateralized)
         {
             // Select a coherence value depending on the active `VisualField`
             activeCoherence = activeVisualField == CameraManager.VisualField.Left ? trainingLateralizedCoherenceLeft : trainingLateralizedCoherenceRight;
         }
         // All "Main_"-type coherence selections include a difficulty selection
-        else if (activeTrialType == TrialType.Main_Trials_Binocular)
+        else if (trial == TrialType.Main_Trials_Binocular)
         {
             activeCoherence = UnityEngine.Random.value > 0.5 ? mainBinocularCoherence.Item1 : mainBinocularCoherence.Item2;;
         }
-        else if (activeTrialType == TrialType.Main_Trials_Monocular)
+        else if (trial == TrialType.Main_Trials_Monocular)
         {
             // Select the appropriate coherence pair (left or right), then select a coherence value (low or high)
             Tuple<float, float> CoherencePair = activeVisualField == CameraManager.VisualField.Left ? mainMonocularCoherenceLeft : mainMonocularCoherenceRight;
             activeCoherence = UnityEngine.Random.value > 0.5 ? CoherencePair.Item1 : CoherencePair.Item2;
         }
-        else if (activeTrialType == TrialType.Main_Trials_Lateralized)
+        else if (trial == TrialType.Main_Trials_Lateralized)
         {
             // Select the appropriate coherence pair (left or right), then select a coherence value (low or high)
             Tuple<float, float> CoherencePair = activeVisualField == CameraManager.VisualField.Left ? mainLateralizedCoherenceLeft : mainLateralizedCoherenceRight;
             activeCoherence = UnityEngine.Random.value > 0.5 ? CoherencePair.Item1 : CoherencePair.Item2;
         }
+
+        // Apply coherence value (RDK-70)
+        stimulusManager.SetCoherence(activeCoherence);
 
         // Store motion-related data points
         Session.instance.CurrentTrial.result["dot_direction"] = dotDirection == (float)Math.PI / 2 ? "up" : "down";
@@ -574,6 +577,14 @@ public class ExperimentManager : MonoBehaviour
             case BlockSequence.Training:
                 // Set the `activeTrialType` depending on the position within the `trainingTimeline`
                 activeTrialType = trainingTimeline[RelativeTrialNumber];
+                break;
+            case BlockSequence.Instructions_Demo_Motion:
+                // Set the `activeTrialType` depending on the position within the `trainingTimeline`
+                activeTrialType = TrialType.Instructions_Demo_Motion;
+                break;
+            case BlockSequence.Instructions_Demo_Selection:
+                // Set the `activeTrialType` depending on the position within the `trainingTimeline`
+                activeTrialType = TrialType.Instructions_Demo_Selection;
                 break;
             case BlockSequence.Mid_Instructions:
                 activeTrialType = TrialType.Mid_Instructions;
