@@ -491,8 +491,7 @@ namespace Stimuli
             // Apply the coherence across all dots
             foreach (Dot dot in dots)
             {
-                string dotBehavior = UnityEngine.Random.value > dotCoherence ? "random" : "reference";
-                dot.SetBehavior(dotBehavior);
+                dot.SetBehavior(UnityEngine.Random.value > dotCoherence ? "random" : "reference");
             }
         }
 
@@ -505,12 +504,16 @@ namespace Stimuli
         {
             dotDirection = direction;
 
-            // Apply the direction across all "reference" type dots
+            // Apply the direction across all "reference" and "random" type dots
             foreach (Dot dot in dots)
             {
                 if (dot.GetBehavior() == "reference")
                 {
                     dot.SetDirection(dotDirection);
+                }
+                else
+                {
+                    dot.SetDirection(UnityEngine.Random.value * 2.0f * Mathf.PI);
                 }
             }
         }

@@ -458,10 +458,6 @@ public class ExperimentManager : MonoBehaviour
     /// </summary>
     private void SetupMotion(TrialType trial)
     {
-        // Set the reference direction randomly
-        float dotDirection = UnityEngine.Random.value > 0.5f ? (float)Math.PI / 2 : (float)Math.PI * 3 / 2;
-        stimulusManager.SetDirection(dotDirection);
-
         // Setup the camera according to the active `TrialType`
         if (trial == TrialType.Training_Trials_Binocular || trial == TrialType.Main_Trials_Binocular)
         {
@@ -515,9 +511,14 @@ public class ExperimentManager : MonoBehaviour
 
         // Apply coherence value (RDK-70)
         stimulusManager.SetCoherence(activeCoherence);
+        Debug.Log("Active coherence: " + stimulusManager.GetCoherence());
+
+        // Set the reference direction and re-randomize distractor dot motion
+        float dotDirection = UnityEngine.Random.value > 0.5f ? Mathf.PI / 2 : Mathf.PI * 3 / 2;
+        stimulusManager.SetDirection(dotDirection);
 
         // Store motion-related data points
-        Session.instance.CurrentTrial.result["dot_direction"] = dotDirection == (float)Math.PI / 2 ? "up" : "down";
+        Session.instance.CurrentTrial.result["dot_direction"] = dotDirection == Mathf.PI / 2 ? "up" : "down";
         Session.instance.CurrentTrial.result["active_coherence"] = activeCoherence;
         if (activeBlock == BlockSequence.Training)
         {
