@@ -97,8 +97,8 @@ public class ExperimentManager : MonoBehaviour
     private Tuple<float, float> mainLateralizedCoherenceRight;
 
     // Timing variables
-    private readonly float POST_FIXATION_DURATION = 0.1f; // 500 milliseconds
-    private readonly float PRE_DISPLAY_DURATION = 0.5f; // 500 milliseconds
+    private readonly float POST_FIXATION_DURATION = 0.1f; // 100 milliseconds
+    private readonly float PRE_DISPLAY_DURATION = 0.3f; // 300 milliseconds
     private readonly float DISPLAY_DURATION = 0.180f; // 180 milliseconds
 
     // Store references to Manager classes
@@ -850,6 +850,43 @@ public class ExperimentManager : MonoBehaviour
             // End the experiment session
             Session.instance.End();
         }
+    }
+
+    /// <summary>
+    /// Function to "force" the end of the experiment, skipping all remaining trials
+    /// </summary>
+    public void ForceEnd()
+    {
+        // End the experiment session
+        Session.instance.End();
+    }
+
+    /// <summary>
+    /// Set the requirement for fixation prior to trial advancement
+    /// </summary>
+    /// <param name="state">`true` if required, `false` if not</param>
+    public void SetFixationRequired(bool state)
+    {
+        RequireFixation = state;
+
+        // Logging output
+        if (state == true)
+        {
+            Debug.Log("Fixation requirement: Enabled");
+        }
+        else
+        {
+            Debug.Log("Fixation requirement: Disabled");
+        }
+    }
+
+    /// <summary>
+    /// Get if fixation is required or not
+    /// </summary>
+    /// <returns>`true` if required, `false` if not</returns>
+    public bool GetFixationRequired()
+    {
+        return RequireFixation;
     }
 
     /// <summary>
