@@ -458,10 +458,6 @@ public class ExperimentManager : MonoBehaviour
     /// </summary>
     private void SetupMotion(TrialType trial)
     {
-        // Set the reference direction randomly
-        float dotDirection = UnityEngine.Random.value > 0.5f ? (float)Math.PI / 2 : (float)Math.PI * 3 / 2;
-        stimulusManager.SetDirection(dotDirection);
-
         // Setup the camera according to the active `TrialType`
         if (trial == TrialType.Training_Trials_Binocular || trial == TrialType.Main_Trials_Binocular)
         {
@@ -481,40 +477,48 @@ public class ExperimentManager : MonoBehaviour
         activeVisualField = cameraManager.GetActiveField();
 
         // Set the coherence value depending on the `TrialType`
-        if (activeTrialType == TrialType.Training_Trials_Binocular)
+        if (trial == TrialType.Training_Trials_Binocular)
         {
             activeCoherence = trainingBinocularCoherence;
         }
-        else if (activeTrialType == TrialType.Training_Trials_Monocular)
+        else if (trial == TrialType.Training_Trials_Monocular)
         {
             // Select a coherence value depending on the active `VisualField`
             activeCoherence = activeVisualField == CameraManager.VisualField.Left ? trainingMonocularCoherenceLeft : trainingMonocularCoherenceRight;
         }
-        else if (activeTrialType == TrialType.Training_Trials_Lateralized)
+        else if (trial == TrialType.Training_Trials_Lateralized)
         {
             // Select a coherence value depending on the active `VisualField`
             activeCoherence = activeVisualField == CameraManager.VisualField.Left ? trainingLateralizedCoherenceLeft : trainingLateralizedCoherenceRight;
         }
         // All "Main_"-type coherence selections include a difficulty selection
-        else if (activeTrialType == TrialType.Main_Trials_Binocular)
+        else if (trial == TrialType.Main_Trials_Binocular)
         {
             activeCoherence = UnityEngine.Random.value > 0.5 ? mainBinocularCoherence.Item1 : mainBinocularCoherence.Item2;;
         }
-        else if (activeTrialType == TrialType.Main_Trials_Monocular)
+        else if (trial == TrialType.Main_Trials_Monocular)
         {
             // Select the appropriate coherence pair (left or right), then select a coherence value (low or high)
             Tuple<float, float> CoherencePair = activeVisualField == CameraManager.VisualField.Left ? mainMonocularCoherenceLeft : mainMonocularCoherenceRight;
             activeCoherence = UnityEngine.Random.value > 0.5 ? CoherencePair.Item1 : CoherencePair.Item2;
         }
-        else if (activeTrialType == TrialType.Main_Trials_Lateralized)
+        else if (trial == TrialType.Main_Trials_Lateralized)
         {
             // Select the appropriate coherence pair (left or right), then select a coherence value (low or high)
             Tuple<float, float> CoherencePair = activeVisualField == CameraManager.VisualField.Left ? mainLateralizedCoherenceLeft : mainLateralizedCoherenceRight;
             activeCoherence = UnityEngine.Random.value > 0.5 ? CoherencePair.Item1 : CoherencePair.Item2;
         }
 
+        // Apply coherence value (RDK-70)
+        stimulusManager.SetCoherence(activeCoherence);
+        Debug.Log("Active coherence: " + stimulusManager.GetCoherence());
+
+        // Set the reference direction and re-randomize distractor dot motion
+        float dotDirection = UnityEngine.Random.value > 0.5f ? Mathf.PI / 2 : Mathf.PI * 3 / 2;
+        stimulusManager.SetDirection(dotDirection);
+
         // Store motion-related data points
-        Session.instance.CurrentTrial.result["dot_direction"] = dotDirection == (float)Math.PI / 2 ? "up" : "down";
+        Session.instance.CurrentTrial.result["dot_direction"] = dotDirection == Mathf.PI / 2 ? "up" : "down";
         Session.instance.CurrentTrial.result["active_coherence"] = activeCoherence;
         if (activeBlock == BlockSequence.Training)
         {
@@ -574,6 +578,14 @@ public class ExperimentManager : MonoBehaviour
             case BlockSequence.Training:
                 // Set the `activeTrialType` depending on the position within the `trainingTimeline`
                 activeTrialType = trainingTimeline[RelativeTrialNumber];
+                break;
+            case BlockSequence.Instructions_Demo_Motion:
+                // Set the `activeTrialType` depending on the position within the `trainingTimeline`
+                activeTrialType = TrialType.Instructions_Demo_Motion;
+                break;
+            case BlockSequence.Instructions_Demo_Selection:
+                // Set the `activeTrialType` depending on the position within the `trainingTimeline`
+                activeTrialType = TrialType.Instructions_Demo_Selection;
                 break;
             case BlockSequence.Mid_Instructions:
                 activeTrialType = TrialType.Mid_Instructions;

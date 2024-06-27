@@ -40,7 +40,7 @@ namespace Stimuli
         private readonly float DOT_DIAMETER = 0.12f; // Specified in supplementary materials
         private float dotWorldRadius;
         private List<Dot> dots = new();
-        private float dotCoherence = 0.5f;
+        private float dotCoherence = 0.2f; // Default training coherence
         private float dotDirection = (float)Math.PI; // "reference" dot type direction
         private readonly float DOT_DENSITY = 16.0f;
         private int dotCount = 0;
@@ -491,8 +491,7 @@ namespace Stimuli
             // Apply the coherence across all dots
             foreach (Dot dot in dots)
             {
-                string dotBehavior = UnityEngine.Random.value > dotCoherence ? "random" : "reference";
-                dot.SetBehavior(dotBehavior);
+                dot.SetBehavior(UnityEngine.Random.value > dotCoherence ? "random" : "reference");
             }
         }
 
@@ -505,12 +504,16 @@ namespace Stimuli
         {
             dotDirection = direction;
 
-            // Apply the direction across all "reference" type dots
+            // Apply the direction across all "reference" and "random" type dots
             foreach (Dot dot in dots)
             {
                 if (dot.GetBehavior() == "reference")
                 {
                     dot.SetDirection(dotDirection);
+                }
+                else
+                {
+                    dot.SetDirection(UnityEngine.Random.value * 2.0f * Mathf.PI);
                 }
             }
         }

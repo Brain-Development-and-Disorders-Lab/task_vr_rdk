@@ -77,6 +77,11 @@ namespace Stimuli
             DotRenderer.enabled = DotVisible;
         }
 
+        public bool GetVisible()
+        {
+            return DotVisible;
+        }
+
         public void SetDirection(float direction)
         {
             DotDirection = direction;
@@ -140,7 +145,7 @@ namespace Stimuli
 
                 // Get and apply visibility state
                 bool visibility = IsVisible(updatedX, updatedY);
-                DotObject.GetComponent<SpriteRenderer>().enabled = visibility;
+                SetVisible(visibility);
 
                 // Random direction adjustment every 12 frames
                 if (DotBehavior == "random" && Time.frameCount % 12 == 0)
