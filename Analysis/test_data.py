@@ -2,7 +2,7 @@ import pandas as pd
 import statistics
 
 FILES = [
-  "/Users/henryburgess/Downloads/jab-bd2d8c51-3a42-4bb6-ad7f-a159c9e61c7c/S001/trial_results.csv"
+  "./ppt_id/trial_results.csv"
 ]
 
 def start():
@@ -15,20 +15,11 @@ def start():
     row["id"] = file_path
     data_struct.append(row)
     print("Done\n")
-    run_eye_tracking(results_df);
 
   # Construct and output data
   df_acc = pd.DataFrame(data_struct)
   df_acc.to_csv("./output.csv")
   print("Generated \"output.csv\"")
-
-
-def run_eye_tracking(results_df):
-  for _, row in results_df.iterrows():
-    left_eye_file = "/" + "/".join(str(row["lefteyeactive_gaze_location_0"]).split("/")[1:])
-    right_eye_file = "/" + "/".join(str(row["righteyeactive_gaze_location_0"]).split("/")[1:])
-    # left_eye_df = pd.read_csv(FOLDER_PATH + left_eye_file)
-    # right_eye_df = pd.read_csv(FOLDER_PATH + right_eye_file)
 
 
 def run_results(results_df):
