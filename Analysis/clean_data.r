@@ -2,6 +2,7 @@
 # Created: Henry Burgess <henry.burgess@wustl.edu>
 
 library(dplyr)
+library(purrr)
 
 DATA_DIRECTORY <- "~/Documents/GitHub/task_vr_rdk/Analysis/24105011"
 
@@ -12,9 +13,6 @@ setup <- function() {
   # Create folders
   dir.create(file.path(DATA_DIRECTORY, "raw"));
   dir.create(file.path(DATA_DIRECTORY, "cleaned"));
-  
-  # Set the working directory
-  setwd("./raw");
 }
 
 copy_data <- function() {
@@ -28,18 +26,28 @@ copy_data <- function() {
 }
 
 clean_data <- function() {
+  # Set the working directory to cleaned directory
+  setwd("./cleaned");
+  
   # Remove unused columns from the trial_results
   trial_results = read.csv("trial_results.csv");
   trial_results <- subset(trial_results, select=-c(experiment, ppid, session_num, trial_num_in_block))
   
   # Trim values in eye gaze data paths
-  trial_results %>%
-    mutate(across(lefteyeactive_gaze_location_0, trim_tracker_filenames))
+  trial_results$lefteyeactive_gaze_location_0 <- trial_results$lefteyeactive_gaze_location_0 %>% map_chr(trim_tracker_filenames)
+  trial_results$righteyeactive_gaze_location_0 <- trial_results$righteyeactive_gaze_location_0 %>% map_chr(trim_tracker_filenames)
 }
 
 trim_tracker_filenames <- function(filename) {
   # Update the filenames stored in the columns
-  filename
+  split_filename <- strsplit(filename, "/")
+  # Get the last element from the array of string components
+  relative_filename <- paste(tail(split_filename[[1]], n=2), collapse = "/")
+  relative_filename
+}
+
+export_data <- function() {
+  # Export the cleaned data
 }
 
 # Parent `start` function
@@ -47,4 +55,5 @@ start <- function() {
   setup()
   copy_data()
   clean_data()
+  export_data()
 }
