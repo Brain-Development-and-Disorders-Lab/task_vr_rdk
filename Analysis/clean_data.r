@@ -23,6 +23,11 @@ copy_data <- function() {
   file.copy("trackers", "cleaned", recursive=TRUE);
   file.copy("trial_results.csv", "raw");
   file.copy("trial_results.csv", "cleaned");
+  
+  # Delete original folders
+  unlink("session_info", recursive=TRUE);
+  unlink("trackers", recursive=TRUE);
+  file.remove("trial_results.csv");
 }
 
 clean_export_data <- function() {
