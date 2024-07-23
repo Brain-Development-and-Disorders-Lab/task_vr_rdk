@@ -25,7 +25,7 @@ copy_data <- function() {
   file.copy("trial_results.csv", "cleaned");
 }
 
-clean_data <- function() {
+clean_export_data <- function() {
   # Set the working directory to cleaned directory
   setwd("./cleaned");
   
@@ -36,24 +36,22 @@ clean_data <- function() {
   # Trim values in eye gaze data paths
   trial_results$lefteyeactive_gaze_location_0 <- trial_results$lefteyeactive_gaze_location_0 %>% map_chr(trim_tracker_filenames)
   trial_results$righteyeactive_gaze_location_0 <- trial_results$righteyeactive_gaze_location_0 %>% map_chr(trim_tracker_filenames)
+  
+  # Export the cleaned data
+  write.csv(trial_results,"trial_results.csv", na="", row.names=FALSE)
 }
 
 trim_tracker_filenames <- function(filename) {
   # Update the filenames stored in the columns
   split_filename <- strsplit(filename, "/")
   # Get the last element from the array of string components
-  relative_filename <- paste(tail(split_filename[[1]], n=2), collapse = "/")
+  relative_filename <- paste(tail(split_filename[[1]], n=2), collapse="/")
   relative_filename
-}
-
-export_data <- function() {
-  # Export the cleaned data
 }
 
 # Parent `start` function
 start <- function() {
   setup()
   copy_data()
-  clean_data()
-  export_data()
+  clean_export_data()
 }
