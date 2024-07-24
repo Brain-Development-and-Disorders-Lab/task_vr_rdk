@@ -1,18 +1,25 @@
-# Script to ingest, clean, and output raw data from the VR RDK task
+# Script to ingest, clean, and output raw data from UXF-based VR tasks
 # Created: Henry Burgess <henry.burgess@wustl.edu>
 
 library(dplyr)
 library(purrr)
 
-DATA_DIRECTORY <- "~/Documents/GitHub/task_vr_rdk/Analysis/24105011"
+BASE_DIRECTORY <- "~/Documents/GitHub/task_vr_rdk/Analysis/"
+IDENTIFIERS <- list(
+  "00000000"
+);
 
-setup <- function() {
-  # Set the working directory
-  setwd(DATA_DIRECTORY);
+setup <- function(directory) {
+  # Reset the working directory
+  setwd(BASE_DIRECTORY);
+  data_directory <- paste(c(BASE_DIRECTORY, directory), collapse="")
+  
+  # Change to new working directory
+  setwd(data_directory)
   
   # Create folders
-  dir.create(file.path(DATA_DIRECTORY, "raw"));
-  dir.create(file.path(DATA_DIRECTORY, "cleaned"));
+  dir.create(file.path(data_directory, "raw"));
+  dir.create(file.path(data_directory, "cleaned"));
 }
 
 copy_data <- function() {
@@ -56,7 +63,9 @@ trim_tracker_filenames <- function(filename) {
 
 # Parent `start` function
 start <- function() {
-  setup()
-  copy_data()
-  clean_export_data()
+  for (identifier in IDENTIFIERS) {
+    setup(identifier)
+    copy_data()
+    clean_export_data()
+  }
 }
