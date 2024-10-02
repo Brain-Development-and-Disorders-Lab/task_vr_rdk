@@ -16,6 +16,9 @@ public class ExperimentManager : MonoBehaviour
     // Loading screen object, parent object that contains all loading screen components
     public GameObject LoadingScreen;
 
+    [Header("Experiment Behavior")]
+    public bool DemoMode = false;
+
     // Define the types of trials that occur during the experiment timeline
     public enum TrialType
     {
@@ -97,9 +100,9 @@ public class ExperimentManager : MonoBehaviour
     private Tuple<float, float> mainLateralizedCoherenceRight;
 
     // Timing variables
-    private readonly float POST_FIXATION_DURATION = 0.1f; // 100 milliseconds
     private readonly float PRE_DISPLAY_DURATION = 0.5f; // 500 milliseconds
-    private readonly float DISPLAY_DURATION = 0.180f; // 180 milliseconds
+    private readonly float POST_FIXATION_DURATION = 0.1f; // 100 milliseconds
+    private float DISPLAY_DURATION = 0.180f; // 180 milliseconds
 
     // Store references to Manager classes
     private StimulusManager stimulusManager;
@@ -202,6 +205,18 @@ public class ExperimentManager : MonoBehaviour
 
         // Update the CameraManager value for the aperture offset to be the stimulus radius
         cameraManager.SetStimulusWidth(stimulusManager.GetApertureWidth());
+
+        // Update experiment behavior if running in demonstration mode
+        if (DemoMode == true)
+        {
+            Debug.LogWarning("Experiment is being run in Demonstration Mode");
+
+            // Disable fixation requirement
+            RequireFixation = false;
+
+            // Update timings
+            DISPLAY_DURATION = 1.80f;
+        }
     }
 
     /// <summary>

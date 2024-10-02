@@ -409,7 +409,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2834388984357925155, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 62400
+      value: 63115
       objectReference: {fileID: 0}
     - target: {fileID: 2896031059644693069, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_IsActive
@@ -445,7 +445,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4267567203292169432, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 116040
+      value: 117360
       objectReference: {fileID: 0}
     - target: {fileID: 4612929069887686480, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_AnchorMax.y
@@ -739,6 +739,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LoadingScreen: {fileID: 439538600}
+  DemoMode: 0
   RequireFixation: 1
   FixationRadius: 0.5
   LeftEyeTracker: {fileID: 567733400}
@@ -855,6 +856,7 @@ MonoBehaviour:
   CaptureSources:
   - {fileID: 1568580417}
   - {fileID: 1747961104}
+  Prefix: http://*:4444/
 --- !u!1 &223726298
 GameObject:
   m_ObjectHideFlags: 0
@@ -6570,7 +6572,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: -13.41}
+  m_AnchoredPosition: {x: -6.4, y: -1.4}
   m_SizeDelta: {x: 565, y: 479}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1476643089
