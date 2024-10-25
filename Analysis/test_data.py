@@ -1,9 +1,15 @@
+# Script to validate raw data from UXF-based RDK VR task, checking coherence values and accuracy
+# Created: Henry Burgess <henry.burgess@wustl.edu>
+
+
 import pandas as pd
 import statistics
+
 
 FILES = [
   "./ppt_id/trial_results.csv"
 ]
+
 
 def start():
   data_struct = []
