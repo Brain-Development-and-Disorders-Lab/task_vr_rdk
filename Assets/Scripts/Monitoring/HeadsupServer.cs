@@ -88,7 +88,7 @@ namespace Monitoring {
             logsPreflight = new Queue<string>();
 
             Server = new WebSocketServer(Port);
-            Server.AddWebSocketService<Handler>("/headsup", () => new Handler(Experiment));
+            Server.AddWebSocketService<Handler>("/", () => new Handler(Experiment));
             Server.Start();
 
             Application.logMessageReceived += HandleLogMessage;
@@ -102,14 +102,16 @@ namespace Monitoring {
                 Dictionary<string, string> status = Experiment != null ?
                     Experiment.GetExperimentStatus() :
                     new Dictionary<string, string>() { { "active_block", "-1" } };
-                Server.WebSocketServices["/headsup"].Sessions.Broadcast(JsonConvert.SerializeObject(status));
+                Dictionary<string, string> toSend = new() { { "type", "status" }, { "data", JsonConvert.SerializeObject(status) } };
+                Server.WebSocketServices["/"].Sessions.Broadcast(JsonConvert.SerializeObject(toSend));
                 nextUpdateTime += UpdateInterval;
             }
 
             // Broadcast any log messages to the client interface
             if (logsPreflight.Count > 0)
             {
-                Server.WebSocketServices["/headsup"].Sessions.Broadcast(JsonConvert.SerializeObject(logsPreflight.Dequeue()));
+                Dictionary<string, string> toSend = new() { { "type", "logs" }, { "data", JsonConvert.SerializeObject(logsPreflight.Dequeue()) } };
+                Server.WebSocketServices["/"].Sessions.Broadcast(JsonConvert.SerializeObject(toSend));
             }
         }
 
