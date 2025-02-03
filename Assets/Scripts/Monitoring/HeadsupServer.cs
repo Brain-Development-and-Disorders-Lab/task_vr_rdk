@@ -7,10 +7,6 @@ Adapted from https://gist.github.com/amimaro/10e879ccb54b2cacae4b81abea455b10
 using UnityEngine;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Threading;
 using Newtonsoft.Json;
 using WebSocketSharp;
 using WebSocketSharp.Server;
@@ -19,10 +15,12 @@ namespace Monitoring {
     public class Handler : WebSocketBehavior
     {
         private ExperimentManager Experiment;
+        private CaptureManager[] CaptureSources;
 
-        public Handler(ExperimentManager manager)
+        public Handler(ExperimentManager manager, CaptureManager[] sources)
         {
             Experiment = manager;
+            CaptureSources = sources;
         }
 
         protected override void OnMessage(MessageEventArgs e)
@@ -51,6 +49,24 @@ namespace Monitoring {
                 Experiment.SetFixationRequired(true);
                 Send(JsonConvert.SerializeObject("Fixation Enabled"));
             }
+            else if (e.Data == "screenshot")
+            {
+                // Capture screenshot of current view
+                // Retrieve screenshots from each of the in-game displays
+                List<string> sourceCaptures = new();
+                foreach (CaptureManager source in CaptureSources)
+                {
+                    // For each source, capture the screenshots and convert to base64 string for network communication
+                    source.CaptureScreenshot();
+                    byte[] screenshot = source.GetLastScreenshot();
+                    string bufferContents = Convert.ToBase64String(screenshot);
+                    sourceCaptures.Add(bufferContents);
+                }
+
+                Dictionary<string, string> toSend = new() { { "type", "screenshot" }, { "data", JsonConvert.SerializeObject(sourceCaptures) } };
+                Send(JsonConvert.SerializeObject(toSend));
+            }
+
             else
             {
                 // Default error message
@@ -88,7 +104,7 @@ namespace Monitoring {
             logsPreflight = new Queue<string>();
 
             Server = new WebSocketServer(Port);
-            Server.AddWebSocketService<Handler>("/", () => new Handler(Experiment));
+            Server.AddWebSocketService<Handler>("/", () => new Handler(Experiment, CaptureSources));
             Server.Start();
 
             Application.logMessageReceived += HandleLogMessage;
