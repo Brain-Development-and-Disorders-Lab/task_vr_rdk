@@ -1,18 +1,24 @@
 using CSV, DataFrames, Plots, StatsPlots, KernelDensity
 
-MOTION_DURATION = 0.180 # 180ms display duration
+# Path to the results directory
 RESULTS_PATH = "/Analysis/results"
 
+# Duration of the dot motion display (measured in seconds)
+MOTION_DURATION = 0.180
+
 # Configure some offset adjustments
+# Baseline offset of the camera in the Unity scene (measured in world units)
 X_OFFSET = 0.0
 Y_OFFSET = -1.5
-X_OFFSET_LAT = 1.440966 # In-game adjustment of -1.440966
+# When the trial is lateralized, the camera is offset by 1.440966 (measured in world units)
+# along the X axis, depending on which visual field is being used during that trial
+X_OFFSET_LAT = 1.440966
 
 # Thresholds for data filtering
 BLINK_THRESHOLD = 0.01
 
 # Utility function to read in CSV files
-function read_data(path)
+function _read_data(path)
   println("Reading: ", path)
   try
     data = CSV.read(path, DataFrame)
@@ -24,7 +30,7 @@ function read_data(path)
 end
 
 # Utility function to clean lengthy paths to eye-tracking data files
-function clean_tracking_paths(paths)
+function _clean_tracking_paths(paths)
   cleaned_paths = Vector{String}(undef, 0)
   for path in paths
     push!(cleaned_paths, "./trackers/" * split(path, "/")[end])
@@ -32,28 +38,7 @@ function clean_tracking_paths(paths)
   return cleaned_paths
 end
 
-# Check if the trial_results.csv file exists
-if !isfile("trial_results.csv")
-  println("Error: trial_results.csv not found, attempting to change directory")
-  cd(pwd() * RESULTS_PATH)
-else
-  println("Directory contains trial_results.csv")
-end
-
-# Begin by reading the results data file
-df = read_data("trial_results.csv")
-
-# Select columns with the paths to the eye-tracking data
-df = select(df, :trial_type, :active_visual_field, :trial_start, :decision_start, :motion_duration, :lefteyeactive_gaze_location_0, :righteyeactive_gaze_location_0)
-
-# Filter rows to only be those with "Training_" or "Main_"-type trials
-df = filter(row -> startswith(row.trial_type, "Training_") || startswith(row.trial_type, "Main_"), df)
-
-# Update the values in the columns for the paths to contain the correct paths
-df = mapcols(val -> clean_tracking_paths(val), df, cols=r"lefteyeactive_gaze_location_0")
-df = mapcols(val -> clean_tracking_paths(val), df, cols=r"righteyeactive_gaze_location_0")
-
-# Helper function to apply offsets to the data, accounting for visual fields in Unity application
+# Helper function to apply visual field-specific offsets to the data
 function _apply_offsets(row)
   # Apply standard offsets
   row.pos_x = row.pos_x + X_OFFSET
@@ -116,7 +101,7 @@ function _generate_coordinate_plots(df_x, df_y, type, title)
 end
 
 # Function to generate heatmaps of the eye-tracking data
-function generate_motion_plots()
+function motion_plots()
   println("Generating motion plots...")
   # Generate concatenated datasets for heatmaps
   df_l = DataFrame([[], [], [], [], [], [], [], [], [], [], []], ["trial_type", "active_visual_field", "time", "eye", "pos_x", "pos_y", "pos_z", "rot_x", "rot_y", "rot_z", "blink"])
@@ -206,7 +191,7 @@ function generate_motion_plots()
 end
 
 # Function to generate heatmaps of the eye-tracking data
-function generate_decision_plots()
+function decision_plots()
   println("Generating decision plots...")
   # Generate concatenated datasets for heatmaps
   df_l = DataFrame([[], [], [], [], [], [], [], [], [], [], []], ["trial_type", "active_visual_field", "time", "eye", "pos_x", "pos_y", "pos_z", "rot_x", "rot_y", "rot_z", "blink"])
@@ -243,7 +228,8 @@ function generate_decision_plots()
   )
 end
 
-function generate_time_to_fixation()
+# Function to generate box plots of the time to fixation
+function time_to_fixation()
   println("Generating time to fixation box plots...")
   # Calculate time to fixation
   df.time_to_fixation = df.decision_start - df.trial_start - df.motion_duration
@@ -264,6 +250,27 @@ function generate_time_to_fixation()
   display(p)
 end
 
-generate_motion_plots()
-generate_decision_plots()
-generate_time_to_fixation()
+# Check if the trial_results.csv file exists
+if !isfile("trial_results.csv")
+  println("Error: trial_results.csv not found, attempting to change directory")
+  cd(pwd() * RESULTS_PATH)
+else
+  println("Directory contains trial_results.csv")
+end
+
+# Begin by reading the results data file
+df = _read_data("trial_results.csv")
+
+# Select columns with the paths to the eye-tracking data
+df = select(df, :trial_type, :active_visual_field, :trial_start, :decision_start, :motion_duration, :lefteyeactive_gaze_location_0, :righteyeactive_gaze_location_0)
+
+# Filter rows to only be those with "Training_" or "Main_"-type trials
+df = filter(row -> startswith(row.trial_type, "Training_") || startswith(row.trial_type, "Main_"), df)
+
+# Update the values in the columns for the paths to contain the correct paths
+df = mapcols(val -> _clean_tracking_paths(val), df, cols=r"lefteyeactive_gaze_location_0")
+df = mapcols(val -> _clean_tracking_paths(val), df, cols=r"righteyeactive_gaze_location_0")
+
+motion_plots()
+decision_plots()
+time_to_fixation()
