@@ -127,6 +127,9 @@ public class ExperimentManager : MonoBehaviour
     private bool isInputReset = true; // Flag to prevent input being held down
     private InputState lastInputState; // Prior frame input state
 
+    // Signal state from external management tools
+    private bool hasQueuedExit = false;
+
     // Input button slider GameObjects and variables
     private readonly float TRIGGER_THRESHOLD = 0.8f;
     private readonly float JOYSTICK_THRESHOLD = 0.6f;
@@ -877,8 +880,8 @@ public class ExperimentManager : MonoBehaviour
     /// </summary>
     public void ForceEnd()
     {
-        // End the experiment session
-        Session.instance.End();
+        // End the experiment session by updating the exit flag
+        hasQueuedExit = true;
     }
 
     /// <summary>
@@ -1209,6 +1212,14 @@ public class ExperimentManager : MonoBehaviour
             {
                 isInputReset = true;
             }
+        }
+
+        // Management tools:
+        // If the exit signal flag has been set, end the session and quit
+        if (hasQueuedExit == true)
+        {
+            Session.instance.End();
+            Application.Quit();
         }
     }
 }
