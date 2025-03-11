@@ -1,7 +1,7 @@
 using CSV, DataFrames, Plots
 
 MOTION_DURATION = 0.180 # 180ms display duration
-RESULTS_PATH = "./results/"
+RESULTS_PATH = "/Analysis/results"
 
 # Configure some offset adjustments
 X_OFFSET = 0.0
@@ -28,13 +28,21 @@ end
 function clean_tracking_paths(paths)
   cleaned_paths = Vector{String}(undef, 0)
   for path in paths
-    push!(cleaned_paths, RESULTS_PATH * "trackers/" * split(path, "/")[end])
+    push!(cleaned_paths, "./trackers/" * split(path, "/")[end])
   end
   return cleaned_paths
 end
 
+# Check if the trial_results.csv file exists
+if !isfile("trial_results.csv")
+  println("Error: trial_results.csv not found, attempting to change directory")
+  cd(pwd() * RESULTS_PATH)
+else
+  println("Directory contains trial_results.csv")
+end
+
 # Begin by reading the results data file
-df = read_data(RESULTS_PATH * "trial_results.csv")
+df = read_data("trial_results.csv")
 
 # Select columns with the paths to the eye-tracking data
 df = select(df, :trial_type, :active_visual_field, :decision_start, :lefteyeactive_gaze_location_0, :righteyeactive_gaze_location_0)
@@ -69,11 +77,11 @@ for (i, row) in enumerate(eachrow(df))
   for left_row in eachrow(left_gaze_data)
     # Apply standard offsets
     left_row.pos_x = left_row.pos_x + X_OFFSET
-    left_row.pos_y = left_row.pos_y - Y_OFFSET
+    left_row.pos_y = left_row.pos_y + Y_OFFSET
 
     # Apply lateralized offsets
     if (left_row.active_visual_field == "Left" && endswith(left_row.trial_type, "Lateralized"))
-      left_row.pos_x = left_row.pos_x + X_OFFSET_LAT
+      left_row.pos_x = left_row.pos_x - X_OFFSET_LAT
     end
 
     # Push the updated row
@@ -83,11 +91,11 @@ for (i, row) in enumerate(eachrow(df))
   for right_row in eachrow(right_gaze_data)
     # Apply standard offsets
     right_row.pos_x = right_row.pos_x + X_OFFSET
-    right_row.pos_y = right_row.pos_y - Y_OFFSET
+    right_row.pos_y = right_row.pos_y + Y_OFFSET
 
     # Apply lateralized offsets
     if (right_row.active_visual_field == "Right" && endswith(right_row.trial_type, "Lateralized"))
-      right_row.pos_x = right_row.pos_x - X_OFFSET_LAT
+      right_row.pos_x = right_row.pos_x + X_OFFSET_LAT
     end
 
     # Push the updated row
@@ -118,9 +126,8 @@ display(p)
 
 # Heatmap - Monocular, Left trials
 df_l_l_monocular = filter(row -> row.active_visual_field == "Left" && endswith(row.trial_type, "Monocular"), df_l)
-df_l_r_monocular = filter(row -> row.active_visual_field == "Left" && endswith(row.trial_type, "Monocular"), df_r)
 
-p = histogram2d([df_l_l_monocular.pos_x, df_l_r_monocular.pos_x], [df_l_l_monocular.pos_y, df_l_r_monocular.pos_y], bins=range(-8, 8, length=120), show_empty_bins=true, color=:plasma)
+p = histogram2d([df_l_l_monocular.pos_x], [df_l_l_monocular.pos_y], bins=range(-8, 8, length=120), show_empty_bins=true, color=:plasma)
 xlims!(-8, 8)
 ylims!(-8, 8)
 xlabel!("X")
@@ -129,10 +136,9 @@ title!("Eye-tracking Heatmap (Monocular, Left)")
 display(p)
 
 # Heatmap - Monocular, Right trials
-df_r_l_monocular = filter(row -> row.active_visual_field == "Right" && endswith(row.trial_type, "Monocular"), df_l)
 df_r_r_monocular = filter(row -> row.active_visual_field == "Right" && endswith(row.trial_type, "Monocular"), df_r)
 
-p = histogram2d([df_r_l_monocular.pos_x, df_r_r_monocular.pos_x], [df_r_l_monocular.pos_y, df_r_r_monocular.pos_y], bins=range(-8, 8, length=120), show_empty_bins=true, color=:plasma)
+p = histogram2d([ df_r_r_monocular.pos_x], [df_r_r_monocular.pos_y], bins=range(-8, 8, length=120), show_empty_bins=true, color=:plasma)
 xlims!(-8, 8)
 ylims!(-8, 8)
 xlabel!("X")
@@ -142,9 +148,8 @@ display(p)
 
 # Heatmap - Lateralized, Left trials
 df_l_l_lateralized = filter(row -> row.active_visual_field == "Left" && endswith(row.trial_type, "Lateralized"), df_l)
-df_l_r_lateralized = filter(row -> row.active_visual_field == "Left" && endswith(row.trial_type, "Lateralized"), df_r)
 
-p = histogram2d([df_l_l_lateralized.pos_x, df_l_r_lateralized.pos_x], [df_l_l_lateralized.pos_y, df_l_r_lateralized.pos_y], bins=range(-8, 8, length=120), show_empty_bins=true, color=:plasma)
+p = histogram2d([df_l_l_lateralized.pos_x], [df_l_l_lateralized.pos_y], bins=range(-8, 8, length=120), show_empty_bins=true, color=:plasma)
 xlims!(-8, 8)
 ylims!(-8, 8)
 xlabel!("X")
@@ -153,10 +158,9 @@ title!("Eye-tracking Heatmap (Lateralized, Left)")
 display(p)
 
 # Heatmap - Lateralized, Right trials
-df_r_l_lateralized = filter(row -> row.active_visual_field == "Right" && endswith(row.trial_type, "Lateralized"), df_l)
 df_r_r_lateralized = filter(row -> row.active_visual_field == "Right" && endswith(row.trial_type, "Lateralized"), df_r)
 
-p = histogram2d([df_r_l_lateralized.pos_x, df_r_r_lateralized.pos_x], [df_r_l_lateralized.pos_y, df_r_r_lateralized.pos_y], bins=range(-8, 8, length=120), show_empty_bins=true, color=:plasma)
+p = histogram2d([ df_r_r_lateralized.pos_x], [df_r_r_lateralized.pos_y], bins=range(-8, 8, length=120), show_empty_bins=true, color=:plasma)
 xlims!(-8, 8)
 ylims!(-8, 8)
 xlabel!("X")
