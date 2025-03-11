@@ -165,16 +165,16 @@ public class ExperimentManager : MonoBehaviour
 
         // Generate the experiment timeline
         // Generate the "Training_"-type trial timeline and shuffle
-        var trainingTrialMapping = new Dictionary<TrialCount, TrialType>
+        var trainingTrialMapping = new Dictionary<TrialType, TrialCount>
         {
-            { TrialCount.Training_Trials_Binocular, TrialType.Training_Trials_Binocular },
-            { TrialCount.Training_Trials_Monocular_Left, TrialType.Training_Trials_Monocular_Left },
-            { TrialCount.Training_Trials_Monocular_Right, TrialType.Training_Trials_Monocular_Right },
-            { TrialCount.Training_Trials_Lateralized_Left, TrialType.Training_Trials_Lateralized_Left },
-            { TrialCount.Training_Trials_Lateralized_Right, TrialType.Training_Trials_Lateralized_Right }
+            { TrialType.Training_Trials_Binocular, TrialCount.Training_Trials_Binocular },
+            { TrialType.Training_Trials_Monocular_Left, TrialCount.Training_Trials_Monocular_Left },
+            { TrialType.Training_Trials_Monocular_Right, TrialCount.Training_Trials_Monocular_Right },
+            { TrialType.Training_Trials_Lateralized_Left, TrialCount.Training_Trials_Lateralized_Left },
+            { TrialType.Training_Trials_Lateralized_Right, TrialCount.Training_Trials_Lateralized_Right }
         };
 
-        foreach (var (count, type) in trainingTrialMapping)
+        foreach (var (type, count) in trainingTrialMapping)
         {
             for (int i = 0; i < (int)count; i++)
             {
@@ -184,16 +184,16 @@ public class ExperimentManager : MonoBehaviour
         trainingTimeline.Shuffle();
 
         // Generate the "Main_"-type trial timeline and shuffle
-        var mainTrialMapping = new Dictionary<TrialCount, TrialType>
+        var mainTrialMapping = new Dictionary<TrialType, TrialCount>
         {
-            { TrialCount.Main_Trials_Binocular, TrialType.Main_Trials_Binocular },
-            { TrialCount.Main_Trials_Monocular_Left, TrialType.Main_Trials_Monocular_Left },
-            { TrialCount.Main_Trials_Monocular_Right, TrialType.Main_Trials_Monocular_Right },
-            { TrialCount.Main_Trials_Lateralized_Left, TrialType.Main_Trials_Lateralized_Left },
-            { TrialCount.Main_Trials_Lateralized_Right, TrialType.Main_Trials_Lateralized_Right }
+            { TrialType.Main_Trials_Binocular, TrialCount.Main_Trials_Binocular },
+            { TrialType.Main_Trials_Monocular_Left, TrialCount.Main_Trials_Monocular_Left },
+            { TrialType.Main_Trials_Monocular_Right, TrialCount.Main_Trials_Monocular_Right },
+            { TrialType.Main_Trials_Lateralized_Left, TrialCount.Main_Trials_Lateralized_Left },
+            { TrialType.Main_Trials_Lateralized_Right, TrialCount.Main_Trials_Lateralized_Right }
         };
 
-        foreach (var (count, type) in mainTrialMapping)
+        foreach (var (type, count) in mainTrialMapping)
         {
             for (int i = 0; i < (int)count; i++)
             {
