@@ -236,8 +236,46 @@ public class ExperimentManager : MonoBehaviour
             // Update timings
             DISPLAY_DURATION = 1.80f;
         }
+
+        // Print the proportions of each `TrialType` in the training timeline
+        Debug.Log(GetTrialProportions(trainingTimeline));
+
+        // Print the proportions of each `TrialType` in the main timeline
+        Debug.Log(GetTrialProportions(mainTimeline));
     }
 
+    /// <summary>
+    /// Get the proportions of each `TrialType` in a timeline
+    /// </summary>
+    /// <param name="timeline">The timeline to get the proportions of</param>
+    /// <returns>A string summary of the proportions of each `TrialType` in the timeline</returns>
+    public string GetTrialProportions(List<TrialType> timeline)
+    {
+        var proportions = timeline
+            .GroupBy(t => t)
+            .OrderBy(g => g.Key)
+            .Select(g => new
+            {
+                Type = g.Key,
+                Count = g.Count(),
+                Percentage = (double)g.Count() / timeline.Count * 100
+            });
+
+        var summary = new System.Text.StringBuilder();
+        summary.AppendLine($"Timeline Summary (Trials: {timeline.Count})");
+        summary.AppendLine("----------------------------------------");
+
+        foreach (var prop in proportions)
+        {
+            summary.AppendLine(
+                $"{prop.Type}: {prop.Count} trials ({prop.Percentage:F1}%)");
+        }
+
+        return summary.ToString();
+    }
+
+    /// <summary>
+    /// Start the experiment by triggering the next trial
     /// <summary>
     /// Start the experiment by triggering the next trial
     /// </summary>
