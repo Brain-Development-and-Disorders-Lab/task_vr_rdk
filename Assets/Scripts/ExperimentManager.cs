@@ -165,7 +165,7 @@ public class ExperimentManager : MonoBehaviour
 
         // Generate the experiment timeline
         // Generate the "Training_"-type trial timeline and shuffle
-        var trainingTrialMapping = new Dictionary<ETrialType, ETrialCount>
+        Dictionary<ETrialType, ETrialCount> trainingTrialMapping = new()
         {
             { ETrialType.Training_Trials_Binocular, ETrialCount.Training_Trials_Binocular },
             { ETrialType.Training_Trials_Monocular_Left, ETrialCount.Training_Trials_Monocular_Left },
@@ -184,7 +184,7 @@ public class ExperimentManager : MonoBehaviour
         _trainingTimeline.Shuffle();
 
         // Generate the "Main_"-type trial timeline and shuffle
-        var mainTrialMapping = new Dictionary<ETrialType, ETrialCount>
+        Dictionary<ETrialType, ETrialCount> mainTrialMapping = new()
         {
             { ETrialType.Main_Trials_Binocular, ETrialCount.Main_Trials_Binocular },
             { ETrialType.Main_Trials_Monocular_Left, ETrialCount.Main_Trials_Monocular_Left },
@@ -226,7 +226,7 @@ public class ExperimentManager : MonoBehaviour
         _cameraManager.SetStimulusWidth(_stimulusManager.GetApertureWidth());
 
         // Update experiment behavior if running in demonstration mode
-        if (demoMode == true)
+        if (demoMode)
         {
             Debug.LogWarning("Experiment is being run in Demonstration Mode");
 
@@ -261,7 +261,7 @@ public class ExperimentManager : MonoBehaviour
                 Percentage = (double)g.Count() / timeline.Count * 100
             });
 
-        var summary = new System.Text.StringBuilder();
+        System.Text.StringBuilder summary = new();
         summary.AppendLine($"Timeline Summary (Trials: {timeline.Count})");
         summary.AppendLine("----------------------------------------");
 
@@ -295,10 +295,7 @@ public class ExperimentManager : MonoBehaviour
     /// <summary>
     /// Quit the experiment and close the VR application
     /// </summary>
-    public void QuitExperiment()
-    {
-        Application.Quit();
-    }
+    public void QuitExperiment() => Application.Quit();
 
     /// <summary>
     /// Get trials of a specific `ETrialType` and `VisualField` from a `Block`. Used primarily to filter a set of `Trial`s
@@ -311,10 +308,10 @@ public class ExperimentManager : MonoBehaviour
     private List<Trial> GetTrialsByType(ETrialType trialType, CameraManager.VisualField visualField, EBlockSequence blockIndex)
     {
         List<Trial> result = new();
-        Block searchBlock = Session.instance.GetBlock((int)blockIndex);
+        var searchBlock = Session.instance.GetBlock((int)blockIndex);
         if (searchBlock.trials.Count > 0)
         {
-            foreach (Trial trial in searchBlock.trials)
+            foreach (var trial in searchBlock.trials)
             {
                 // Extract results into enum names
                 Enum.TryParse(trial.result["active_visual_field"].ToString(), out CameraManager.VisualField priorVisualField);
@@ -343,7 +340,7 @@ public class ExperimentManager : MonoBehaviour
 
         for (int i = currentIndex - 1; i >= 1; i--)
         {
-            Trial priorTrial = Session.instance.CurrentBlock.GetRelativeTrial(i);
+            var priorTrial = Session.instance.CurrentBlock.GetRelativeTrial(i);
             string priorETrialType = priorTrial.result["trial_type"].ToString();
             Enum.TryParse(priorTrial.result["active_visual_field"].ToString(), out CameraManager.VisualField priorVisualField);
 
@@ -365,27 +362,27 @@ public class ExperimentManager : MonoBehaviour
     /// </summary>
     private void UpdateCoherences()
     {
-        ETrialType targetETrialType = _activeTrialType;
+        var targetTrialType = _activeTrialType;
         float coherenceDelta = 0.0f;
 
         // Current `Trial` information
-        Trial currentTrial = Session.instance.CurrentTrial;
+        var currentTrial = Session.instance.CurrentTrial;
         bool currentTrialAccuracy = (bool)currentTrial.result["correct_selection"];
         int currentTrialIndex = currentTrial.numberInBlock;
         float currentTrialCoherence = (float)currentTrial.result["active_coherence"];
-        if (currentTrialAccuracy == true)
+        if (currentTrialAccuracy)
         {
             // Search for previous trial of matching `ETrialType` for comparison
             int previousTrialIndex = GetPreviousTrialIndex(_activeTrialType, _activeVisualField, currentTrialIndex);
             if (previousTrialIndex != -1)
             {
                 // Prior trial found matching the current `ETrialType`
-                Trial previousTrial = Session.instance.CurrentBlock.GetRelativeTrial(previousTrialIndex);
+                var previousTrial = Session.instance.CurrentBlock.GetRelativeTrial(previousTrialIndex);
                 bool previousTrialAccuracy = (bool)previousTrial.result["correct_selection"];
                 float previousTrialCoherence = (float)previousTrial.result["active_coherence"];
 
                 // Check criteria for two consecutive correct responses
-                if (previousTrialAccuracy == true && currentTrialCoherence == previousTrialCoherence)
+                if (previousTrialAccuracy && currentTrialCoherence == previousTrialCoherence)
                 {
                     // Reduce the target `ETrialType` coherence value, increasing difficulty
                     coherenceDelta = -0.01f;
@@ -399,11 +396,11 @@ public class ExperimentManager : MonoBehaviour
         }
 
         // Apply the modification to the `ETrialType` coherence value
-        if (targetETrialType == ETrialType.Training_Trials_Binocular)
+        if (targetTrialType == ETrialType.Training_Trials_Binocular)
         {
             _trainingBinocularCoherence += coherenceDelta;
         }
-        else if (targetETrialType == ETrialType.Training_Trials_Monocular_Left || targetETrialType == ETrialType.Training_Trials_Monocular_Right)
+        else if (targetTrialType is ETrialType.Training_Trials_Monocular_Left or ETrialType.Training_Trials_Monocular_Right)
         {
             if (_activeVisualField == CameraManager.VisualField.Left)
             {
@@ -414,7 +411,7 @@ public class ExperimentManager : MonoBehaviour
                 _trainingMonocularCoherenceRight += coherenceDelta;
             }
         }
-        else if (targetETrialType == ETrialType.Training_Trials_Lateralized_Left || targetETrialType == ETrialType.Training_Trials_Lateralized_Right)
+        else if (targetTrialType is ETrialType.Training_Trials_Lateralized_Left or ETrialType.Training_Trials_Lateralized_Right)
         {
             if (_activeVisualField == CameraManager.VisualField.Left)
             {
@@ -453,23 +450,23 @@ public class ExperimentManager : MonoBehaviour
     private void CalculateCoherences()
     {
         // Calculate coherences for `Training_Trials_Binocular` trials
-        List<Trial> binocularTrials = GetTrialsByType(ETrialType.Training_Trials_Binocular, CameraManager.VisualField.Both, EBlockSequence.Training);
+        var binocularTrials = GetTrialsByType(ETrialType.Training_Trials_Binocular, CameraManager.VisualField.Both, EBlockSequence.Training);
         _mainBinocularCoherence = CalculateCoherencePairs(binocularTrials, "training_binocular_coherence");
 
         // Calculate coherences for left `Training_Trials_Monocular` trials
-        List<Trial> monocularTrialsLeft = GetTrialsByType(ETrialType.Training_Trials_Monocular_Left, CameraManager.VisualField.Left, EBlockSequence.Training);
+        var monocularTrialsLeft = GetTrialsByType(ETrialType.Training_Trials_Monocular_Left, CameraManager.VisualField.Left, EBlockSequence.Training);
         _mainMonocularCoherenceLeft = CalculateCoherencePairs(monocularTrialsLeft, "training_monocular_coherence_left");
 
         // Calculate coherences for right `Training_Trials_Monocular` trials
-        List<Trial> monocularTrialsRight = GetTrialsByType(ETrialType.Training_Trials_Monocular_Right, CameraManager.VisualField.Right, EBlockSequence.Training);
+        var monocularTrialsRight = GetTrialsByType(ETrialType.Training_Trials_Monocular_Right, CameraManager.VisualField.Right, EBlockSequence.Training);
         _mainMonocularCoherenceRight = CalculateCoherencePairs(monocularTrialsRight, "training_monocular_coherence_right");
 
         // Calculate coherences for left `Training_Trials_Lateralized` trials
-        List<Trial> lateralizedTrialsLeft = GetTrialsByType(ETrialType.Training_Trials_Lateralized_Left, CameraManager.VisualField.Left, EBlockSequence.Training);
+        var lateralizedTrialsLeft = GetTrialsByType(ETrialType.Training_Trials_Lateralized_Left, CameraManager.VisualField.Left, EBlockSequence.Training);
         _mainLateralizedCoherenceLeft = CalculateCoherencePairs(lateralizedTrialsLeft, "training_lateralized_coherence_left");
 
         // Calculate coherences for right `Training_Trials_Lateralized` trials
-        List<Trial> lateralizedTrialsRight = GetTrialsByType(ETrialType.Training_Trials_Lateralized_Right, CameraManager.VisualField.Right, EBlockSequence.Training);
+        var lateralizedTrialsRight = GetTrialsByType(ETrialType.Training_Trials_Lateralized_Right, CameraManager.VisualField.Right, EBlockSequence.Training);
         _mainLateralizedCoherenceRight = CalculateCoherencePairs(lateralizedTrialsRight, "training_lateralized_coherence_right");
     }
 
@@ -531,27 +528,27 @@ public class ExperimentManager : MonoBehaviour
     private void SetupMotion(ETrialType trial)
     {
         // Step 1: Setup the camera according to the active `ETrialType`
-        if (trial == ETrialType.Training_Trials_Binocular || trial == ETrialType.Main_Trials_Binocular)
+        if (trial is ETrialType.Training_Trials_Binocular or ETrialType.Main_Trials_Binocular)
         {
             // Activate both cameras in binocular mode
             _cameraManager.SetActiveField(CameraManager.VisualField.Both, false);
         }
-        else if (trial == ETrialType.Training_Trials_Monocular_Left || trial == ETrialType.Main_Trials_Monocular_Left)
+        else if (trial is ETrialType.Training_Trials_Monocular_Left or ETrialType.Main_Trials_Monocular_Left)
         {
             // Activate one camera in monocular mode, without lateralization
             _cameraManager.SetActiveField(CameraManager.VisualField.Left, false);
         }
-        else if (trial == ETrialType.Training_Trials_Monocular_Right || trial == ETrialType.Main_Trials_Monocular_Right)
+        else if (trial is ETrialType.Training_Trials_Monocular_Right or ETrialType.Main_Trials_Monocular_Right)
         {
             // Activate one camera in monocular mode, without lateralization
             _cameraManager.SetActiveField(CameraManager.VisualField.Right, false);
         }
-        else if (trial == ETrialType.Training_Trials_Lateralized_Left || trial == ETrialType.Main_Trials_Lateralized_Left)
+        else if (trial is ETrialType.Training_Trials_Lateralized_Left or ETrialType.Main_Trials_Lateralized_Left)
         {
             // Activate one camera in monocular mode, with lateralization
             _cameraManager.SetActiveField(CameraManager.VisualField.Left, true);
         }
-        else if (trial == ETrialType.Training_Trials_Lateralized_Right || trial == ETrialType.Main_Trials_Lateralized_Right)
+        else if (trial is ETrialType.Training_Trials_Lateralized_Right or ETrialType.Main_Trials_Lateralized_Right)
         {
             // Activate one camera in monocular mode, with lateralization
             _cameraManager.SetActiveField(CameraManager.VisualField.Right, true);
@@ -563,12 +560,12 @@ public class ExperimentManager : MonoBehaviour
         {
             _activeCoherence = _trainingBinocularCoherence;
         }
-        else if (trial == ETrialType.Training_Trials_Monocular_Left || trial == ETrialType.Training_Trials_Monocular_Right)
+        else if (trial is ETrialType.Training_Trials_Monocular_Left or ETrialType.Training_Trials_Monocular_Right)
         {
             // Select the coherence value for the active monocular training trial
             _activeCoherence = _activeVisualField == CameraManager.VisualField.Left ? _trainingMonocularCoherenceLeft : _trainingMonocularCoherenceRight;
         }
-        else if (trial == ETrialType.Training_Trials_Lateralized_Left || trial == ETrialType.Training_Trials_Lateralized_Right)
+        else if (trial is ETrialType.Training_Trials_Lateralized_Left or ETrialType.Training_Trials_Lateralized_Right)
         {
             // Select the coherence value for the active lateralized training trial
             _activeCoherence = _activeVisualField == CameraManager.VisualField.Left ? _trainingLateralizedCoherenceLeft : _trainingLateralizedCoherenceRight;
@@ -578,16 +575,16 @@ public class ExperimentManager : MonoBehaviour
         {
             _activeCoherence = UnityEngine.Random.value > 0.5 ? _mainBinocularCoherence.Item1 : _mainBinocularCoherence.Item2;
         }
-        else if (trial == ETrialType.Main_Trials_Monocular_Left || trial == ETrialType.Main_Trials_Monocular_Right)
+        else if (trial is ETrialType.Main_Trials_Monocular_Left or ETrialType.Main_Trials_Monocular_Right)
         {
             // Select the appropriate coherence pair (left or right), then select a coherence value (low or high)
-            Tuple<float, float> CoherencePair = _activeVisualField == CameraManager.VisualField.Left ? _mainMonocularCoherenceLeft : _mainMonocularCoherenceRight;
+            var CoherencePair = _activeVisualField == CameraManager.VisualField.Left ? _mainMonocularCoherenceLeft : _mainMonocularCoherenceRight;
             _activeCoherence = UnityEngine.Random.value > 0.5 ? CoherencePair.Item1 : CoherencePair.Item2;
         }
-        else if (trial == ETrialType.Main_Trials_Lateralized_Left || trial == ETrialType.Main_Trials_Lateralized_Right)
+        else if (trial is ETrialType.Main_Trials_Lateralized_Left or ETrialType.Main_Trials_Lateralized_Right)
         {
             // Select the appropriate coherence pair (left or right), then select a coherence value (low or high)
-            Tuple<float, float> CoherencePair = _activeVisualField == CameraManager.VisualField.Left ? _mainLateralizedCoherenceLeft : _mainLateralizedCoherenceRight;
+            var CoherencePair = _activeVisualField == CameraManager.VisualField.Left ? _mainLateralizedCoherenceLeft : _mainLateralizedCoherenceRight;
             _activeCoherence = UnityEngine.Random.value > 0.5 ? CoherencePair.Item1 : CoherencePair.Item2;
         }
 
@@ -656,7 +653,8 @@ public class ExperimentManager : MonoBehaviour
 
         // Define the active `ETrialType` depending on the active `Block`
         _activeTrialType = ETrialType.Instructions_Motion;
-        switch (block) {
+        switch (block)
+        {
             case EBlockSequence.Training:
                 // Set the `_activeTrialType` depending on the position within the `_trainingTimeline`
                 _activeTrialType = _trainingTimeline[RelativeTrialNumber];
@@ -679,6 +677,14 @@ public class ExperimentManager : MonoBehaviour
             case EBlockSequence.Post_Instructions:
                 _activeTrialType = ETrialType.Post_Instructions;
                 break;
+            case EBlockSequence.Fit:
+            case EBlockSequence.Setup:
+            case EBlockSequence.Instructions_Motion:
+            case EBlockSequence.Instructions_Selection:
+            case EBlockSequence.Instructions_Training:
+            default:
+                // Default cases
+                break;
         }
 
         // Debugging information
@@ -691,7 +697,8 @@ public class ExperimentManager : MonoBehaviour
         // Store the current `ETrialType`
         Session.instance.CurrentTrial.result["trial_type"] = Enum.GetName(typeof(ETrialType), _activeTrialType);
 
-        switch (block) {
+        switch (block)
+        {
             case EBlockSequence.Fit:
                 _setupManager.SetViewCalibrationVisibility(true);
 
@@ -786,6 +793,8 @@ public class ExperimentManager : MonoBehaviour
                 // Input delay
                 yield return StartCoroutine(WaitSeconds(1.0f, true));
                 break;
+            default:
+                break;
         }
     }
 
@@ -793,37 +802,32 @@ public class ExperimentManager : MonoBehaviour
     /// Return the value of the currently active Block, stored as `_activeBlock`
     /// </summary>
     /// <returns>String representation of the value</returns>
-    public string GetActiveBlock()
-    {
-        return _activeBlock.ToString();
-    }
+    public string GetActiveBlock() => _activeBlock.ToString();
 
-    public Dictionary<string, string> GetExperimentStatus()
+    public Dictionary<string, string> GetExperimentStatus() => new()
     {
-        return new Dictionary<string, string>{
-            { "active_block", _activeBlock.ToString() },
-            { "current_trial", Session.instance.currentTrialNum.ToString() },
-            { "total_trials", Session.instance.Trials.Count().ToString() },
-            { "device_name", _deviceName },
-            { "device_model", _deviceModel },
-            { "device_battery", _deviceBattery.ToString() }
-        };
-    }
+        { "active_block", _activeBlock.ToString() },
+        { "current_trial", Session.instance.currentTrialNum.ToString() },
+        { "total_trials", Session.instance.Trials.Count().ToString() },
+        { "device_name", _deviceName },
+        { "device_model", _deviceModel },
+        { "device_battery", _deviceBattery.ToString() }
+    };
 
     /// <summary>
     /// Utility function to display "Feedback_"-type stimuli
     /// </summary>
     /// <param name="correct">`true` to display green cross, `false` to display red cross</param>
-    private IEnumerator DisplayFeedback(bool correct)
-    {
-        _stimulusManager.SetFixationCrossColor(correct ? "green" : "red");
-        _stimulusManager.SetFixationCrossVisibility(true);
-        _stimulusManager.SetVisible(correct ? StimulusType.Feedback_Correct : StimulusType.Feedback_Incorrect, true);
-        yield return StartCoroutine(WaitSeconds(1.0f, true));
-        _stimulusManager.SetVisible(correct ? StimulusType.Feedback_Correct : StimulusType.Feedback_Incorrect, false);
-        _stimulusManager.SetFixationCrossVisibility(false);
-        _stimulusManager.SetFixationCrossColor("white");
-    }
+    // private IEnumerator DisplayFeedback(bool correct)
+    // {
+    //     _stimulusManager.SetFixationCrossColor(correct ? "green" : "red");
+    //     _stimulusManager.SetFixationCrossVisibility(true);
+    //     _stimulusManager.SetVisible(correct ? StimulusType.Feedback_Correct : StimulusType.Feedback_Incorrect, true);
+    //     yield return StartCoroutine(WaitSeconds(1.0f, true));
+    //     _stimulusManager.SetVisible(correct ? StimulusType.Feedback_Correct : StimulusType.Feedback_Incorrect, false);
+    //     _stimulusManager.SetFixationCrossVisibility(false);
+    //     _stimulusManager.SetFixationCrossColor("white");
+    // }
 
     /// <summary>
     /// Utility function to display the dot motion stimulus and wait for a response, used in all trial types
@@ -942,11 +946,7 @@ public class ExperimentManager : MonoBehaviour
     /// <summary>
     /// Function to "force" the end of the experiment, skipping all remaining trials
     /// </summary>
-    public void ForceEnd()
-    {
-        // End the experiment session by updating the exit flag
-        _hasQueuedExit = true;
-    }
+    public void ForceEnd() => _hasQueuedExit = true;
 
     /// <summary>
     /// Set the requirement for fixation prior to trial advancement
@@ -957,7 +957,7 @@ public class ExperimentManager : MonoBehaviour
         requireFixation = state;
 
         // Logging output
-        if (state == true)
+        if (state)
         {
             Debug.Log("Fixation requirement: Enabled");
         }
@@ -971,19 +971,13 @@ public class ExperimentManager : MonoBehaviour
     /// Get if fixation is required or not
     /// </summary>
     /// <returns>`true` if required, `false` if not</returns>
-    public bool GetFixationRequired()
-    {
-        return requireFixation;
-    }
+    public bool GetFixationRequired() => requireFixation;
 
     /// <summary>
     /// Set the input state, `true` allows input, `false` ignores input
     /// </summary>
     /// <param name="state">Input state</param>
-    private void SetIsInputEnabled(bool state)
-    {
-        _isInputEnabled = state;
-    }
+    private void SetIsInputEnabled(bool state) => _isInputEnabled = state;
 
     /// <summary>
     /// Wait for eye gaze to return to central fixation point prior to returning
@@ -992,9 +986,9 @@ public class ExperimentManager : MonoBehaviour
     private bool IsFixated()
     {
         // Get gaze estimates and the current world position
-        Vector3 leftGaze = leftEyeTracker.GetGazeEstimate();
-        Vector3 rightGaze = rightEyeTracker.GetGazeEstimate();
-        Vector3 worldPosition = _stimulusManager.GetFixationAnchor().transform.position;
+        var leftGaze = leftEyeTracker.GetGazeEstimate();
+        var rightGaze = rightEyeTracker.GetGazeEstimate();
+        var worldPosition = _stimulusManager.GetFixationAnchor().transform.position;
 
         bool isFixated = false; // Fixated state
         // If the gaze is directed in fixation, increment the counter to signify a measurement
@@ -1040,32 +1034,20 @@ public class ExperimentManager : MonoBehaviour
     }
 
     // Functions to bulk-classify ETrialType values
-    private bool IsInstructionsScreen()
-    {
-        return _activeBlock == EBlockSequence.Instructions_Motion ||
-            _activeBlock == EBlockSequence.Instructions_Selection ||
-            _activeBlock == EBlockSequence.Instructions_Training ||
-            _activeBlock == EBlockSequence.Mid_Instructions ||
-            _activeBlock == EBlockSequence.Post_Instructions;
-    }
+    private bool IsInstructionsScreen() => _activeBlock is EBlockSequence.Instructions_Motion or
+        EBlockSequence.Instructions_Selection or
+        EBlockSequence.Instructions_Training or
+        EBlockSequence.Mid_Instructions or
+        EBlockSequence.Post_Instructions;
 
-    private bool IsStimulusScreen()
-    {
-        return _activeBlock == EBlockSequence.Instructions_Demo_Motion ||
-            _activeBlock == EBlockSequence.Instructions_Demo_Selection ||
-            _activeBlock == EBlockSequence.Training ||
-            _activeBlock == EBlockSequence.Main;
-    }
+    private bool IsStimulusScreen() => _activeBlock is EBlockSequence.Instructions_Demo_Motion or
+        EBlockSequence.Instructions_Demo_Selection or
+        EBlockSequence.Training or
+        EBlockSequence.Main;
 
-    private bool IsSetupScreen()
-    {
-        return _activeBlock == EBlockSequence.Setup;
-    }
+    private bool IsSetupScreen() => _activeBlock == EBlockSequence.Setup;
 
-    private bool IsFitScreen()
-    {
-        return _activeBlock == EBlockSequence.Fit;
-    }
+    private bool IsFitScreen() => _activeBlock == EBlockSequence.Fit;
 
     /// <summary>
     /// Input function to handle `InputState` object and update button presentation or take action depending on
@@ -1074,7 +1056,7 @@ public class ExperimentManager : MonoBehaviour
     /// <param name="inputs">`InputState` object</param>
     private void ApplyInputs(InputState inputs)
     {
-        ButtonSliderInput[] buttonControllers = _stimulusManager.GetButtonSliders();
+        var buttonControllers = _stimulusManager.GetButtonSliders();
 
         // Increment button selection
         if (!(VRInput.LeftTrigger() || VRInput.RightTrigger()) && (inputs.L_J_State.y > _joystickThreshold || inputs.R_J_State.y > _joystickThreshold) && _isInputReset)
@@ -1099,7 +1081,7 @@ public class ExperimentManager : MonoBehaviour
         // Apply trigger input if trigger inputs are active and a selection has been made
         if ((VRInput.LeftTrigger() || VRInput.RightTrigger()) && _hasMovedSelection)
         {
-            buttonControllers[_selectedButtonIndex].SetSliderValue(buttonControllers[_selectedButtonIndex].GetSliderValue() + _buttonHoldFactor * Time.deltaTime);
+            buttonControllers[_selectedButtonIndex].SetSliderValue(buttonControllers[_selectedButtonIndex].GetSliderValue() + (_buttonHoldFactor * Time.deltaTime));
 
             // Signify that these inputs are new, store `last_keypress_start` timestamp
             if ((_lastInputState.L_T_State < _triggerThreshold && VRInput.LeftTrigger()) ||
@@ -1131,6 +1113,8 @@ public class ExperimentManager : MonoBehaviour
                 case 3:
                     HandleSelection("vc_d");
                     break;
+                default:
+                    break;
             }
 
             // Reset the slider value of the selected button
@@ -1146,7 +1130,7 @@ public class ExperimentManager : MonoBehaviour
     /// </summary>
     private void ResetButtons()
     {
-        foreach (ButtonSliderInput button in _stimulusManager.GetButtonSliders())
+        foreach (var button in _stimulusManager.GetButtonSliders())
         {
             button.SetSliderValue(0.0f);
         }
@@ -1157,7 +1141,7 @@ public class ExperimentManager : MonoBehaviour
     /// </summary>
     private void IncrementButtonSelection()
     {
-        if (_hasMovedSelection == false)
+        if (!_hasMovedSelection)
         {
             // Initial button press
             _selectedButtonIndex = 2;
@@ -1174,7 +1158,7 @@ public class ExperimentManager : MonoBehaviour
     /// </summary>
     private void DecrementButtonSelection()
     {
-        if (_hasMovedSelection == false)
+        if (!_hasMovedSelection)
         {
             // Initial button press
             _selectedButtonIndex = 1;
@@ -1186,7 +1170,7 @@ public class ExperimentManager : MonoBehaviour
         }
     }
 
-    void Update()
+    private void Update()
     {
         // Inputs:
         // - Trigger (any controller): Advance instructions page, (hold) select button
@@ -1194,7 +1178,7 @@ public class ExperimentManager : MonoBehaviour
         if (_isInputEnabled)
         {
             // Get the current input state across both controllers
-            InputState inputs = VRInput.PollAllInput();
+            var inputs = VRInput.PollAllInput();
 
             // Handle input on a stimulus screen
             if (IsStimulusScreen() && _isInputReset)
@@ -1251,10 +1235,7 @@ public class ExperimentManager : MonoBehaviour
                         }
 
                         // Trigger eye-tracking calibration the end the trial
-                        _setupManager.RunSetup(() =>
-                        {
-                            EndTrial();
-                        });
+                        _setupManager.RunSetup(() => EndTrial());
                         _isInputReset = false;
                     }
                     else if (IsFitScreen() && _isInputReset)
@@ -1272,7 +1253,7 @@ public class ExperimentManager : MonoBehaviour
             }
 
             // Reset input state to prevent holding buttons to repeatedly select options
-            if (_isInputReset == false && !VRInput.AnyInput())
+            if (!_isInputReset && !VRInput.AnyInput())
             {
                 _isInputReset = true;
             }
@@ -1280,7 +1261,7 @@ public class ExperimentManager : MonoBehaviour
 
         // Management tools:
         // If the exit signal flag has been set, end the session and quit
-        if (_hasQueuedExit == true)
+        if (_hasQueuedExit)
         {
             Session.instance.End();
             Application.Quit();
