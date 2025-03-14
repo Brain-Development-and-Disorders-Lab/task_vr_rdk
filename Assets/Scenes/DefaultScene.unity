@@ -837,10 +837,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 039d6a55cb8e84b4192545808705b2a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ViewCalibrationPrefab: {fileID: 9049305647374640026, guid: 8550bc875980e4c53a493cafc55b1d6f, type: 3}
-  StimulusAnchor: {fileID: 1762882801}
-  LeftEyeTracker: {fileID: 567733400}
-  RightEyeTracker: {fileID: 1593745115}
+  viewCalibrationPrefab: {fileID: 9049305647374640026, guid: 8550bc875980e4c53a493cafc55b1d6f, type: 3}
+  stimulusAnchor: {fileID: 1762882801}
+  leftEyeTracker: {fileID: 567733400}
+  rightEyeTracker: {fileID: 1593745115}
 --- !u!114 &215276337
 MonoBehaviour:
   m_ObjectHideFlags: 0
