@@ -7,29 +7,29 @@ public class CameraManager : MonoBehaviour
 {
     // Left and Right eye cameras
     [Header("Camera components")]
-    public OVRCameraRig CameraRig;
-    public Camera LeftCamera;
-    public Camera RightCamera;
+    public OVRCameraRig cameraRig;
+    public Camera leftCamera;
+    public Camera rightCamera;
 
     // Anchor for stimulus, this is critical for true dichoptic presentation
     [Header("Anchors")]
-    public GameObject StimulusAnchor;
-    public GameObject UIAnchor;
-    public GameObject FixationAnchor;
+    public GameObject stimulusAnchor;
+    public GameObject uiAnchor;
+    public GameObject fixationAnchor;
 
     [Header("Visual presentation parameters")]
     [Tooltip("Enable a layer-based mask to provide a full eye-patch effect.")]
-    public bool UseCullingMask = false; // Parameter to use a culling mask for full "eye-patch" effect
+    public bool useCullingMask = false; // Parameter to use a culling mask for full "eye-patch" effect
     [Tooltip("Distance (degrees) to offset the outer edge of the stimulus from the central fixation point")]
-    public float OffsetAngle = 3.0f; // Visual offset angle (degrees) to place stimulus in single hemifield
+    public float offsetAngle = 3.0f; // Visual offset angle (degrees) to place stimulus in single hemifield
     [Tooltip("Distance (world units) to translate anchors vertically")]
-    public float VerticalOffset = -2.0f;
-    private float stimulusWidth = 0.0f; // Additional world-units to offset the stimulus
-    private float totalOffset = 0.0f;
-    private float stimulusAnchorDistance;
+    public float verticalOffset = -2.0f;
+    private float _stimulusWidth = 0.0f; // Additional world-units to offset the stimulus
+    private float _totalOffset = 0.0f;
+    private float _stimulusAnchorDistance;
 
     // Camera presentation modes
-    public enum VisualField
+    public enum EVisualField
     {
         Left,
         Right,
@@ -37,17 +37,17 @@ public class CameraManager : MonoBehaviour
     };
 
     // Default visual field (active camera)
-    private VisualField activeField = VisualField.Both;
+    private EVisualField _activeField = EVisualField.Both;
 
     private void Start()
     {
         // Check if OVRCameraRig has been specified, required for head tracking
-        if (CameraRig)
+        if (cameraRig)
         {
-            // Set the anchor object for stimuli and UI as a child of the CameraRig
-            StimulusAnchor.transform.SetParent(CameraRig.centerEyeAnchor.transform, false);
-            UIAnchor.transform.SetParent(CameraRig.centerEyeAnchor.transform, false);
-            FixationAnchor.transform.SetParent(CameraRig.centerEyeAnchor.transform, false);
+            // Set the anchor object for stimuli and UI as a child of the cameraRig
+            stimulusAnchor.transform.SetParent(cameraRig.centerEyeAnchor.transform, false);
+            uiAnchor.transform.SetParent(cameraRig.centerEyeAnchor.transform, false);
+            fixationAnchor.transform.SetParent(cameraRig.centerEyeAnchor.transform, false);
 
             CalculateOffset();
         }
@@ -61,19 +61,19 @@ public class CameraManager : MonoBehaviour
     {
         // Calculate required visual offsets for dichoptic presentation
         // Step 1: Calculate IPD
-        float ipd = Mathf.Abs(LeftCamera.transform.position.x - RightCamera.transform.position.x);
+        float ipd = Mathf.Abs(leftCamera.transform.position.x - rightCamera.transform.position.x);
 
         // Step 2: Calculate the distance (d) of the view position to the stimulus, world units
-        stimulusAnchorDistance = Mathf.Abs(LeftCamera.transform.position.z - StimulusAnchor.transform.position.z);
+        _stimulusAnchorDistance = Mathf.Abs(leftCamera.transform.position.z - stimulusAnchor.transform.position.z);
 
         // Step 3: Calculate theta (angle between static eye position vector and future offset vector), radians
-        float theta = OffsetAngle * Mathf.PI / 180;
+        float theta = offsetAngle * Mathf.PI / 180;
 
         // Step 4: Calculate baseline offset distance from static eye position to offset position, world units
-        float offsetDistance = stimulusAnchorDistance * Mathf.Tan(theta);
+        float offsetDistance = _stimulusAnchorDistance * Mathf.Tan(theta);
 
         // Step 5: Calculate total offset value
-        totalOffset = offsetDistance + (stimulusWidth / 2.0f) + (ipd / 2.0f);
+        _totalOffset = offsetDistance + (_stimulusWidth / 2.0f) + (ipd / 2.0f);
         Debug.Log("Calculated CameraManager offset distance: " + offsetDistance);
     }
 
@@ -81,51 +81,51 @@ public class CameraManager : MonoBehaviour
     /// Set the active visual field
     /// </summary>
     /// <param name="field"></param>
-    public void SetActiveField(VisualField field, bool lateralized = true)
+    public void SetActiveField(EVisualField field, bool lateralized = true)
     {
         // Update the stored field
-        activeField = field;
+        _activeField = field;
 
         // Update the vertical offset of the fixation cross
-        FixationAnchor.transform.localPosition = new Vector3(0.0f, 0.0f + VerticalOffset, stimulusAnchorDistance);
+        fixationAnchor.transform.localPosition = new Vector3(0.0f, 0.0f + verticalOffset, _stimulusAnchorDistance);
 
         // Apply local offset adjustments for lateralized presentation and culling mask for eye-patch effect
-        if (field == VisualField.Left)
+        if (field == EVisualField.Left)
         {
             // Left visual presentation
-            if (lateralized == true)
+            if (lateralized)
             {
-                StimulusAnchor.transform.localPosition = new Vector3(0.0f - totalOffset, 0.0f + VerticalOffset, stimulusAnchorDistance);
+                stimulusAnchor.transform.localPosition = new Vector3(0.0f - _totalOffset, 0.0f + verticalOffset, _stimulusAnchorDistance);
             }
 
-            if (UseCullingMask)
+            if (useCullingMask)
             {
-                LeftCamera.cullingMask = ~(1 << 6);
-                RightCamera.cullingMask = 1 << 6;
+                leftCamera.cullingMask = ~(1 << 6);
+                rightCamera.cullingMask = 1 << 6;
             }
         }
-        else if (field == VisualField.Right)
+        else if (field == EVisualField.Right)
         {
             // Right visual presentation
-            if (lateralized == true)
+            if (lateralized)
             {
-                StimulusAnchor.transform.localPosition = new Vector3(0.0f + totalOffset, 0.0f + VerticalOffset, stimulusAnchorDistance);
+                stimulusAnchor.transform.localPosition = new Vector3(0.0f + _totalOffset, 0.0f + verticalOffset, _stimulusAnchorDistance);
             }
 
-            if (UseCullingMask)
+            if (useCullingMask)
             {
-                LeftCamera.cullingMask = 1 << 6;
-                RightCamera.cullingMask = ~(1 << 6);
+                leftCamera.cullingMask = 1 << 6;
+                rightCamera.cullingMask = ~(1 << 6);
             }
         }
         else
         {
             // Central visual presentation
-            StimulusAnchor.transform.localPosition = new Vector3(0.0f, 0.0f + VerticalOffset, stimulusAnchorDistance);
-            if (UseCullingMask)
+            stimulusAnchor.transform.localPosition = new Vector3(0.0f, 0.0f + verticalOffset, _stimulusAnchorDistance);
+            if (useCullingMask)
             {
-                LeftCamera.cullingMask = ~(1 << 6);
-                RightCamera.cullingMask = ~(1 << 6);
+                leftCamera.cullingMask = ~(1 << 6);
+                rightCamera.cullingMask = ~(1 << 6);
             }
         }
     }
@@ -136,25 +136,19 @@ public class CameraManager : MonoBehaviour
     /// <param name="width">Stimulus width, measured in world units</param>
     public void SetStimulusWidth(float width)
     {
-        stimulusWidth = width;
+        _stimulusWidth = width;
         CalculateOffset(); // We need to re-calculate the offset values if this has been updated
     }
 
     /// <summary>
     /// Get the current active visual field
     /// </summary>
-    /// <returns>Active visual field, member of `VisualField` enum</returns>
-    public VisualField GetActiveField()
-    {
-        return activeField;
-    }
+    /// <returns>Active visual field, member of `EVisualField` enum</returns>
+    public EVisualField GetActiveField() => _activeField;
 
     /// <summary>
     /// Get the offset distance, measured in world units
     /// </summary>
     /// <returns>`float` representing the offset distance</returns>
-    public float GetTotalOffset()
-    {
-        return totalOffset;
-    }
+    public float GetTotalOffset() => _totalOffset;
 }
