@@ -30,13 +30,17 @@ public class ExperimentManager : MonoBehaviour
         Instructions_Demo_Selection = 6,
         Instructions_Training = 7,
         Training_Trials_Binocular = 8,
-        Training_Trials_Monocular = 9,
-        Training_Trials_Lateralized = 10,
-        Mid_Instructions = 11,
-        Main_Trials_Binocular = 12,
-        Main_Trials_Monocular = 13,
-        Main_Trials_Lateralized = 14,
-        Post_Instructions = 15,
+        Training_Trials_Monocular_Left = 9,
+        Training_Trials_Monocular_Right = 10,
+        Training_Trials_Lateralized_Left = 11,
+        Training_Trials_Lateralized_Right = 12,
+        Mid_Instructions = 13,
+        Main_Trials_Binocular = 14,
+        Main_Trials_Monocular_Left = 15,
+        Main_Trials_Monocular_Right = 16,
+        Main_Trials_Lateralized_Left = 17,
+        Main_Trials_Lateralized_Right = 18,
+        Post_Instructions = 19,
     };
 
     // Set the number of trials within a specific block in the experiment timeline
@@ -50,12 +54,16 @@ public class ExperimentManager : MonoBehaviour
         Instructions_Demo_Selection = 1,
         Instructions_Training = 1,
         Training_Trials_Binocular = 24, // Training trials, central presentation to both eyes
-        Training_Trials_Monocular = 48, // Training trials, central presentation to one eye
-        Training_Trials_Lateralized = 48, // Training trials, lateralized presentation to one eye
+        Training_Trials_Monocular_Left = 24, // Training trials, central presentation to left eye
+        Training_Trials_Monocular_Right = 24, // Training trials, central presentation to right eye
+        Training_Trials_Lateralized_Left = 24, // Training trials, lateralized presentation to left eye
+        Training_Trials_Lateralized_Right = 24, // Training trials, lateralized presentation to right eye
         Mid_Instructions = 1,
         Main_Trials_Binocular = 24, // Main trials, central presentation to both eyes
-        Main_Trials_Monocular = 48, // Main trials, central presentation to one eye
-        Main_Trials_Lateralized = 48, // Main trials, lateralized presentation to one eye
+        Main_Trials_Monocular_Left = 24, // Main trials, central presentation to left eye
+        Main_Trials_Monocular_Right = 24, // Main trials, central presentation to right eye
+        Main_Trials_Lateralized_Left = 24, // Main trials, lateralized presentation to left eye
+        Main_Trials_Lateralized_Right = 24, // Main trials, lateralized presentation to right eye
         Post_Instructions = 1,
     };
 
@@ -156,33 +164,41 @@ public class ExperimentManager : MonoBehaviour
         deviceBattery = SystemInfo.batteryLevel;
 
         // Generate the experiment timeline
-        // Generate all "Training_"-type trials and shuffle timeline
-        for (int i = 0; i < (int)TrialCount.Training_Trials_Binocular; i++)
+        // Generate the "Training_"-type trial timeline and shuffle
+        var trainingTrialMapping = new Dictionary<TrialType, TrialCount>
         {
-            trainingTimeline.Add(TrialType.Training_Trials_Binocular);
-        }
-        for (int j = 0; j < (int)TrialCount.Training_Trials_Monocular; j++)
+            { TrialType.Training_Trials_Binocular, TrialCount.Training_Trials_Binocular },
+            { TrialType.Training_Trials_Monocular_Left, TrialCount.Training_Trials_Monocular_Left },
+            { TrialType.Training_Trials_Monocular_Right, TrialCount.Training_Trials_Monocular_Right },
+            { TrialType.Training_Trials_Lateralized_Left, TrialCount.Training_Trials_Lateralized_Left },
+            { TrialType.Training_Trials_Lateralized_Right, TrialCount.Training_Trials_Lateralized_Right }
+        };
+
+        foreach (var (type, count) in trainingTrialMapping)
         {
-            trainingTimeline.Add(TrialType.Training_Trials_Monocular);
-        }
-        for (int k = 0; k < (int)TrialCount.Training_Trials_Lateralized; k++)
-        {
-            trainingTimeline.Add(TrialType.Training_Trials_Lateralized);
+            for (int i = 0; i < (int)count; i++)
+            {
+                trainingTimeline.Add(type);
+            }
         }
         trainingTimeline.Shuffle();
 
-        // Generate all "Main_"-type trials and shuffle timeline
-        for (int i = 0; i < (int)TrialCount.Main_Trials_Binocular; i++)
+        // Generate the "Main_"-type trial timeline and shuffle
+        var mainTrialMapping = new Dictionary<TrialType, TrialCount>
         {
-            mainTimeline.Add(TrialType.Main_Trials_Binocular);
-        }
-        for (int j = 0; j < (int)TrialCount.Main_Trials_Monocular; j++)
+            { TrialType.Main_Trials_Binocular, TrialCount.Main_Trials_Binocular },
+            { TrialType.Main_Trials_Monocular_Left, TrialCount.Main_Trials_Monocular_Left },
+            { TrialType.Main_Trials_Monocular_Right, TrialCount.Main_Trials_Monocular_Right },
+            { TrialType.Main_Trials_Lateralized_Left, TrialCount.Main_Trials_Lateralized_Left },
+            { TrialType.Main_Trials_Lateralized_Right, TrialCount.Main_Trials_Lateralized_Right }
+        };
+
+        foreach (var (type, count) in mainTrialMapping)
         {
-            mainTimeline.Add(TrialType.Main_Trials_Monocular);
-        }
-        for (int k = 0; k < (int)TrialCount.Main_Trials_Lateralized; k++)
-        {
-            mainTimeline.Add(TrialType.Main_Trials_Lateralized);
+            for (int i = 0; i < (int)count; i++)
+            {
+                mainTimeline.Add(type);
+            }
         }
         mainTimeline.Shuffle();
 
@@ -220,8 +236,46 @@ public class ExperimentManager : MonoBehaviour
             // Update timings
             DISPLAY_DURATION = 1.80f;
         }
+
+        // Print the proportions of each `TrialType` in the training timeline
+        Debug.Log(GetTrialProportions(trainingTimeline));
+
+        // Print the proportions of each `TrialType` in the main timeline
+        Debug.Log(GetTrialProportions(mainTimeline));
     }
 
+    /// <summary>
+    /// Get the proportions of each `TrialType` in a timeline
+    /// </summary>
+    /// <param name="timeline">The timeline to get the proportions of</param>
+    /// <returns>A string summary of the proportions of each `TrialType` in the timeline</returns>
+    public string GetTrialProportions(List<TrialType> timeline)
+    {
+        var proportions = timeline
+            .GroupBy(t => t)
+            .OrderBy(g => g.Key)
+            .Select(g => new
+            {
+                Type = g.Key,
+                Count = g.Count(),
+                Percentage = (double)g.Count() / timeline.Count * 100
+            });
+
+        var summary = new System.Text.StringBuilder();
+        summary.AppendLine($"Timeline Summary (Trials: {timeline.Count})");
+        summary.AppendLine("----------------------------------------");
+
+        foreach (var prop in proportions)
+        {
+            summary.AppendLine(
+                $"{prop.Type}: {prop.Count} trials ({prop.Percentage:F1}%)");
+        }
+
+        return summary.ToString();
+    }
+
+    /// <summary>
+    /// Start the experiment by triggering the next trial
     /// <summary>
     /// Start the experiment by triggering the next trial
     /// </summary>
@@ -349,7 +403,7 @@ public class ExperimentManager : MonoBehaviour
         {
             trainingBinocularCoherence += coherenceDelta;
         }
-        else if (targetTrialType == TrialType.Training_Trials_Monocular)
+        else if (targetTrialType == TrialType.Training_Trials_Monocular_Left || targetTrialType == TrialType.Training_Trials_Monocular_Right)
         {
             if (activeVisualField == CameraManager.VisualField.Left)
             {
@@ -360,7 +414,7 @@ public class ExperimentManager : MonoBehaviour
                 trainingMonocularCoherenceRight += coherenceDelta;
             }
         }
-        else if (targetTrialType == TrialType.Training_Trials_Lateralized)
+        else if (targetTrialType == TrialType.Training_Trials_Lateralized_Left || targetTrialType == TrialType.Training_Trials_Lateralized_Right)
         {
             if (activeVisualField == CameraManager.VisualField.Left)
             {
@@ -403,19 +457,19 @@ public class ExperimentManager : MonoBehaviour
         mainBinocularCoherence = CalculateCoherencePairs(binocularTrials, "training_binocular_coherence");
 
         // Calculate coherences for left `Training_Trials_Monocular` trials
-        List<Trial> monocularTrialsLeft = GetTrialsByType(TrialType.Training_Trials_Monocular, CameraManager.VisualField.Left, BlockSequence.Training);
+        List<Trial> monocularTrialsLeft = GetTrialsByType(TrialType.Training_Trials_Monocular_Left, CameraManager.VisualField.Left, BlockSequence.Training);
         mainMonocularCoherenceLeft = CalculateCoherencePairs(monocularTrialsLeft, "training_monocular_coherence_left");
 
         // Calculate coherences for right `Training_Trials_Monocular` trials
-        List<Trial> monocularTrialsRight = GetTrialsByType(TrialType.Training_Trials_Monocular, CameraManager.VisualField.Right, BlockSequence.Training);
+        List<Trial> monocularTrialsRight = GetTrialsByType(TrialType.Training_Trials_Monocular_Right, CameraManager.VisualField.Right, BlockSequence.Training);
         mainMonocularCoherenceRight = CalculateCoherencePairs(monocularTrialsRight, "training_monocular_coherence_right");
 
         // Calculate coherences for left `Training_Trials_Lateralized` trials
-        List<Trial> lateralizedTrialsLeft = GetTrialsByType(TrialType.Training_Trials_Lateralized, CameraManager.VisualField.Left, BlockSequence.Training);
+        List<Trial> lateralizedTrialsLeft = GetTrialsByType(TrialType.Training_Trials_Lateralized_Left, CameraManager.VisualField.Left, BlockSequence.Training);
         mainLateralizedCoherenceLeft = CalculateCoherencePairs(lateralizedTrialsLeft, "training_lateralized_coherence_left");
 
         // Calculate coherences for right `Training_Trials_Lateralized` trials
-        List<Trial> lateralizedTrialsRight = GetTrialsByType(TrialType.Training_Trials_Lateralized, CameraManager.VisualField.Right, BlockSequence.Training);
+        List<Trial> lateralizedTrialsRight = GetTrialsByType(TrialType.Training_Trials_Lateralized_Right, CameraManager.VisualField.Right, BlockSequence.Training);
         mainLateralizedCoherenceRight = CalculateCoherencePairs(lateralizedTrialsRight, "training_lateralized_coherence_right");
     }
 
@@ -476,51 +530,61 @@ public class ExperimentManager : MonoBehaviour
     /// </summary>
     private void SetupMotion(TrialType trial)
     {
-        // Setup the camera according to the active `TrialType`
+        // Step 1: Setup the camera according to the active `TrialType`
         if (trial == TrialType.Training_Trials_Binocular || trial == TrialType.Main_Trials_Binocular)
         {
             // Activate both cameras in binocular mode
             cameraManager.SetActiveField(CameraManager.VisualField.Both, false);
         }
-        else if (trial == TrialType.Training_Trials_Monocular || trial == TrialType.Main_Trials_Monocular)
+        else if (trial == TrialType.Training_Trials_Monocular_Left || trial == TrialType.Main_Trials_Monocular_Left)
         {
             // Activate one camera in monocular mode, without lateralization
-            cameraManager.SetActiveField(UnityEngine.Random.value > 0.5 ? CameraManager.VisualField.Left : CameraManager.VisualField.Right, false);
+            cameraManager.SetActiveField(CameraManager.VisualField.Left, false);
         }
-        else
+        else if (trial == TrialType.Training_Trials_Monocular_Right || trial == TrialType.Main_Trials_Monocular_Right)
         {
-            // Activate one camera in lateralized mode, with lateralization enabled
-            cameraManager.SetActiveField(UnityEngine.Random.value > 0.5 ? CameraManager.VisualField.Left : CameraManager.VisualField.Right, true);
+            // Activate one camera in monocular mode, without lateralization
+            cameraManager.SetActiveField(CameraManager.VisualField.Right, false);
         }
-        activeVisualField = cameraManager.GetActiveField();
+        else if (trial == TrialType.Training_Trials_Lateralized_Left || trial == TrialType.Main_Trials_Lateralized_Left)
+        {
+            // Activate one camera in monocular mode, with lateralization
+            cameraManager.SetActiveField(CameraManager.VisualField.Left, true);
+        }
+        else if (trial == TrialType.Training_Trials_Lateralized_Right || trial == TrialType.Main_Trials_Lateralized_Right)
+        {
+            // Activate one camera in monocular mode, with lateralization
+            cameraManager.SetActiveField(CameraManager.VisualField.Right, true);
+        }
 
-        // Set the coherence value depending on the `TrialType`
+        // Step 2: Set the coherence value depending on the `TrialType`
+        activeVisualField = cameraManager.GetActiveField();
         if (trial == TrialType.Training_Trials_Binocular)
         {
             activeCoherence = trainingBinocularCoherence;
         }
-        else if (trial == TrialType.Training_Trials_Monocular)
+        else if (trial == TrialType.Training_Trials_Monocular_Left || trial == TrialType.Training_Trials_Monocular_Right)
         {
-            // Select a coherence value depending on the active `VisualField`
+            // Select the coherence value for the active monocular training trial
             activeCoherence = activeVisualField == CameraManager.VisualField.Left ? trainingMonocularCoherenceLeft : trainingMonocularCoherenceRight;
         }
-        else if (trial == TrialType.Training_Trials_Lateralized)
+        else if (trial == TrialType.Training_Trials_Lateralized_Left || trial == TrialType.Training_Trials_Lateralized_Right)
         {
-            // Select a coherence value depending on the active `VisualField`
+            // Select the coherence value for the active lateralized training trial
             activeCoherence = activeVisualField == CameraManager.VisualField.Left ? trainingLateralizedCoherenceLeft : trainingLateralizedCoherenceRight;
         }
         // All "Main_"-type coherence selections include a difficulty selection
         else if (trial == TrialType.Main_Trials_Binocular)
         {
-            activeCoherence = UnityEngine.Random.value > 0.5 ? mainBinocularCoherence.Item1 : mainBinocularCoherence.Item2;;
+            activeCoherence = UnityEngine.Random.value > 0.5 ? mainBinocularCoherence.Item1 : mainBinocularCoherence.Item2;
         }
-        else if (trial == TrialType.Main_Trials_Monocular)
+        else if (trial == TrialType.Main_Trials_Monocular_Left || trial == TrialType.Main_Trials_Monocular_Right)
         {
             // Select the appropriate coherence pair (left or right), then select a coherence value (low or high)
             Tuple<float, float> CoherencePair = activeVisualField == CameraManager.VisualField.Left ? mainMonocularCoherenceLeft : mainMonocularCoherenceRight;
             activeCoherence = UnityEngine.Random.value > 0.5 ? CoherencePair.Item1 : CoherencePair.Item2;
         }
-        else if (trial == TrialType.Main_Trials_Lateralized)
+        else if (trial == TrialType.Main_Trials_Lateralized_Left || trial == TrialType.Main_Trials_Lateralized_Right)
         {
             // Select the appropriate coherence pair (left or right), then select a coherence value (low or high)
             Tuple<float, float> CoherencePair = activeVisualField == CameraManager.VisualField.Left ? mainLateralizedCoherenceLeft : mainLateralizedCoherenceRight;
