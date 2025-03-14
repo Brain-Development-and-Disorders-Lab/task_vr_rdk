@@ -3,25 +3,25 @@ using TMPro;
 using UnityEngine.UI;
 
 /// <summary>
-/// Utility class attached to the ButtonSlider prefab to manage slider behaviour
+/// Utility class attached to the _buttonSlider prefab to manage slider behaviour
 /// </summary>
 public class ButtonSliderInput : MonoBehaviour
 {
-    public GameObject ButtonBackground;
-    public GameObject ButtonFill;
+    public GameObject buttonBackground;
+    public GameObject buttonFill;
 
-    GameObject ButtonSlider;
-    TextMeshProUGUI ButtonSliderText;
-    Slider ButtonSliderComponent;
-    bool HasSetup = false;
+    private GameObject _buttonSlider;
+    private TextMeshProUGUI _buttonSliderText;
+    private Slider _buttonSliderComponent;
+    private bool _hasSetup = false;
 
     public void Setup()
     {
         // Get references to all required components
-        ButtonSlider = gameObject;
-        ButtonSliderComponent = ButtonSlider.GetComponent<Slider>();
-        ButtonSliderText = ButtonSlider.GetComponentInChildren<TextMeshProUGUI>();
-        HasSetup = true;
+        _buttonSlider = gameObject;
+        _buttonSliderComponent = _buttonSlider.GetComponent<Slider>();
+        _buttonSliderText = _buttonSlider.GetComponentInChildren<TextMeshProUGUI>();
+        _hasSetup = true;
     }
 
     /// <summary>
@@ -30,17 +30,17 @@ public class ButtonSliderInput : MonoBehaviour
     /// <param name="buttonText">Button text</param>
     public void SetButtonText(string buttonText)
     {
-        if (HasSetup)
+        if (_hasSetup)
         {
-            ButtonSliderText.text = buttonText;
+            _buttonSliderText.text = buttonText;
         }
     }
 
     public float GetSliderValue()
     {
-        if (HasSetup)
+        if (_hasSetup)
         {
-            return ButtonSliderComponent.value;
+            return _buttonSliderComponent.value;
         }
         return 0.0f;
     }
@@ -54,26 +54,20 @@ public class ButtonSliderInput : MonoBehaviour
         if (value < 0.0f)
         {
             // Value must be positive
-            ButtonSliderComponent.value = 0.0f;
+            _buttonSliderComponent.value = 0.0f;
         }
         else if (value > 1.0f)
         {
             // Value must be less than or equal to `1.0f`
-            ButtonSliderComponent.value = 1.0f;
+            _buttonSliderComponent.value = 1.0f;
         }
         else
         {
-            ButtonSliderComponent.value = value;
+            _buttonSliderComponent.value = value;
         }
     }
 
-    public void SetBackgroundColor(Color color)
-    {
-        ButtonBackground.GetComponentInChildren<Image>().color = color;
-    }
+    public void SetBackgroundColor(Color color) => buttonBackground.GetComponentInChildren<Image>().color = color;
 
-    public void SetFillColor(Color color)
-    {
-        ButtonFill.GetComponentInChildren<Image>().color = color;
-    }
+    public void SetFillColor(Color color) => buttonFill.GetComponentInChildren<Image>().color = color;
 }

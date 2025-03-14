@@ -90,7 +90,7 @@ public class ExperimentManager : MonoBehaviour
     // Active fields that are updated during trials
     private EBlockSequence _activeBlock; // Store the currently active `EBlockSequence` type
     private ETrialType _activeTrialType; // Store the currently active `ETrialType`
-    private CameraManager.VisualField _activeVisualField; // Store the currently active `VisualField`
+    private CameraManager.EVisualField _activeVisualField; // Store the currently active `EVisualField`
     private float _activeCoherence; // Current coherence value
 
     // "Training_"-type coherence values start at `0.2f` and are adjusted
@@ -298,14 +298,14 @@ public class ExperimentManager : MonoBehaviour
     public void QuitExperiment() => Application.Quit();
 
     /// <summary>
-    /// Get trials of a specific `ETrialType` and `VisualField` from a `Block`. Used primarily to filter a set of `Trial`s
+    /// Get trials of a specific `ETrialType` and `EVisualField` from a `Block`. Used primarily to filter a set of `Trial`s
     /// for calculation of coherence values that are specific to the search parameters.
     /// </summary>
     /// <param name="trialType">`ETrialType` value</param>
-    /// <param name="visualField">The active `VisualField`</param>
+    /// <param name="visualField">The active `EVisualField`</param>
     /// <param name="blockIndex">`EBlockSequence` of the `Block` containing the trials</param>
     /// <returns></returns>
-    private List<Trial> GetTrialsByType(ETrialType trialType, CameraManager.VisualField visualField, EBlockSequence blockIndex)
+    private List<Trial> GetTrialsByType(ETrialType trialType, CameraManager.EVisualField visualField, EBlockSequence blockIndex)
     {
         List<Trial> result = new();
         var searchBlock = Session.instance.GetBlock((int)blockIndex);
@@ -314,7 +314,7 @@ public class ExperimentManager : MonoBehaviour
             foreach (var trial in searchBlock.trials)
             {
                 // Extract results into enum names
-                Enum.TryParse(trial.result["active_visual_field"].ToString(), out CameraManager.VisualField priorVisualField);
+                Enum.TryParse(trial.result["active_visual_field"].ToString(), out CameraManager.EVisualField priorVisualField);
                 Enum.TryParse(trial.result["trial_type"].ToString(), out ETrialType priorETrialType);
                 if (priorETrialType == trialType && priorVisualField == visualField)
                 {
@@ -327,10 +327,10 @@ public class ExperimentManager : MonoBehaviour
 
     /// <summary>
     /// Search within a block to find the index of the previous occurence of that `ETrialType` with a matching active
-    /// `VisualField`.
+    /// `EVisualField`.
     /// </summary>
     /// <returns>`int` >= `1` if found, `-1` if no matching `ETrialType` found</returns>
-    private int GetPreviousTrialIndex(ETrialType searchType, CameraManager.VisualField visualField, int currentIndex)
+    private int GetPreviousTrialIndex(ETrialType searchType, CameraManager.EVisualField visualField, int currentIndex)
     {
         if (currentIndex <= 1)
         {
@@ -342,7 +342,7 @@ public class ExperimentManager : MonoBehaviour
         {
             var priorTrial = Session.instance.CurrentBlock.GetRelativeTrial(i);
             string priorETrialType = priorTrial.result["trial_type"].ToString();
-            Enum.TryParse(priorTrial.result["active_visual_field"].ToString(), out CameraManager.VisualField priorVisualField);
+            Enum.TryParse(priorTrial.result["active_visual_field"].ToString(), out CameraManager.EVisualField priorVisualField);
 
             // Compared the stored `name` with the name of the `ETrialType`and the active visual field being searched for
             if (priorETrialType == Enum.GetName(typeof(ETrialType), searchType) && priorVisualField == visualField)
@@ -402,7 +402,7 @@ public class ExperimentManager : MonoBehaviour
         }
         else if (targetTrialType is ETrialType.Training_Trials_Monocular_Left or ETrialType.Training_Trials_Monocular_Right)
         {
-            if (_activeVisualField == CameraManager.VisualField.Left)
+            if (_activeVisualField == CameraManager.EVisualField.Left)
             {
                 _trainingMonocularCoherenceLeft += coherenceDelta;
             }
@@ -413,7 +413,7 @@ public class ExperimentManager : MonoBehaviour
         }
         else if (targetTrialType is ETrialType.Training_Trials_Lateralized_Left or ETrialType.Training_Trials_Lateralized_Right)
         {
-            if (_activeVisualField == CameraManager.VisualField.Left)
+            if (_activeVisualField == CameraManager.EVisualField.Left)
             {
                 _trainingLateralizedCoherenceLeft += coherenceDelta;
             }
@@ -450,23 +450,23 @@ public class ExperimentManager : MonoBehaviour
     private void CalculateCoherences()
     {
         // Calculate coherences for `Training_Trials_Binocular` trials
-        var binocularTrials = GetTrialsByType(ETrialType.Training_Trials_Binocular, CameraManager.VisualField.Both, EBlockSequence.Training);
+        var binocularTrials = GetTrialsByType(ETrialType.Training_Trials_Binocular, CameraManager.EVisualField.Both, EBlockSequence.Training);
         _mainBinocularCoherence = CalculateCoherencePairs(binocularTrials, "training_binocular_coherence");
 
         // Calculate coherences for left `Training_Trials_Monocular` trials
-        var monocularTrialsLeft = GetTrialsByType(ETrialType.Training_Trials_Monocular_Left, CameraManager.VisualField.Left, EBlockSequence.Training);
+        var monocularTrialsLeft = GetTrialsByType(ETrialType.Training_Trials_Monocular_Left, CameraManager.EVisualField.Left, EBlockSequence.Training);
         _mainMonocularCoherenceLeft = CalculateCoherencePairs(monocularTrialsLeft, "training_monocular_coherence_left");
 
         // Calculate coherences for right `Training_Trials_Monocular` trials
-        var monocularTrialsRight = GetTrialsByType(ETrialType.Training_Trials_Monocular_Right, CameraManager.VisualField.Right, EBlockSequence.Training);
+        var monocularTrialsRight = GetTrialsByType(ETrialType.Training_Trials_Monocular_Right, CameraManager.EVisualField.Right, EBlockSequence.Training);
         _mainMonocularCoherenceRight = CalculateCoherencePairs(monocularTrialsRight, "training_monocular_coherence_right");
 
         // Calculate coherences for left `Training_Trials_Lateralized` trials
-        var lateralizedTrialsLeft = GetTrialsByType(ETrialType.Training_Trials_Lateralized_Left, CameraManager.VisualField.Left, EBlockSequence.Training);
+        var lateralizedTrialsLeft = GetTrialsByType(ETrialType.Training_Trials_Lateralized_Left, CameraManager.EVisualField.Left, EBlockSequence.Training);
         _mainLateralizedCoherenceLeft = CalculateCoherencePairs(lateralizedTrialsLeft, "training_lateralized_coherence_left");
 
         // Calculate coherences for right `Training_Trials_Lateralized` trials
-        var lateralizedTrialsRight = GetTrialsByType(ETrialType.Training_Trials_Lateralized_Right, CameraManager.VisualField.Right, EBlockSequence.Training);
+        var lateralizedTrialsRight = GetTrialsByType(ETrialType.Training_Trials_Lateralized_Right, CameraManager.EVisualField.Right, EBlockSequence.Training);
         _mainLateralizedCoherenceRight = CalculateCoherencePairs(lateralizedTrialsRight, "training_lateralized_coherence_right");
     }
 
@@ -531,27 +531,27 @@ public class ExperimentManager : MonoBehaviour
         if (trial is ETrialType.Training_Trials_Binocular or ETrialType.Main_Trials_Binocular)
         {
             // Activate both cameras in binocular mode
-            _cameraManager.SetActiveField(CameraManager.VisualField.Both, false);
+            _cameraManager.SetActiveField(CameraManager.EVisualField.Both, false);
         }
         else if (trial is ETrialType.Training_Trials_Monocular_Left or ETrialType.Main_Trials_Monocular_Left)
         {
             // Activate one camera in monocular mode, without lateralization
-            _cameraManager.SetActiveField(CameraManager.VisualField.Left, false);
+            _cameraManager.SetActiveField(CameraManager.EVisualField.Left, false);
         }
         else if (trial is ETrialType.Training_Trials_Monocular_Right or ETrialType.Main_Trials_Monocular_Right)
         {
             // Activate one camera in monocular mode, without lateralization
-            _cameraManager.SetActiveField(CameraManager.VisualField.Right, false);
+            _cameraManager.SetActiveField(CameraManager.EVisualField.Right, false);
         }
         else if (trial is ETrialType.Training_Trials_Lateralized_Left or ETrialType.Main_Trials_Lateralized_Left)
         {
             // Activate one camera in monocular mode, with lateralization
-            _cameraManager.SetActiveField(CameraManager.VisualField.Left, true);
+            _cameraManager.SetActiveField(CameraManager.EVisualField.Left, true);
         }
         else if (trial is ETrialType.Training_Trials_Lateralized_Right or ETrialType.Main_Trials_Lateralized_Right)
         {
             // Activate one camera in monocular mode, with lateralization
-            _cameraManager.SetActiveField(CameraManager.VisualField.Right, true);
+            _cameraManager.SetActiveField(CameraManager.EVisualField.Right, true);
         }
 
         // Step 2: Set the coherence value depending on the `ETrialType`
@@ -563,12 +563,12 @@ public class ExperimentManager : MonoBehaviour
         else if (trial is ETrialType.Training_Trials_Monocular_Left or ETrialType.Training_Trials_Monocular_Right)
         {
             // Select the coherence value for the active monocular training trial
-            _activeCoherence = _activeVisualField == CameraManager.VisualField.Left ? _trainingMonocularCoherenceLeft : _trainingMonocularCoherenceRight;
+            _activeCoherence = _activeVisualField == CameraManager.EVisualField.Left ? _trainingMonocularCoherenceLeft : _trainingMonocularCoherenceRight;
         }
         else if (trial is ETrialType.Training_Trials_Lateralized_Left or ETrialType.Training_Trials_Lateralized_Right)
         {
             // Select the coherence value for the active lateralized training trial
-            _activeCoherence = _activeVisualField == CameraManager.VisualField.Left ? _trainingLateralizedCoherenceLeft : _trainingLateralizedCoherenceRight;
+            _activeCoherence = _activeVisualField == CameraManager.EVisualField.Left ? _trainingLateralizedCoherenceLeft : _trainingLateralizedCoherenceRight;
         }
         // All "Main_"-type coherence selections include a difficulty selection
         else if (trial == ETrialType.Main_Trials_Binocular)
@@ -578,13 +578,13 @@ public class ExperimentManager : MonoBehaviour
         else if (trial is ETrialType.Main_Trials_Monocular_Left or ETrialType.Main_Trials_Monocular_Right)
         {
             // Select the appropriate coherence pair (left or right), then select a coherence value (low or high)
-            var CoherencePair = _activeVisualField == CameraManager.VisualField.Left ? _mainMonocularCoherenceLeft : _mainMonocularCoherenceRight;
+            var CoherencePair = _activeVisualField == CameraManager.EVisualField.Left ? _mainMonocularCoherenceLeft : _mainMonocularCoherenceRight;
             _activeCoherence = UnityEngine.Random.value > 0.5 ? CoherencePair.Item1 : CoherencePair.Item2;
         }
         else if (trial is ETrialType.Main_Trials_Lateralized_Left or ETrialType.Main_Trials_Lateralized_Right)
         {
             // Select the appropriate coherence pair (left or right), then select a coherence value (low or high)
-            var CoherencePair = _activeVisualField == CameraManager.VisualField.Left ? _mainLateralizedCoherenceLeft : _mainLateralizedCoherenceRight;
+            var CoherencePair = _activeVisualField == CameraManager.EVisualField.Left ? _mainLateralizedCoherenceLeft : _mainLateralizedCoherenceRight;
             _activeCoherence = UnityEngine.Random.value > 0.5 ? CoherencePair.Item1 : CoherencePair.Item2;
         }
 
@@ -770,7 +770,7 @@ public class ExperimentManager : MonoBehaviour
                 CalculateCoherences();
 
                 // Override and set the camera to display in both eyes
-                _cameraManager.SetActiveField(CameraManager.VisualField.Both);
+                _cameraManager.SetActiveField(CameraManager.EVisualField.Both);
 
                 _uiManager.SetVisible(true);
                 _uiManager.SetHeaderText("Main Trials");
@@ -783,7 +783,7 @@ public class ExperimentManager : MonoBehaviour
             case EBlockSequence.Post_Instructions:
                 SetupInstructions();
                 // Override and set the camera to display in both eyes
-                _cameraManager.SetActiveField(CameraManager.VisualField.Both);
+                _cameraManager.SetActiveField(CameraManager.EVisualField.Both);
 
                 _uiManager.SetVisible(true);
                 _uiManager.SetHeaderText("Complete");
@@ -879,7 +879,7 @@ public class ExperimentManager : MonoBehaviour
         // Present decision stimulus and wait for response
         Session.instance.CurrentTrial.result["decision_start"] = Time.time;
         _stimulusManager.ResetCursor();
-        _stimulusManager.SetCursorSide(_activeVisualField == CameraManager.VisualField.Left ? StimulusManager.CursorSide.Right : StimulusManager.CursorSide.Left);
+        _stimulusManager.SetCursorSide(_activeVisualField == CameraManager.EVisualField.Left ? StimulusManager.CursorSide.Right : StimulusManager.CursorSide.Left);
         _stimulusManager.SetCursorVisiblity(true);
         _stimulusManager.SetVisible(StimulusType.Decision, true);
         yield return StartCoroutine(WaitSeconds(0.1f, true));
@@ -929,7 +929,7 @@ public class ExperimentManager : MonoBehaviour
         Session.instance.EndCurrentTrial();
 
         // Reset the active visual field
-        _cameraManager.SetActiveField(CameraManager.VisualField.Both, false);
+        _cameraManager.SetActiveField(CameraManager.EVisualField.Both, false);
 
         try
         {
