@@ -409,7 +409,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2834388984357925155, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 64675
+      value: 65975
       objectReference: {fileID: 0}
     - target: {fileID: 2896031059644693069, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_IsActive
@@ -445,7 +445,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4267567203292169432, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 120240
+      value: 122640
       objectReference: {fileID: 0}
     - target: {fileID: 4612929069887686480, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_AnchorMax.y
@@ -740,6 +740,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _loadingScreen: {fileID: 439538600}
   _demoMode: 0
+  _debugMode: 0
   _requireFixation: 1
   _fixationRadius: 0.5
   _leftEyeTracker: {fileID: 567733400}
