@@ -8,91 +8,90 @@ namespace Utilities
     public class VRLogger : MonoBehaviour
     {
         [SerializeField]
-        private GameObject logCanvas;
+        private GameObject _logCanvas;
 
         [SerializeField]
-        private Font font;
+        private Font _font;
 
         [SerializeField]
-        private bool showLogger = true;
+        private bool _showLogger = true;
 
         // Data collections
-        private List<string> messages;
-        private List<GameObject> messageContainers;
+        private List<string> _messages;
+        private List<GameObject> _messageContainers;
 
-        public int MessageLimit = 20; // Set the number of message rows displayed
-        public bool UseHeadTracking = true; // Fix the logger to headset head tracking position
+        [SerializeField]
+        private int _messageLimit = 20; // Set the number of message rows displayed
+        [SerializeField]
+        private bool _useHeadTracking = true; // Fix the logger to headset head tracking position
 
         private void CreateLoggerRows()
         {
-            // Iterate over the list of messages
-            for (int i = 0; i < MessageLimit; i++)
+            // Iterate over the list of _messages
+            for (int i = 0; i < _messageLimit; i++)
             {
-                GameObject textContainer = new GameObject("logger_message_" + i.ToString());
-                textContainer.transform.position = new Vector3(150.0f, 0.0f - 15.0f * i, 0.0f);
+                GameObject textContainer = new("logger_message_" + i.ToString());
+                textContainer.transform.position = new Vector3(150.0f, 0.0f - (15.0f * i), 0.0f);
                 textContainer.layer = 5; // UI layer
-                textContainer.transform.SetParent(logCanvas.transform, false);
+                textContainer.transform.SetParent(_logCanvas.transform, false);
 
-                Text text = textContainer.AddComponent<Text>();
-                text.font = font;
+                var text = textContainer.AddComponent<Text>();
+                text.font = _font;
                 text.color = Color.green;
                 text.alignment = TextAnchor.MiddleLeft;
                 text.fontSize = 8;
-                RectTransform textTransform = textContainer.GetComponent<RectTransform>();
+                var textTransform = textContainer.GetComponent<RectTransform>();
                 textTransform.sizeDelta = new Vector2(300.0f, 15.0f);
                 textTransform.anchorMin = new Vector2(0, 1);
                 textTransform.anchorMax = new Vector2(0, 1);
 
-                messageContainers.Add(textContainer);
+                _messageContainers.Add(textContainer);
             }
         }
 
         private void RenderMessages()
         {
-            for (int i = 0; i < messages.Count; i++)
+            for (int i = 0; i < _messages.Count; i++)
             {
-                GameObject textContainer = messageContainers[i];
-                Text messageText = textContainer.GetComponent<Text>();
-                messageText.text = messages[i];
+                var textContainer = _messageContainers[i];
+                var messageText = textContainer.GetComponent<Text>();
+                messageText.text = _messages[i];
 
                 // Toggle visibility
-                textContainer.SetActive(showLogger);
+                textContainer.SetActive(_showLogger);
             }
         }
 
-        void Start()
+        private void Start()
         {
             // Create new arrays
-            messages = new List<string>();
-            messageContainers = new List<GameObject>();
+            _messages = new List<string>();
+            _messageContainers = new List<GameObject>();
 
             // Instatiate the rows
             CreateLoggerRows();
 
             // Fix to head movement if in VR context
-            if (UseHeadTracking)
+            if (_useHeadTracking)
             {
-                OVRCameraRig cameraRig = FindObjectOfType<OVRCameraRig>();
+                var cameraRig = FindObjectOfType<OVRCameraRig>();
                 if (cameraRig)
                 {
-                    logCanvas.transform.SetParent(cameraRig.centerEyeAnchor.transform, false);
+                    _logCanvas.transform.SetParent(cameraRig.centerEyeAnchor.transform, false);
                 }
             }
         }
 
-        void Update()
-        {
-            RenderMessages();
-        }
+        private void Update() => RenderMessages();
 
         public void Log(string message)
         {
             message = DateTime.Now.ToString("T") + ": " + message;
-            messages.Add(message);
-            if (messages.Count > MessageLimit)
+            _messages.Add(message);
+            if (_messages.Count > _messageLimit)
             {
-                messages.RemoveAt(0);
-                messages.TrimExcess();
+                _messages.RemoveAt(0);
+                _messages.TrimExcess();
             }
         }
     }

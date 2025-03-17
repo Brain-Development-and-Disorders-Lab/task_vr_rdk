@@ -7,8 +7,10 @@ using UnityEngine.UI;
 /// </summary>
 public class ButtonSliderInput : MonoBehaviour
 {
-    public GameObject buttonBackground;
-    public GameObject buttonFill;
+    [SerializeField]
+    private GameObject _buttonBackground;
+    [SerializeField]
+    private GameObject _buttonFill;
 
     private GameObject _buttonSlider;
     private TextMeshProUGUI _buttonSliderText;
@@ -67,7 +69,7 @@ public class ButtonSliderInput : MonoBehaviour
         }
     }
 
-    public void SetBackgroundColor(Color color) => buttonBackground.GetComponentInChildren<Image>().color = color;
+    public void SetBackgroundColor(Color color) => _buttonBackground.GetComponentInChildren<Image>().color = color;
 
-    public void SetFillColor(Color color) => buttonFill.GetComponentInChildren<Image>().color = color;
+    public void SetFillColor(Color color) => _buttonFill.GetComponentInChildren<Image>().color = color;
 }
