@@ -19,19 +19,19 @@ namespace Utilities
         public bool B_Pressed { get; set; }
         public bool A_Pressed { get; set; }
 
-        public InputState(float L_trigger, Vector2 L_joystick, bool Y, bool X, float R_trigger, Vector2 R_joystick, bool B, bool A)
+        public InputState(float l_trigger, Vector2 l_joystick, bool y, bool x, float r_trigger, Vector2 r_joystick, bool b, bool a)
         {
             // Store left controller state
-            L_T_State = L_trigger;
-            L_J_State = L_joystick;
-            Y_Pressed = Y;
-            X_Pressed = X;
+            L_T_State = l_trigger;
+            L_J_State = l_joystick;
+            Y_Pressed = y;
+            X_Pressed = x;
 
             // Store right controller state
-            R_T_State = R_trigger;
-            R_J_State = R_joystick;
-            B_Pressed = B;
-            A_Pressed = A;
+            R_T_State = r_trigger;
+            R_J_State = r_joystick;
+            B_Pressed = b;
+            A_Pressed = a;
         }
     }
 }

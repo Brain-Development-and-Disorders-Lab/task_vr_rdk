@@ -8,28 +8,31 @@ namespace Stimuli
 {
     public class UIManager : MonoBehaviour
     {
-        public Canvas UICanvas;
-        public float ScalingFactor = 0.1f; // Adjust scaling of stimulus to be viewable
-        public float VerticalOffset = -2.0f; // Adjust the vertical positioning of the UI
+        [SerializeField]
+        private Canvas _uiCanvas;
+        [SerializeField]
+        private float _scalingFactor = 0.1f; // Adjust scaling of stimulus to be viewable
+        [SerializeField]
+        private float _verticalOffset = -2.0f; // Adjust the vertical positioning of the UI
 
         // Text UI components
-        private GameObject headerContainer;
-        private string headerText = "";
-        private TextMeshProUGUI headerTextComponent;
-        private GameObject bodyContainer;
-        private string bodyText = "";
-        private TextMeshProUGUI bodyTextComponent;
+        private GameObject _headerContainer;
+        private string _headerText = "";
+        private TextMeshProUGUI _headerTextComponent;
+        private GameObject _bodyContainer;
+        private string _bodyText = "";
+        private TextMeshProUGUI _bodyTextComponent;
 
         // Button UI components
-        private GameObject leftButton;
-        private GameObject rightButton;
+        private GameObject _leftButton;
+        private GameObject _rightButton;
 
         // Page UI components
-        private bool usePagination;
-        private List<string> pageContent;
-        private int activePage = 0;
+        private bool _usePagination;
+        private List<string> _pageContent;
+        private int _activePage = 0;
 
-        void Start()
+        private void Start()
         {
             // Run setup functions to create and position UI components
             SetupUI();
@@ -38,79 +41,76 @@ namespace Stimuli
 
         public void SetupUI()
         {
-            if (UICanvas == null)
+            if (_uiCanvas == null)
             {
-                Debug.LogError("No UICanvas specified. UI will not appear!");
+                Debug.LogError("No _uiCanvas specified. UI will not appear!");
                 SetVisible(false);
                 return;
             }
 
-            // Update the UICanvas positioning to incorporate a vertical offset
-            UICanvas.transform.position = new Vector3(0.0f, 10.0f * VerticalOffset, 200.0f);
+            // Update the _uiCanvas positioning to incorporate a vertical offset
+            _uiCanvas.transform.position = new Vector3(0.0f, 10.0f * _verticalOffset, 200.0f);
 
             // Create GameObject for header
-            headerContainer = new GameObject();
-            headerContainer.name = "rdk_text_header_container";
-            headerContainer.AddComponent<TextMeshProUGUI>();
-            headerContainer.transform.SetParent(UICanvas.transform, false);
-            headerContainer.SetActive(true);
-            headerContainer.transform.localScale = new Vector3(ScalingFactor, ScalingFactor, ScalingFactor);
+            _headerContainer = new("rdk_text_header_container");
+            _headerContainer.AddComponent<TextMeshProUGUI>();
+            _headerContainer.transform.SetParent(_uiCanvas.transform, false);
+            _headerContainer.SetActive(true);
+            _headerContainer.transform.localScale = new Vector3(_scalingFactor, _scalingFactor, _scalingFactor);
 
             // Header component (10%, top)
-            headerTextComponent = headerContainer.GetComponent<TextMeshProUGUI>();
-            headerTextComponent.text = headerText;
-            headerTextComponent.fontStyle = FontStyles.Bold;
-            headerTextComponent.fontSize = 8.0f;
-            headerTextComponent.material.color = Color.white;
-            headerTextComponent.alignment = TextAlignmentOptions.Center;
-            headerTextComponent.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
-            headerTextComponent.transform.localPosition = new Vector3(0.0f, 40.0f, 0.0f);
-            headerTextComponent.rectTransform.sizeDelta = new Vector2(180.0f, 14.0f);
+            _headerTextComponent = _headerContainer.GetComponent<TextMeshProUGUI>();
+            _headerTextComponent.text = _headerText;
+            _headerTextComponent.fontStyle = FontStyles.Bold;
+            _headerTextComponent.fontSize = 8.0f;
+            _headerTextComponent.material.color = Color.white;
+            _headerTextComponent.alignment = TextAlignmentOptions.Center;
+            _headerTextComponent.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
+            _headerTextComponent.transform.localPosition = new Vector3(0.0f, 40.0f, 0.0f);
+            _headerTextComponent.rectTransform.sizeDelta = new Vector2(180.0f, 14.0f);
 
             // Create GameObject for body
-            bodyContainer = new GameObject();
-            bodyContainer.name = "rdk_text_body_object";
-            bodyContainer.AddComponent<TextMeshProUGUI>();
-            bodyContainer.transform.SetParent(UICanvas.transform, false);
-            bodyContainer.SetActive(true);
-            bodyContainer.transform.localScale = new Vector3(ScalingFactor, ScalingFactor, ScalingFactor);
+            _bodyContainer = new("rdk_text_body_object");
+            _bodyContainer.AddComponent<TextMeshProUGUI>();
+            _bodyContainer.transform.SetParent(_uiCanvas.transform, false);
+            _bodyContainer.SetActive(true);
+            _bodyContainer.transform.localScale = new Vector3(_scalingFactor, _scalingFactor, _scalingFactor);
 
             // Body component (80%, below header)
-            bodyTextComponent = bodyContainer.GetComponent<TextMeshProUGUI>();
-            bodyTextComponent.text = bodyText;
-            bodyTextComponent.fontSize = 6.0f;
-            bodyTextComponent.material.color = Color.white;
-            bodyTextComponent.alignment = TextAlignmentOptions.Center;
-            bodyTextComponent.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
-            bodyTextComponent.transform.localPosition = new Vector3(0.0f, -5.0f, 0.0f);
-            bodyTextComponent.rectTransform.sizeDelta = new Vector2(160.0f, 100.0f);
+            _bodyTextComponent = _bodyContainer.GetComponent<TextMeshProUGUI>();
+            _bodyTextComponent.text = _bodyText;
+            _bodyTextComponent.fontSize = 6.0f;
+            _bodyTextComponent.material.color = Color.white;
+            _bodyTextComponent.alignment = TextAlignmentOptions.Center;
+            _bodyTextComponent.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
+            _bodyTextComponent.transform.localPosition = new Vector3(0.0f, -5.0f, 0.0f);
+            _bodyTextComponent.rectTransform.sizeDelta = new Vector2(160.0f, 100.0f);
 
             // Button components (10%, below body)
-            GameObject buttonBodyObject = new GameObject();
-            buttonBodyObject.name = "rdk_button_body_object";
-            buttonBodyObject.transform.SetParent(UICanvas.transform, false);
+            GameObject buttonBodyObject = new("rdk_button_body_object");
+            buttonBodyObject.transform.SetParent(_uiCanvas.transform, false);
             buttonBodyObject.transform.localPosition = new Vector3(0.0f, -60.0f, 0.0f);
 
-            TMP_DefaultControls.Resources ButtonResources = new TMP_DefaultControls.Resources();
+            TMP_DefaultControls.Resources ButtonResources = new();
 
             // Left button, typically "back" action
-            leftButton = TMP_DefaultControls.CreateButton(ButtonResources);
-            leftButton.transform.SetParent(buttonBodyObject.transform, false);
-            leftButton.transform.localPosition = new Vector3(-42.5f, 0.0f, 0.0f);
-            leftButton.GetComponent<RectTransform>().sizeDelta = new Vector2(28.0f, 14.0f);
-            leftButton.GetComponent<Image>().sprite = Resources.Load<Sprite>("Sprites/Button");
-            TextMeshProUGUI LButtonText = leftButton.GetComponentInChildren<TextMeshProUGUI>();
+            _leftButton = TMP_DefaultControls.CreateButton(ButtonResources);
+            _leftButton.transform.SetParent(buttonBodyObject.transform, false);
+            _leftButton.transform.localPosition = new Vector3(-42.5f, 0.0f, 0.0f);
+            _leftButton.GetComponent<RectTransform>().sizeDelta = new Vector2(28.0f, 14.0f);
+            _leftButton.GetComponent<Image>().sprite = Resources.Load<Sprite>("Sprites/Button");
+            var LButtonText = _leftButton.GetComponentInChildren<TextMeshProUGUI>();
             LButtonText.fontStyle = FontStyles.Bold;
             LButtonText.fontSize = 5.0f;
             LButtonText.text = "Back";
 
             // Right button, typically "next" action
-            rightButton = TMP_DefaultControls.CreateButton(ButtonResources);
-            rightButton.transform.SetParent(buttonBodyObject.transform, false);
-            rightButton.transform.localPosition = new Vector3(42.5f, 0.0f, 0.0f);
-            rightButton.GetComponent<RectTransform>().sizeDelta = new Vector2(28.0f, 14.0f);
-            rightButton.GetComponent<Image>().sprite = Resources.Load<Sprite>("Sprites/Button");
-            TextMeshProUGUI RButtonText = rightButton.GetComponentInChildren<TextMeshProUGUI>();
+            _rightButton = TMP_DefaultControls.CreateButton(ButtonResources);
+            _rightButton.transform.SetParent(buttonBodyObject.transform, false);
+            _rightButton.transform.localPosition = new Vector3(42.5f, 0.0f, 0.0f);
+            _rightButton.GetComponent<RectTransform>().sizeDelta = new Vector2(28.0f, 14.0f);
+            _rightButton.GetComponent<Image>().sprite = Resources.Load<Sprite>("Sprites/Button");
+            var RButtonText = _rightButton.GetComponentInChildren<TextMeshProUGUI>();
             RButtonText.fontStyle = FontStyles.Bold;
             RButtonText.fontSize = 5.0f;
             RButtonText.text = "Next";
@@ -118,44 +118,38 @@ namespace Stimuli
 
         public void SetHeaderText(string text)
         {
-            headerText = text;
-            headerTextComponent.text = headerText;
+            _headerText = text;
+            _headerTextComponent.text = _headerText;
         }
 
         public void SetBodyText(string text)
         {
-            bodyText = text;
-            bodyTextComponent.text = bodyText;
+            _bodyText = text;
+            _bodyTextComponent.text = _bodyText;
         }
 
-        public void EnablePagination(bool state)
-        {
-            usePagination = state;
-        }
+        public void EnablePagination(bool state) => _usePagination = state;
 
-        public int GetCurrentActivePage()
-        {
-            return activePage;
-        }
+        public int GetCurrentActivePage() => _activePage;
 
         public void SetPages(List<string> pages)
         {
-            pageContent = pages;
-            activePage = 0; // Reset the active page index
-            usePagination = pages.Count > 1;
-            SetPage(activePage);
+            _pageContent = pages;
+            _activePage = 0; // Reset the active page index
+            _usePagination = pages.Count > 1;
+            SetPage(_activePage);
         }
 
         public void SetPage(int pageIndex)
         {
-            if (pageIndex >= 0 && pageIndex < pageContent.Count)
+            if (pageIndex >= 0 && pageIndex < _pageContent.Count)
             {
-                activePage = pageIndex;
-                SetBodyText(pageContent[activePage]);
+                _activePage = pageIndex;
+                SetBodyText(_pageContent[_activePage]);
 
                 // Update the button state
-                leftButton.GetComponent<Button>().interactable = HasPreviousPage();
-                rightButton.GetComponent<Button>().interactable = HasNextPage();
+                _leftButton.GetComponent<Button>().interactable = HasPreviousPage();
+                _rightButton.GetComponent<Button>().interactable = HasNextPage();
             }
             else
             {
@@ -163,65 +157,53 @@ namespace Stimuli
             }
         }
 
-        public bool HasNextPage()
-        {
-            return usePagination && activePage + 1 < pageContent.Count;
-        }
+        public bool HasNextPage() => _usePagination && _activePage + 1 < _pageContent.Count;
 
         public void NextPage()
         {
             if (HasNextPage())
             {
-                SetPage(activePage + 1);
+                SetPage(_activePage + 1);
             }
         }
 
-        public bool HasPreviousPage()
-        {
-            return usePagination && activePage - 1 >= 0;
-        }
+        public bool HasPreviousPage() => _usePagination && _activePage - 1 >= 0;
 
         public void PreviousPage()
         {
             if (HasPreviousPage())
             {
-                SetPage(activePage - 1);
+                SetPage(_activePage - 1);
             }
         }
 
         public void SetLeftButtonState(bool enabled, bool visible = true, string text = "Back")
         {
-            leftButton.GetComponentInChildren<TextMeshProUGUI>().text = text;
-            leftButton.GetComponent<Button>().interactable = enabled;
-            leftButton.SetActive(visible);
+            _leftButton.GetComponentInChildren<TextMeshProUGUI>().text = text;
+            _leftButton.GetComponent<Button>().interactable = enabled;
+            _leftButton.SetActive(visible);
         }
 
         public void SetRightButtonState(bool enabled, bool visible = true, string text = "Next")
         {
-            rightButton.GetComponentInChildren<TextMeshProUGUI>().text = text;
-            rightButton.GetComponent<Button>().interactable = enabled;
-            rightButton.SetActive(visible);
+            _rightButton.GetComponentInChildren<TextMeshProUGUI>().text = text;
+            _rightButton.GetComponent<Button>().interactable = enabled;
+            _rightButton.SetActive(visible);
         }
 
-        public void ClickLeftButton()
-        {
-            ExecuteEvents.Execute(leftButton, new BaseEventData(EventSystem.current), ExecuteEvents.submitHandler);
-        }
+        public void ClickLeftButton() => ExecuteEvents.Execute(_leftButton, new BaseEventData(EventSystem.current), ExecuteEvents.submitHandler);
 
-        public void ClickRightButton()
-        {
-            ExecuteEvents.Execute(rightButton, new BaseEventData(EventSystem.current), ExecuteEvents.submitHandler);
-        }
+        public void ClickRightButton() => ExecuteEvents.Execute(_rightButton, new BaseEventData(EventSystem.current), ExecuteEvents.submitHandler);
 
         public void SetVisible(bool state)
         {
             // Text components
-            headerContainer.SetActive(state);
-            bodyContainer.SetActive(state);
+            _headerContainer.SetActive(state);
+            _bodyContainer.SetActive(state);
 
             // Button components
-            leftButton.SetActive(state);
-            rightButton.SetActive(state);
+            _leftButton.SetActive(state);
+            _rightButton.SetActive(state);
         }
     }
 }

@@ -53,14 +53,14 @@ namespace Utilities
         {
             // Simplify directional joystick input and translate keyboard input
             // Raw input represented as Vector2 along X/Y axis with values [-1.0f, 1.0f]
-            Vector2 leftJoystickRaw = OVRInput.Get(OVRInput.RawAxis2D.LThumbstick);
-            Vector2 rightJoystickRaw = OVRInput.Get(OVRInput.RawAxis2D.RThumbstick);
+            var leftJoystickRaw = OVRInput.Get(OVRInput.RawAxis2D.LThumbstick);
+            var rightJoystickRaw = OVRInput.Get(OVRInput.RawAxis2D.RThumbstick);
 
             // Establish if joysticks are "constrained" along a specific axis
-            bool leftXConstrained = leftJoystickRaw.y > -0.2f && leftJoystickRaw.y < 0.2f;
-            bool leftYConstrained = leftJoystickRaw.x > -0.2f && leftJoystickRaw.x < 0.2f;
-            bool rightXConstrained = rightJoystickRaw.y > -0.2f && rightJoystickRaw.y < 0.2f;
-            bool rightYConstrained = rightJoystickRaw.x > -0.2f && rightJoystickRaw.x < 0.2f;
+            bool leftXConstrained = leftJoystickRaw.y is > (-0.2f) and < 0.2f;
+            bool leftYConstrained = leftJoystickRaw.x is > (-0.2f) and < 0.2f;
+            bool rightXConstrained = rightJoystickRaw.y is > (-0.2f) and < 0.2f;
+            bool rightYConstrained = rightJoystickRaw.x is > (-0.2f) and < 0.2f;
 
             // Generate simplified vectors to return as input values
             Vector2 leftJoystickDirection = new();
@@ -139,19 +139,13 @@ namespace Utilities
         /// State of the left trigger in relation to a default threshold value of 0.8f
         /// </summary>
         /// <returns>`true` if pressed beyond threshold value, `false` otherwise</returns>
-        public static bool LeftTrigger(float threshold = 0.8f)
-        {
-            return Input.GetKey(KeyCode.Alpha2) || OVRInput.Get(OVRInput.Axis1D.PrimaryIndexTrigger) > threshold;
-        }
+        public static bool LeftTrigger(float threshold = 0.8f) => Input.GetKey(KeyCode.Alpha2) || OVRInput.Get(OVRInput.Axis1D.PrimaryIndexTrigger) > threshold;
 
         /// <summary>
         /// State of the right trigger in relation to a default threshold value of 0.8f
         /// </summary>
         /// <returns>`true` if pressed beyond threshold value, `false` otherwise</returns>
-        public static bool RightTrigger(float threshold = 0.8f)
-        {
-            return Input.GetKey(KeyCode.Alpha7) || OVRInput.Get(OVRInput.Axis1D.SecondaryIndexTrigger) > threshold;
-        }
+        public static bool RightTrigger(float threshold = 0.8f) => Input.GetKey(KeyCode.Alpha7) || OVRInput.Get(OVRInput.Axis1D.SecondaryIndexTrigger) > threshold;
 
         /// <summary>
         /// Flag if any inputs are active at one time
@@ -159,7 +153,7 @@ namespace Utilities
         /// <returns></returns>
         public static bool AnyInput()
         {
-            InputState inputs = PollAllInput();
+            var inputs = PollAllInput();
             return inputs.L_T_State != 0.0f || inputs.L_J_State.x != 0.0f || inputs.L_J_State.y != 0.0f ||
                 inputs.Y_Pressed || inputs.X_Pressed ||
                 inputs.R_T_State != 0.0f || inputs.R_J_State.x != 0.0f || inputs.R_J_State.y != 0.0f ||
