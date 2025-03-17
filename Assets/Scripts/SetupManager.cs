@@ -13,14 +13,18 @@ using Utilities;
 public class SetupManager : MonoBehaviour
 {
     [Header("Required visual elements")]
-    public GameObject viewCalibrationPrefab; // Prefab containing visual elements aiding in calibration procedure
-    public GameObject stimulusAnchor;
+    [SerializeField]
+    private GameObject _viewCalibrationPrefab; // Prefab containing visual elements aiding in calibration procedure
+    [SerializeField]
+    private GameObject _stimulusAnchor;
     private GameObject _viewCalibrationPrefabInstance;
 
     // Left and right `EyePositionTracker` objects
     [Header("Eye trackers")]
-    public EyePositionTracker leftEyeTracker;
-    public EyePositionTracker rightEyeTracker;
+    [SerializeField]
+    private EyePositionTracker _leftEyeTracker;
+    [SerializeField]
+    private EyePositionTracker _rightEyeTracker;
 
     // Flags for state management
     private bool _isEyeTrackingSetupActive = false; // 'true' when running calibration operations
@@ -67,7 +71,7 @@ public class SetupManager : MonoBehaviour
         // Create moving fixation object
         _fixationObject = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         _fixationObject.name = "calibration_fixation";
-        _fixationObject.transform.SetParent(stimulusAnchor.transform, false);
+        _fixationObject.transform.SetParent(_stimulusAnchor.transform, false);
         _fixationObject.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f);
         _fixationObject.GetComponent<MeshRenderer>().material = new Material(Shader.Find("Sprites/Default"));
         _fixationObject.GetComponent<MeshRenderer>().material.SetColor("_Color", Color.red);
@@ -77,7 +81,7 @@ public class SetupManager : MonoBehaviour
         _fixationObject.transform.localPosition = new Vector3(_unitVector.x * _unitDistance, _unitVector.y * _unitDistance, 0.0f);
 
         // Setup the calibration prefab instance, initially hidden
-        _viewCalibrationPrefabInstance = Instantiate(viewCalibrationPrefab, stimulusAnchor.transform);
+        _viewCalibrationPrefabInstance = Instantiate(_viewCalibrationPrefab, _stimulusAnchor.transform);
         _viewCalibrationPrefabInstance.SetActive(false);
     }
 
@@ -187,8 +191,8 @@ public class SetupManager : MonoBehaviour
             else
             {
                 // Capture eye tracking data and store alongside location
-                var l_p = leftEyeTracker.GetGazeEstimate();
-                var r_p = rightEyeTracker.GetGazeEstimate();
+                var l_p = _leftEyeTracker.GetGazeEstimate();
+                var r_p = _rightEyeTracker.GetGazeEstimate();
                 _gazeData[_unitVectorsPath.Keys.ToList()[_unitVectorIndex]].Add(new(l_p, r_p));
             }
         }

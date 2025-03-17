@@ -14,10 +14,12 @@ using Utilities;
 public class ExperimentManager : MonoBehaviour
 {
     // Loading screen object, parent object that contains all loading screen components
-    public GameObject loadingScreen;
+    [SerializeField]
+    private GameObject _loadingScreen;
 
     [Header("Experiment Behavior")]
-    public bool demoMode = false;
+    [SerializeField]
+    private bool _demoMode = false;
 
     // Define the types of trials that occur during the experiment timeline
     public enum ETrialType
@@ -121,12 +123,16 @@ public class ExperimentManager : MonoBehaviour
     // Store references to EyePositionTracker instances
     [Header("Gaze Fixation Parameters")]
     [Tooltip("Require a central fixation prior to presenting the trial stimuli")]
-    public bool requireFixation = true; // Require participant to be fixation on center before trial begins
+    [SerializeField]
+    private bool _requireFixation = true; // Require participant to be fixation on center before trial begins
     [Tooltip("Radius (in world units) around the central fixation point which registers as fixated")]
-    public float fixationRadius = 0.5f; // Specify the fixation radius
+    [SerializeField]
+    private float _fixationRadius = 0.5f; // Specify the fixation radius
     [Header("EyePositionTrackers")]
-    public EyePositionTracker leftEyeTracker;
-    public EyePositionTracker rightEyeTracker;
+    [SerializeField]
+    private EyePositionTracker _leftEyeTracker;
+    [SerializeField]
+    private EyePositionTracker _rightEyeTracker;
     private int _fixationMeasurementCounter = 0; // Counter for number of fixation measurements
     private readonly int _requiredFixationMeasurements = 48; // Required on-target fixation measurements
 
@@ -226,12 +232,12 @@ public class ExperimentManager : MonoBehaviour
         _cameraManager.SetStimulusWidth(_stimulusManager.GetApertureWidth());
 
         // Update experiment behavior if running in demonstration mode
-        if (demoMode)
+        if (_demoMode)
         {
             Debug.LogWarning("Experiment is being run in Demonstration Mode");
 
             // Disable fixation requirement
-            requireFixation = false;
+            _requireFixation = false;
 
             // Update timings
             _displayDuration = 1.80f;
@@ -283,9 +289,9 @@ public class ExperimentManager : MonoBehaviour
     public void BeginExperiment(Session session)
     {
         // If a loading screen was specified, disable / hide it
-        if (loadingScreen)
+        if (_loadingScreen)
         {
-            loadingScreen.SetActive(false);
+            _loadingScreen.SetActive(false);
         }
 
         // Start the first trial of the Session
@@ -822,9 +828,9 @@ public class ExperimentManager : MonoBehaviour
     // {
     //     _stimulusManager.SetFixationCrossColor(correct ? "green" : "red");
     //     _stimulusManager.SetFixationCrossVisibility(true);
-    //     _stimulusManager.SetVisible(correct ? StimulusType.Feedback_Correct : StimulusType.Feedback_Incorrect, true);
+    //     _stimulusManager.SetVisible(correct ? EStimulusType.Feedback_Correct : EStimulusType.Feedback_Incorrect, true);
     //     yield return StartCoroutine(WaitSeconds(1.0f, true));
-    //     _stimulusManager.SetVisible(correct ? StimulusType.Feedback_Correct : StimulusType.Feedback_Incorrect, false);
+    //     _stimulusManager.SetVisible(correct ? EStimulusType.Feedback_Correct : EStimulusType.Feedback_Incorrect, false);
     //     _stimulusManager.SetFixationCrossVisibility(false);
     //     _stimulusManager.SetFixationCrossColor("white");
     // }
@@ -838,7 +844,7 @@ public class ExperimentManager : MonoBehaviour
         // Disable input and wait for fixation if enabled
         SetIsInputEnabled(false);
         _stimulusManager.SetFixationCrossVisibility(true);
-        if (requireFixation)
+        if (_requireFixation)
         {
             Debug.Log("Waiting for fixation...");
             yield return new WaitUntil(() => IsFixated());
@@ -851,10 +857,10 @@ public class ExperimentManager : MonoBehaviour
         yield return StartCoroutine(WaitSeconds(_postDisplayDuration, true));
 
         // Present fixation stimulus
-        _stimulusManager.SetVisible(StimulusType.Fixation, true);
+        _stimulusManager.SetVisible(EStimulusType.Fixation, true);
 
         // Wait either for fixation or a fixed duration if fixation not required
-        if (requireFixation)
+        if (_requireFixation)
         {
             Debug.Log("Waiting for fixation...");
             yield return new WaitUntil(() => IsFixated());
@@ -865,12 +871,12 @@ public class ExperimentManager : MonoBehaviour
             Debug.Log("Fixation not required");
             yield return StartCoroutine(WaitSeconds(_preDisplayDuration, true));
         }
-        _stimulusManager.SetVisible(StimulusType.Fixation, false);
+        _stimulusManager.SetVisible(EStimulusType.Fixation, false);
 
         // Present motion stimulus
-        _stimulusManager.SetVisible(StimulusType.Motion, true);
+        _stimulusManager.SetVisible(EStimulusType.Motion, true);
         yield return StartCoroutine(WaitSeconds(duration, true));
-        _stimulusManager.SetVisible(StimulusType.Motion, false);
+        _stimulusManager.SetVisible(EStimulusType.Motion, false);
         _stimulusManager.SetFixationCrossVisibility(false);
     }
 
@@ -879,9 +885,9 @@ public class ExperimentManager : MonoBehaviour
         // Present decision stimulus and wait for response
         Session.instance.CurrentTrial.result["decision_start"] = Time.time;
         _stimulusManager.ResetCursor();
-        _stimulusManager.SetCursorSide(_activeVisualField == CameraManager.EVisualField.Left ? StimulusManager.CursorSide.Right : StimulusManager.CursorSide.Left);
+        _stimulusManager.SetCursorSide(_activeVisualField == CameraManager.EVisualField.Left ? StimulusManager.ECursorSide.Right : StimulusManager.ECursorSide.Left);
         _stimulusManager.SetCursorVisiblity(true);
-        _stimulusManager.SetVisible(StimulusType.Decision, true);
+        _stimulusManager.SetVisible(EStimulusType.Decision, true);
         yield return StartCoroutine(WaitSeconds(0.1f, true));
     }
 
@@ -954,7 +960,7 @@ public class ExperimentManager : MonoBehaviour
     /// <param name="state">`true` if required, `false` if not</param>
     public void SetFixationRequired(bool state)
     {
-        requireFixation = state;
+        _requireFixation = state;
 
         // Logging output
         if (state)
@@ -971,7 +977,7 @@ public class ExperimentManager : MonoBehaviour
     /// Get if fixation is required or not
     /// </summary>
     /// <returns>`true` if required, `false` if not</returns>
-    public bool GetFixationRequired() => requireFixation;
+    public bool GetFixationRequired() => _requireFixation;
 
     /// <summary>
     /// Set the input state, `true` allows input, `false` ignores input
@@ -986,13 +992,13 @@ public class ExperimentManager : MonoBehaviour
     private bool IsFixated()
     {
         // Get gaze estimates and the current world position
-        var leftGaze = leftEyeTracker.GetGazeEstimate();
-        var rightGaze = rightEyeTracker.GetGazeEstimate();
+        var leftGaze = _leftEyeTracker.GetGazeEstimate();
+        var rightGaze = _rightEyeTracker.GetGazeEstimate();
         var worldPosition = _stimulusManager.GetFixationAnchor().transform.position;
 
         bool isFixated = false; // Fixated state
         // If the gaze is directed in fixation, increment the counter to signify a measurement
-        if ((Mathf.Abs(leftGaze.x - worldPosition.x) <= fixationRadius && Mathf.Abs(leftGaze.y - worldPosition.y) <= fixationRadius) || (Mathf.Abs(rightGaze.x - worldPosition.x) <= fixationRadius && Mathf.Abs(rightGaze.y - worldPosition.y) <= fixationRadius))
+        if ((Mathf.Abs(leftGaze.x - worldPosition.x) <= _fixationRadius && Mathf.Abs(leftGaze.y - worldPosition.y) <= _fixationRadius) || (Mathf.Abs(rightGaze.x - worldPosition.x) <= _fixationRadius && Mathf.Abs(rightGaze.y - worldPosition.y) <= _fixationRadius))
         {
             _fixationMeasurementCounter += 1;
         }

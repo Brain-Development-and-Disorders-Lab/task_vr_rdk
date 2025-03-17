@@ -9,26 +9,33 @@ using System.IO;
 
 /// <summary>
 /// `CaptureManager` will save individual images of active scene in any resolution and of a specific image
-/// format including jpg and png.
+/// _format including jpg and png.
 /// </summary>
 public class CaptureManager : MonoBehaviour
 {
     // Capture dimensions
-    public int captureWidth = 1280;
-    public int captureHeight = 720;
-    public bool saveCapture = false;
+    [SerializeField]
+    private int _captureWidth = 1280;
+    [SerializeField]
+    private int _captureHeight = 720;
+    [SerializeField]
+    private bool _saveCapture = false;
 
     // Optional game object to hide during screenshots
-    public GameObject hideGameObject;
+    [SerializeField]
+    private GameObject _hideGameObject;
 
     // Optimize for many screenshots will not destroy any objects so future screenshots will be fast
-    public bool optimizeForManyScreenshots = true;
+    [SerializeField]
+    private bool _optimizeForManyScreenshots = true;
 
     public enum EFormat { JPG, PNG };
-    public EFormat format = EFormat.JPG;
+    [SerializeField]
+    private EFormat _format = EFormat.JPG;
 
     // Folder to write output (defaults to data path)
-    public string folder;
+    [SerializeField]
+    private string _folder;
 
     // Private variables for screenshot generation
     private Rect _rect;
@@ -48,28 +55,28 @@ public class CaptureManager : MonoBehaviour
     /// <returns></returns>
     private string UniqueFilename(int width, int height)
     {
-        // if folder not specified by now use a good default
-        if (folder == null || folder.Length == 0)
+        // if _folder not specified by now use a good default
+        if (_folder == null || _folder.Length == 0)
         {
-            folder = Application.dataPath;
+            _folder = Application.dataPath;
             if (Application.isEditor)
             {
-                // put screenshots in folder above asset path so unity doesn't index the files
-                string stringPath = folder + "/..";
-                folder = Path.GetFullPath(stringPath);
+                // put screenshots in _folder above asset path so unity doesn't index the files
+                string stringPath = _folder + "/..";
+                _folder = Path.GetFullPath(stringPath);
             }
-            folder += "/screenshots";
+            _folder += "/screenshots";
 
             // make sure di_rectoroy exists
-            System.IO.Directory.CreateDirectory(folder);
+            System.IO.Directory.CreateDirectory(_folder);
 
-            // count number of files of specified format in folder
-            string mask = string.Format("screen_{0}x{1}*.{2}", width, height, format.ToString().ToLower());
-            _counter = Directory.GetFiles(folder, mask, SearchOption.TopDirectoryOnly).Length;
+            // count number of files of specified _format in _folder
+            string mask = string.Format("screen_{0}x{1}*.{2}", width, height, _format.ToString().ToLower());
+            _counter = Directory.GetFiles(_folder, mask, SearchOption.TopDirectoryOnly).Length;
         }
 
         // use width, height, and _counter for unique file name
-        string filename = string.Format("{0}/screen_{1}x{2}_{3}.{4}", folder, width, height, _counter, format.ToString().ToLower());
+        string filename = string.Format("{0}/screen_{1}x{2}_{3}.{4}", _folder, width, height, _counter, _format.ToString().ToLower());
 
         // up _counter for next call
         ++_counter;
@@ -106,18 +113,18 @@ public class CaptureManager : MonoBehaviour
             _captureScreenshot = false;
 
             // Hide optional game object if set
-            if (hideGameObject != null)
+            if (_hideGameObject != null)
             {
-                hideGameObject.SetActive(false);
+                _hideGameObject.SetActive(false);
             }
 
             // Create screenshot objects if needed
             if (_renderTexture == null)
             {
                 // Creates off-screen render texture that can rendered into
-                _rect = new Rect(0, 0, captureWidth, captureHeight);
-                _renderTexture = new RenderTexture(captureWidth, captureHeight, 24);
-                _screenShot = new Texture2D(captureWidth, captureHeight, TextureFormat.RGB24, false);
+                _rect = new Rect(0, 0, _captureWidth, _captureHeight);
+                _renderTexture = new RenderTexture(_captureWidth, _captureHeight, 24);
+                _screenShot = new Texture2D(_captureWidth, _captureHeight, TextureFormat.RGB24, false);
             }
 
             // Get main camera and manually render scene to the render texture
@@ -137,22 +144,22 @@ public class CaptureManager : MonoBehaviour
             // Get our unique filename
             string filename = UniqueFilename((int)_rect.width, (int)_rect.height);
 
-            // Pull in our file header/data bytes for the specified image format
+            // Pull in our file header/data bytes for the specified image _format
             // Note: This has to be done from main thread
             byte[] fileHeader = null;
             byte[] fileData = null;
-            if (format == EFormat.PNG)
+            if (_format == EFormat.PNG)
             {
                 fileData = _screenShot.EncodeToPNG();
             }
-            else if (format == EFormat.JPG)
+            else if (_format == EFormat.JPG)
             {
                 fileData = _screenShot.EncodeToJPG();
             }
             _lastScreenshot = fileData;
 
             // Optionally save the captured screenshot
-            if (saveCapture)
+            if (_saveCapture)
             {
                 // Create new thread to save the image to file (only operation that can be done in background)
                 new System.Threading.Thread(() =>
@@ -170,13 +177,13 @@ public class CaptureManager : MonoBehaviour
             }
 
             // Unhide optional game object if set
-            if (hideGameObject != null)
+            if (_hideGameObject != null)
             {
-                hideGameObject.SetActive(true);
+                _hideGameObject.SetActive(true);
             }
 
             // Cleanup if needed
-            if (!optimizeForManyScreenshots)
+            if (!_optimizeForManyScreenshots)
             {
                 Destroy(_renderTexture);
                 _renderTexture = null;
