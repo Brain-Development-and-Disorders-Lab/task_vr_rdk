@@ -409,7 +409,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2834388984357925155, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 63180
+      value: 64675
       objectReference: {fileID: 0}
     - target: {fileID: 2896031059644693069, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_IsActive
@@ -445,7 +445,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4267567203292169432, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 117480
+      value: 120240
       objectReference: {fileID: 0}
     - target: {fileID: 4612929069887686480, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
       propertyPath: m_AnchorMax.y
@@ -738,12 +738,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1313c706090bc4ef09deb8860dce5108, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  loadingScreen: {fileID: 439538600}
-  demoMode: 0
-  requireFixation: 1
-  fixationRadius: 0.5
-  leftEyeTracker: {fileID: 567733400}
-  rightEyeTracker: {fileID: 1593745115}
+  _loadingScreen: {fileID: 439538600}
+  _demoMode: 0
+  _requireFixation: 1
+  _fixationRadius: 0.5
+  _leftEyeTracker: {fileID: 567733400}
+  _rightEyeTracker: {fileID: 1593745115}
 --- !u!114 &215276331
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -756,15 +756,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d17935f09e0454357b619c2e3bad4671, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  CameraRig: {fileID: 440981525}
-  LeftCamera: {fileID: 1568580416}
-  RightCamera: {fileID: 440981524}
-  StimulusAnchor: {fileID: 1762882801}
-  UIAnchor: {fileID: 1149117689}
-  FixationAnchor: {fileID: 223726298}
-  UseCullingMask: 1
-  OffsetAngle: 3
-  VerticalOffset: -1.5
+  _cameraRig: {fileID: 440981525}
+  _leftCamera: {fileID: 1568580416}
+  _rightCamera: {fileID: 440981524}
+  _stimulusAnchor: {fileID: 1762882801}
+  _uiAnchor: {fileID: 1149117689}
+  _fixationAnchor: {fileID: 223726298}
+  _useCullingMask: 1
+  _offsetAngle: 3
+  _verticalOffset: -1.5
 --- !u!114 &215276332
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -777,10 +777,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8fd3c58faa8ef49d29fd1e7672f3549e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  stimulusAnchor: {fileID: 1762882801}
-  fixationAnchor: {fileID: 223726298}
-  ScalingFactor: 1.4
-  ButtonPrefab: {fileID: 8522343874815329266, guid: e6126560ae55a4523a666cf82bc38f1e, type: 3}
+  _stimulusAnchor: {fileID: 1762882801}
+  _fixationAnchor: {fileID: 223726298}
+  _scalingFactor: 1.4
+  _buttonPrefab: {fileID: 8522343874815329266, guid: e6126560ae55a4523a666cf82bc38f1e, type: 3}
 --- !u!114 &215276333
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -793,11 +793,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 84147021373d849cd9a117d7c210ded3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  logCanvas: {fileID: 1420707829}
-  font: {fileID: 12800000, guid: 039db357ef4404e0d9322cc46b42beb5, type: 3}
-  showLogger: 1
-  MessageLimit: 20
-  UseHeadTracking: 1
+  _logCanvas: {fileID: 1420707829}
+  _font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
+  _showLogger: 0
+  _messageLimit: 20
+  _useHeadTracking: 0
 --- !u!114 &215276334
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -810,9 +810,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 43f4f5ffa028f4705beadc45cfca7a75, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  UICanvas: {fileID: 1149117692}
-  ScalingFactor: 0.1
-  VerticalOffset: -1.5
+  _uiCanvas: {fileID: 1149117692}
+  _scalingFactor: 0.1
+  _verticalOffset: -2
 --- !u!114 &215276335
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -837,10 +837,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 039d6a55cb8e84b4192545808705b2a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  viewCalibrationPrefab: {fileID: 9049305647374640026, guid: 8550bc875980e4c53a493cafc55b1d6f, type: 3}
-  stimulusAnchor: {fileID: 1762882801}
-  leftEyeTracker: {fileID: 567733400}
-  rightEyeTracker: {fileID: 1593745115}
+  _viewCalibrationPrefab: {fileID: 9049305647374640026, guid: 8550bc875980e4c53a493cafc55b1d6f, type: 3}
+  _stimulusAnchor: {fileID: 1762882801}
+  _leftEyeTracker: {fileID: 567733400}
+  _rightEyeTracker: {fileID: 1593745115}
 --- !u!114 &215276337
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -853,11 +853,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d56bda6fcb9cd49ecb673eb4f0b302d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  CaptureSources:
+  _captureSources:
   - {fileID: 1568580417}
   - {fileID: 1747961104}
-  Port: 4444
-  UpdateInterval: 1
+  port: 4444
+  _updateInterval: 1
 --- !u!1 &223726298
 GameObject:
   m_ObjectHideFlags: 0
@@ -1302,9 +1302,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   objectName: lefteyeactive
   updateType: 0
-  GazeTargetSurface: {fileID: 1762882801}
-  GazeSource: {fileID: 1578397158}
-  showIndicator: 0
+  _gazeTargetSurface: {fileID: 1762882801}
+  _gazeSource: {fileID: 1578397158}
+  _showIndicator: 0
 --- !u!1 &656792538
 GameObject:
   m_ObjectHideFlags: 0
@@ -6728,13 +6728,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e4e5a1d349d54e1697825e629be5977, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  captureWidth: 1920
-  captureHeight: 1080
-  saveCapture: 0
-  hideGameObject: {fileID: 0}
-  optimizeForManyScreenshots: 1
-  format: 1
-  folder: 
+  _captureWidth: 1280
+  _captureHeight: 720
+  _saveCapture: 0
+  _hideGameObject: {fileID: 1420707829}
+  _optimizeForManyScreenshots: 1
+  _format: 1
+  _folder: 
 --- !u!1 &1578397158 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 100002, guid: 126d619cf4daa52469682f85c1378b4a, type: 3}
@@ -6805,9 +6805,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   objectName: righteyeactive
   updateType: 0
-  GazeTargetSurface: {fileID: 1762882801}
-  GazeSource: {fileID: 1578397158}
-  showIndicator: 0
+  _gazeTargetSurface: {fileID: 1762882801}
+  _gazeSource: {fileID: 1578397158}
+  _showIndicator: 0
 --- !u!224 &1716367616 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 7011177393749261824, guid: 0a3b6392f04558844bd340e68ced1ff9, type: 3}
@@ -6964,13 +6964,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e4e5a1d349d54e1697825e629be5977, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  captureWidth: 1920
-  captureHeight: 1080
-  saveCapture: 0
-  hideGameObject: {fileID: 0}
-  optimizeForManyScreenshots: 1
-  format: 1
-  folder: 
+  _captureWidth: 1280
+  _captureHeight: 720
+  _saveCapture: 0
+  _hideGameObject: {fileID: 1420707829}
+  _optimizeForManyScreenshots: 1
+  _format: 1
+  _folder: 
 --- !u!1 &1762882801
 GameObject:
   m_ObjectHideFlags: 0
@@ -7012,5 +7012,5 @@ SceneRoots:
   - {fileID: 75052806}
   - {fileID: 1497933585}
   - {fileID: 1762882802}
-  - {fileID: 223726299}
   - {fileID: 1149117693}
+  - {fileID: 223726299}
