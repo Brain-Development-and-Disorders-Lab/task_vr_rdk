@@ -17,9 +17,13 @@ public class ExperimentManager : MonoBehaviour
     [SerializeField]
     private GameObject _loadingScreen;
 
-    [Header("Experiment Behavior")]
+    [Header("Experiment Modes")]
     [SerializeField]
     private bool _demoMode = false;
+
+    [SerializeField]
+    private bool _debugMode = false;
+    private readonly int _debugBlockSize = 4;
 
     // Define the types of trials that occur during the experiment timeline
     public enum ETrialType
@@ -119,6 +123,7 @@ public class ExperimentManager : MonoBehaviour
     private UIManager _uiManager;
     private CameraManager _cameraManager;
     private SetupManager _setupManager;
+    private VRLogger _logger;
 
     // Store references to EyePositionTracker instances
     [Header("Gaze Fixation Parameters")]
@@ -182,7 +187,14 @@ public class ExperimentManager : MonoBehaviour
 
         foreach (var (type, count) in trainingTrialMapping)
         {
-            for (int i = 0; i < (int)count; i++)
+            int _trialCount = (int)count;
+            if (_debugMode)
+            {
+                // If debug mode is enabled, use smaller blocks
+                _trialCount = _debugBlockSize;
+            }
+
+            for (int i = 0; i < _trialCount; i++)
             {
                 _trainingTimeline.Add(type);
             }
@@ -201,7 +213,14 @@ public class ExperimentManager : MonoBehaviour
 
         foreach (var (type, count) in mainTrialMapping)
         {
-            for (int i = 0; i < (int)count; i++)
+            int _trialCount = (int)count;
+            if (_debugMode)
+            {
+                // If debug mode is enabled, use smaller blocks
+                _trialCount = _debugBlockSize;
+            }
+
+            for (int i = 0; i < _trialCount; i++)
             {
                 _mainTimeline.Add(type);
             }
@@ -227,6 +246,7 @@ public class ExperimentManager : MonoBehaviour
         _uiManager = GetComponent<UIManager>();
         _cameraManager = GetComponent<CameraManager>();
         _setupManager = GetComponent<SetupManager>();
+        _logger = GetComponent<VRLogger>();
 
         // Update the CameraManager value for the aperture offset to be the stimulus radius
         _cameraManager.SetStimulusWidth(_stimulusManager.GetApertureWidth());
@@ -243,11 +263,30 @@ public class ExperimentManager : MonoBehaviour
             _displayDuration = 1.80f;
         }
 
-        // Print the proportions of each `ETrialType` in the training timeline
-        Debug.Log(GetTrialProportions(_trainingTimeline));
+        // Check if debugging is enabled
+        if (_debugMode)
+        {
+            // If debugging is enabled, we override a number of options
+            Debug.LogWarning("Debug mode has been enabled");
 
-        // Print the proportions of each `ETrialType` in the main timeline
-        Debug.Log(GetTrialProportions(_mainTimeline));
+            // Disable fixation
+            _requireFixation = false;
+
+            // Update timings
+            _displayDuration = 0.50f;
+
+            // Enable the `VRLogger` visibility
+            _logger.SetVisible(true);
+
+            // Print the proportions of each `ETrialType` in the training timeline
+            Debug.Log(GetTrialProportions(_trainingTimeline));
+
+            // Print the proportions of each `ETrialType` in the main timeline
+            Debug.Log(GetTrialProportions(_mainTimeline));
+
+            // Create a message on-screen
+            _logger.Log("Debug mode: Enabled");
+        }
     }
 
     /// <summary>
@@ -392,6 +431,11 @@ public class ExperimentManager : MonoBehaviour
                 {
                     // Reduce the target `ETrialType` coherence value, increasing difficulty
                     coherenceDelta = -0.01f;
+
+                    if (_debugMode)
+                    {
+                        _logger.Log("Coherence: decreased");
+                    }
                 }
             }
         }
@@ -399,6 +443,11 @@ public class ExperimentManager : MonoBehaviour
         {
             // Increase the coherence value, reducing difficulty
             coherenceDelta = 0.01f;
+
+            if (_debugMode)
+            {
+                _logger.Log("Coherence: increased");
+            }
         }
 
         // Apply the modification to the `ETrialType` coherence value

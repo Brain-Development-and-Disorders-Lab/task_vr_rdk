@@ -153,6 +153,14 @@ public class CameraManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Enable or disable the culling mask when displaying stimuli.
+    /// The culling mask is responsible for blocking one eye during
+    /// monocular presentation.
+    /// </summary>
+    /// <param name="cullingMask">State of the culling mask</param>
+    public void SetCullingMask(bool cullingMask) => _useCullingMask = cullingMask;
+
+    /// <summary>
     /// Get the current active visual field
     /// </summary>
     /// <returns>Active visual field, member of `EVisualField` enum</returns>

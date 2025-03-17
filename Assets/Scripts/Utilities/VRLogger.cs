@@ -86,6 +86,7 @@ namespace Utilities
 
         public void Log(string message)
         {
+            Debug.Log("VRLogger: " + message);
             message = DateTime.Now.ToString("T") + ": " + message;
             _messages.Add(message);
             if (_messages.Count > _messageLimit)
@@ -94,5 +95,11 @@ namespace Utilities
                 _messages.TrimExcess();
             }
         }
+
+        /// <summary>
+        /// Set the visibility of the `VRLogger` class
+        /// </summary>
+        /// <param name="visible">State of the logger visibility</param>
+        public void SetVisible(bool visible) => _showLogger = visible;
     }
 }
