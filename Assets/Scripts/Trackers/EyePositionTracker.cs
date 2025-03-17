@@ -10,41 +10,43 @@ namespace UXF
     public class EyePositionTracker : Tracker
     {
         // Default gaze distance (should be mapped to the "surface" of the furthest 2D stimulus)
-        private float gazeDistance = 10.0f; // World units
-        public GameObject GazeTargetSurface; // Typically mapped to StimulusAnchor `GameObject`
-        public GameObject GazeSource; // Typically mapped to CenterEyeAnchor under the `OVRCameraRig` prefab
+        private float _gazeDistance = 10.0f; // World units
+        [SerializeField]
+        private GameObject _gazeTargetSurface; // Typically mapped to StimulusAnchor `GameObject`
+        [SerializeField]
+        private GameObject _gazeSource; // Typically mapped to CenterEyeAnchor under the `OVRCameraRig` prefab
 
         // Fields to enable and manage the gaze indicators
         [SerializeField]
-        private bool showIndicator = false;
-        private GameObject indicator;
+        private bool _showIndicator = false;
+        private GameObject _indicator;
 
         // OVR classes
-        private OVREyeGaze eyeGazeComponent;
-        private OVRFaceExpressions faceComponent;
+        private OVREyeGaze _eyeGazeComponent;
+        private OVRFaceExpressions _faceComponent;
 
         // Data variables
         public override string MeasurementDescriptor => "gaze";
         public override IEnumerable<string> CustomHeader => new string[] { "eye", "pos_x", "pos_y", "pos_z", "rot_x", "rot_y", "rot_z", "blink" };
-        private string TrackedEye = "left"; // Specify if the left or right eye
-        private Vector3 GazeEstimate;
+        private string _trackedEye = "left"; // Specify if the left or right eye
+        private Vector3 _gazeEstimate;
 
         public void Start()
         {
             // Get OVR components
-            eyeGazeComponent = GetComponentInParent<OVREyeGaze>();
-            faceComponent = FindObjectOfType<OVRFaceExpressions>();
+            _eyeGazeComponent = GetComponentInParent<OVREyeGaze>();
+            _faceComponent = FindObjectOfType<OVRFaceExpressions>();
 
             // Setup gaze distance
-            if (GazeTargetSurface != null && GazeSource != null)
+            if (_gazeTargetSurface != null && _gazeSource != null)
             {
-                gazeDistance = GazeTargetSurface.transform.position.z - GazeSource.transform.position.z;
+                _gazeDistance = _gazeTargetSurface.transform.position.z - _gazeSource.transform.position.z;
             }
 
             // Eye gaze setup
-            if (eyeGazeComponent)
+            if (_eyeGazeComponent)
             {
-                TrackedEye = eyeGazeComponent.name.StartsWith("Left") ? "left" : "right";
+                _trackedEye = _eyeGazeComponent.name.StartsWith("Left") ? "left" : "right";
             }
             else
             {
@@ -52,7 +54,7 @@ namespace UXF
             }
 
             // Blink tracking setup
-            if (faceComponent)
+            if (_faceComponent)
             {
                 Debug.Log("Eye tracking setup to detect blinks.");
             }
@@ -61,17 +63,17 @@ namespace UXF
                 Debug.LogWarning("Missing OVRFaceExpressions component. Eye tracking will not detect blinks.");
             }
 
-            // Show gaze indicator if enabled
-            if (showIndicator == true && eyeGazeComponent)
+            // Show gaze _indicator if enabled
+            if (_showIndicator && _eyeGazeComponent)
             {
-                // Create a new indicator object
-                indicator = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                indicator.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+                // Create a new _indicator object
+                _indicator = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                _indicator.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
 
                 // Assign the colour based on left or right eye
-                var indicatorRenderer = indicator.GetComponent<Renderer>();
+                var indicatorRenderer = _indicator.GetComponent<Renderer>();
                 indicatorRenderer.material = new Material(Shader.Find("Sprites/Default"));
-                if (TrackedEye == "left")
+                if (_trackedEye == "left")
                 {
                     // Left eye is red
                     indicatorRenderer.material.SetColor("_Color", Color.red);
@@ -88,10 +90,7 @@ namespace UXF
         /// Utility function to access the realtime gaze estimate from other classes
         /// </summary>
         /// <returns>Gaze estimate as Vector3</returns>
-        public Vector3 GetGazeEstimate()
-        {
-            return GazeEstimate;
-        }
+        public Vector3 GetGazeEstimate() => _gazeEstimate;
 
         /// <summary>
         /// Returns current position and rotation values of the eye
@@ -100,37 +99,37 @@ namespace UXF
         protected override UXFDataRow GetCurrentValues()
         {
             // Eye position and rotation
-            Vector3 p = transform.position;
-            Vector3 r = transform.eulerAngles;
-            GazeEstimate = (p + transform.forward) * gazeDistance;
+            var p = transform.position;
+            var r = transform.eulerAngles;
+            _gazeEstimate = (p + transform.forward) * _gazeDistance;
 
             // If using indicators, update the position
-            if (showIndicator == true && indicator != null)
+            if (_showIndicator && _indicator != null)
             {
-                // Apply the raw position to the primary indicator
-                indicator.transform.position = GetGazeEstimate();
+                // Apply the raw position to the primary _indicator
+                _indicator.transform.position = GetGazeEstimate();
             }
 
             float LBlinkWeight = -1.0f;
             float RBlinkWeight = -1.0f;
-            if (faceComponent)
+            if (_faceComponent)
             {
                 // Testing collection of blink weights
-                faceComponent.TryGetFaceExpressionWeight(OVRFaceExpressions.FaceExpression.EyesClosedL, out LBlinkWeight);
-                faceComponent.TryGetFaceExpressionWeight(OVRFaceExpressions.FaceExpression.EyesClosedR, out RBlinkWeight);
+                _faceComponent.TryGetFaceExpressionWeight(OVRFaceExpressions.FaceExpression.EyesClosedL, out LBlinkWeight);
+                _faceComponent.TryGetFaceExpressionWeight(OVRFaceExpressions.FaceExpression.EyesClosedR, out RBlinkWeight);
             }
 
             // Return eye, position, rotation (x, y, z), and blink estimate as an array
-            var values = new UXFDataRow()
+            UXFDataRow values = new()
             {
-                ("eye", TrackedEye),
-                ("pos_x", GazeEstimate.x),
-                ("pos_y", GazeEstimate.y),
-                ("pos_z", GazeEstimate.z),
+                ("eye", _trackedEye),
+                ("pos_x", _gazeEstimate.x),
+                ("pos_y", _gazeEstimate.y),
+                ("pos_z", _gazeEstimate.z),
                 ("rot_x", r.x),
                 ("rot_y", r.y),
                 ("rot_z", r.z),
-                ("blink", TrackedEye == "left" ? LBlinkWeight : RBlinkWeight)
+                ("blink", _trackedEye == "left" ? LBlinkWeight : RBlinkWeight)
             };
 
             return values;
