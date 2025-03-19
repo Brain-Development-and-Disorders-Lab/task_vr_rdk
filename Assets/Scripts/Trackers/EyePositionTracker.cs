@@ -90,7 +90,20 @@ namespace UXF
         /// Utility function to access the realtime gaze estimate from other classes
         /// </summary>
         /// <returns>Gaze estimate as Vector3</returns>
-        public Vector3 GetGazeEstimate() => _gazeEstimate;
+        public Vector3 GetGazeEstimate()
+        {
+#if UNITY_EDITOR
+            // Attempt to create an estimate from the mouse position
+            var mainCamera = Camera.main;
+            if (mainCamera != null)
+            {
+                var position = Input.mousePosition;
+                position.z = _gazeDistance;
+                _gazeEstimate = mainCamera.ScreenToWorldPoint(position);
+            }
+#endif
+            return _gazeEstimate;
+        }
 
         /// <summary>
         /// Returns current position and rotation values of the eye
