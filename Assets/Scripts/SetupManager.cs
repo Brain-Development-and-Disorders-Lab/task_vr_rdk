@@ -34,7 +34,7 @@ public class SetupManager : MonoBehaviour
     // Set of points to be displayed for fixation and the "path" of the fixation object used
     // for eye-tracking setup
     private readonly float _fixationRadius = 2.4f;
-    private readonly float _fixationThreshold = 0.5f;
+    private readonly float _fixationThreshold = 0.25f;
     private GameObject _fixationObject; // Object moved around the screen
     private Vector2 _fixationObjectPosition; // The active unit vector
     private int _fixationObjectPositionIndex = 0;
@@ -79,7 +79,7 @@ public class SetupManager : MonoBehaviour
 
         // Set initial position of fixation object
         _fixationObjectPosition = _fixationObjectPath[_fixationObjectPath.Keys.ToList()[_fixationObjectPositionIndex]];
-        _fixationObject.transform.position = new Vector3(_fixationObjectPosition.x * _fixationRadius, _fixationObjectPosition.y * _fixationRadius, 10.0f);
+        _fixationObject.transform.localPosition = new Vector3(_fixationObjectPosition.x * _fixationRadius, _fixationObjectPosition.y * _fixationRadius, 0.0f);
 
         // Setup the calibration prefab instance, initially hidden
         _viewCalibrationPrefabInstance = Instantiate(_viewCalibrationPrefab, _stimulusAnchor.transform);
@@ -195,7 +195,7 @@ public class SetupManager : MonoBehaviour
                         EndSetup();
                     }
                     _fixationObjectPosition = _fixationObjectPath[_fixationObjectPath.Keys.ToList()[_fixationObjectPositionIndex]];
-                    _fixationObject.transform.position = new Vector3(_fixationObjectPosition.x * _fixationRadius, _fixationObjectPosition.y * _fixationRadius, 10.0f);
+                    _fixationObject.transform.localPosition = new Vector3(_fixationObjectPosition.x * _fixationRadius, _fixationObjectPosition.y * _fixationRadius, 0.0f);
 
                     // Reset the timer, fixation flag, and the color of the fixation object
                     _updateTimer = 0.0f;
