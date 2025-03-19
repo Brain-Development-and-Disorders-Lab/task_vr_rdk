@@ -28,11 +28,13 @@ public class SetupManager : MonoBehaviour
 
     // Flags for state management
     private bool _isEyeTrackingSetupActive = false; // 'true' when running calibration operations
+    private bool _fixationCanProceed = false; // 'true' when the fixation object can proceed to the next position
     private bool _isEyeTrackingSetupComplete = false; // 'true' once operations complete
 
     // Set of points to be displayed for fixation and the "path" of the fixation object used
     // for eye-tracking setup
     private readonly float _fixationRadius = 2.4f;
+    private readonly float _fixationThreshold = 0.5f;
     private GameObject _fixationObject; // Object moved around the screen
     private Vector2 _fixationObjectPosition; // The active unit vector
     private int _fixationObjectPositionIndex = 0;
@@ -70,14 +72,14 @@ public class SetupManager : MonoBehaviour
         _fixationObject = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         _fixationObject.name = "calibration_fixation";
         _fixationObject.transform.SetParent(_stimulusAnchor.transform, false);
-        _fixationObject.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f);
+        _fixationObject.transform.localScale = new Vector3(0.20f, 0.20f, 0.20f);
         _fixationObject.GetComponent<MeshRenderer>().material = new Material(Shader.Find("Sprites/Default"));
         _fixationObject.GetComponent<MeshRenderer>().material.SetColor("_Color", Color.red);
         _fixationObject.SetActive(false);
 
         // Set initial position of fixation object
         _fixationObjectPosition = _fixationObjectPath[_fixationObjectPath.Keys.ToList()[_fixationObjectPositionIndex]];
-        _fixationObject.transform.localPosition = new Vector3(_fixationObjectPosition.x * _fixationRadius, _fixationObjectPosition.y * _fixationRadius, 0.0f);
+        _fixationObject.transform.position = new Vector3(_fixationObjectPosition.x * _fixationRadius, _fixationObjectPosition.y * _fixationRadius, 10.0f);
 
         // Setup the calibration prefab instance, initially hidden
         _viewCalibrationPrefabInstance = Instantiate(_viewCalibrationPrefab, _stimulusAnchor.transform);
@@ -167,32 +169,57 @@ public class SetupManager : MonoBehaviour
         {"q_4", new Tuple<float, float>(270, 360)},
     };
 
+    /// <summary>
+    /// Check if the eye tracking data is within the fixation threshold
+    /// </summary>
+    /// <param name="l_p">Left eye tracking data</param>
+    /// <param name="r_p">Right eye tracking data</param>
+    /// <returns>True if the eye tracking data is within the fixation threshold, false otherwise</returns>
+    private bool IsFixated(Vector3 l_p, Vector3 r_p) => Vector2.Distance(l_p, _fixationObject.transform.position) < _fixationThreshold && Vector2.Distance(r_p, _fixationObject.transform.position) < _fixationThreshold;
+
     private void Update()
     {
         if (_isEyeTrackingSetupActive)
         {
-            _updateTimer += Time.deltaTime;
-            if (_updateTimer >= _pathInterval)
-            {
-                // Shift to the next position if the timer has been reached
-                _fixationObjectPositionIndex += 1;
-                if (_fixationObjectPositionIndex > _fixationObjectPath.Count - 1)
-                {
-                    _fixationObjectPositionIndex = 0;
-                    EndSetup();
-                }
-                _fixationObjectPosition = _fixationObjectPath[_fixationObjectPath.Keys.ToList()[_fixationObjectPositionIndex]];
-                _fixationObject.transform.localPosition = new Vector3(_fixationObjectPosition.x * _fixationRadius, _fixationObjectPosition.y * _fixationRadius, 0.0f);
 
-                // Reset the timer
-                _updateTimer = 0.0f;
+            if (_fixationCanProceed)
+            {
+                _updateTimer += Time.deltaTime;
+                if (_updateTimer >= _pathInterval)
+                {
+                    // Shift to the next position if the timer has been reached
+                    _fixationObjectPositionIndex += 1;
+                    if (_fixationObjectPositionIndex > _fixationObjectPath.Count - 1)
+                    {
+                        _fixationObjectPositionIndex = 0;
+                        EndSetup();
+                    }
+                    _fixationObjectPosition = _fixationObjectPath[_fixationObjectPath.Keys.ToList()[_fixationObjectPositionIndex]];
+                    _fixationObject.transform.position = new Vector3(_fixationObjectPosition.x * _fixationRadius, _fixationObjectPosition.y * _fixationRadius, 10.0f);
+
+                    // Reset the timer, fixation flag, and the color of the fixation object
+                    _updateTimer = 0.0f;
+                    _fixationCanProceed = false;
+                    _fixationObject.GetComponent<MeshRenderer>().material.SetColor("_Color", Color.red);
+                }
             }
             else
             {
                 // Capture eye tracking data and store alongside location
                 var l_p = _leftEyeTracker.GetGazeEstimate();
                 var r_p = _rightEyeTracker.GetGazeEstimate();
-                _gazeData[_fixationObjectPath.Keys.ToList()[_fixationObjectPositionIndex]].Add(new(l_p, r_p));
+
+                if (IsFixated(l_p, r_p))
+                {
+                    _gazeData[_fixationObjectPath.Keys.ToList()[_fixationObjectPositionIndex]].Add(new(l_p, r_p));
+                }
+
+                // If the number of fixations is greater than or equal to 50, proceed to the next position
+                if (_gazeData[_fixationObjectPath.Keys.ToList()[_fixationObjectPositionIndex]].Count >= 50)
+                {
+                    _fixationObject.GetComponent<MeshRenderer>().material.SetColor("_Color", Color.green);
+                    _fixationCanProceed = true;
+                }
             }
         }
     }
