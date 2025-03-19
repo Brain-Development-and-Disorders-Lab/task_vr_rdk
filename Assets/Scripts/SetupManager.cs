@@ -32,10 +32,11 @@ public class SetupManager : MonoBehaviour
 
     // Set of points to be displayed for fixation and the "path" of the fixation object used
     // for eye-tracking setup
-    private int _unitVectorIndex = 0;
-    private Vector2 _unitVector; // The active unit vector
-    private readonly float _unitDistance = 2.4f;
-    private readonly Dictionary<string, Vector2> _unitVectorsPath = new() {
+    private readonly float _fixationRadius = 2.4f;
+    private GameObject _fixationObject; // Object moved around the screen
+    private Vector2 _fixationObjectPosition; // The active unit vector
+    private int _fixationObjectPositionIndex = 0;
+    private readonly Dictionary<string, Vector2> _fixationObjectPath = new() {
         {"c_start", new Vector2(0, 0)},
         {"q_1", new Vector2(1, 1)},
         {"q_2", new Vector2(-1, 1)},
@@ -45,7 +46,6 @@ public class SetupManager : MonoBehaviour
     };
     private float _updateTimer = 0.0f;
     private readonly float _pathInterval = 1.6f; // Duration of each point being displayed in the path
-    private GameObject _fixationObject; // Object moved around the screen
     private Action _setupCallback; // Optional callback function executed after calibration complete
 
     // Data storage
@@ -66,8 +66,6 @@ public class SetupManager : MonoBehaviour
     /// </summary>
     private void Start()
     {
-        _unitVector = _unitVectorsPath[_unitVectorsPath.Keys.ToList()[_unitVectorIndex]];
-
         // Create moving fixation object
         _fixationObject = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         _fixationObject.name = "calibration_fixation";
@@ -78,7 +76,8 @@ public class SetupManager : MonoBehaviour
         _fixationObject.SetActive(false);
 
         // Set initial position of fixation object
-        _fixationObject.transform.localPosition = new Vector3(_unitVector.x * _unitDistance, _unitVector.y * _unitDistance, 0.0f);
+        _fixationObjectPosition = _fixationObjectPath[_fixationObjectPath.Keys.ToList()[_fixationObjectPositionIndex]];
+        _fixationObject.transform.localPosition = new Vector3(_fixationObjectPosition.x * _fixationRadius, _fixationObjectPosition.y * _fixationRadius, 0.0f);
 
         // Setup the calibration prefab instance, initially hidden
         _viewCalibrationPrefabInstance = Instantiate(_viewCalibrationPrefab, _stimulusAnchor.transform);
@@ -131,11 +130,11 @@ public class SetupManager : MonoBehaviour
             foreach (var VectorPair in _gazeData[_unitVectorDirection])
             {
                 // Get the sum of the gaze vector and the actual position of the dot for each eye
-                var L_result = new Vector2(VectorPair.GetLeft().x, VectorPair.GetLeft().y) + (_unitVectorsPath[_unitVectorDirection] * _unitDistance);
-                L_vectorSum += new Vector2(VectorPair.GetLeft().x, VectorPair.GetLeft().y) + (_unitVectorsPath[_unitVectorDirection] * _unitDistance);
+                var L_result = new Vector2(VectorPair.GetLeft().x, VectorPair.GetLeft().y) + (_fixationObjectPath[_unitVectorDirection] * _fixationRadius);
+                L_vectorSum += new Vector2(VectorPair.GetLeft().x, VectorPair.GetLeft().y) + (_fixationObjectPath[_unitVectorDirection] * _fixationRadius);
 
-                var R_result = new Vector2(VectorPair.GetRight().x, VectorPair.GetRight().y) + (_unitVectorsPath[_unitVectorDirection] * _unitDistance);
-                R_vectorSum += new Vector2(VectorPair.GetRight().x, VectorPair.GetRight().y) + (_unitVectorsPath[_unitVectorDirection] * _unitDistance);
+                var R_result = new Vector2(VectorPair.GetRight().x, VectorPair.GetRight().y) + (_fixationObjectPath[_unitVectorDirection] * _fixationRadius);
+                R_vectorSum += new Vector2(VectorPair.GetRight().x, VectorPair.GetRight().y) + (_fixationObjectPath[_unitVectorDirection] * _fixationRadius);
             }
 
             L_vectorSum /= _gazeData[_unitVectorDirection].Count;
@@ -176,14 +175,14 @@ public class SetupManager : MonoBehaviour
             if (_updateTimer >= _pathInterval)
             {
                 // Shift to the next position if the timer has been reached
-                _unitVectorIndex += 1;
-                if (_unitVectorIndex > _unitVectorsPath.Count - 1)
+                _fixationObjectPositionIndex += 1;
+                if (_fixationObjectPositionIndex > _fixationObjectPath.Count - 1)
                 {
-                    _unitVectorIndex = 0;
+                    _fixationObjectPositionIndex = 0;
                     EndSetup();
                 }
-                _unitVector = _unitVectorsPath[_unitVectorsPath.Keys.ToList()[_unitVectorIndex]];
-                _fixationObject.transform.localPosition = new Vector3(_unitVector.x * _unitDistance, _unitVector.y * _unitDistance, 0.0f);
+                _fixationObjectPosition = _fixationObjectPath[_fixationObjectPath.Keys.ToList()[_fixationObjectPositionIndex]];
+                _fixationObject.transform.localPosition = new Vector3(_fixationObjectPosition.x * _fixationRadius, _fixationObjectPosition.y * _fixationRadius, 0.0f);
 
                 // Reset the timer
                 _updateTimer = 0.0f;
@@ -193,7 +192,7 @@ public class SetupManager : MonoBehaviour
                 // Capture eye tracking data and store alongside location
                 var l_p = _leftEyeTracker.GetGazeEstimate();
                 var r_p = _rightEyeTracker.GetGazeEstimate();
-                _gazeData[_unitVectorsPath.Keys.ToList()[_unitVectorIndex]].Add(new(l_p, r_p));
+                _gazeData[_fixationObjectPath.Keys.ToList()[_fixationObjectPositionIndex]].Add(new(l_p, r_p));
             }
         }
     }
