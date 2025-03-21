@@ -279,6 +279,7 @@ public class SetupManager : MonoBehaviour
         // If the number of fixations is greater than or equal to 50, proceed to the next position
         if (gazeData[_fixationObjectPath.Keys.ToList()[_fixationObjectPositionIndex]].Count >= _requiredMeasurements)
         {
+            Debug.Log("Fixation detected at position \"" + _fixationObjectPath.Keys.ToList()[_fixationObjectPositionIndex] + "\", proceeding to next position...");
             _fixationObject.GetComponent<MeshRenderer>().material.SetColor("_Color", Color.green);
             _fixationCanProceed = true;
         }
