@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UXF;
@@ -40,6 +41,7 @@ public class SetupManager : MonoBehaviour
     private readonly float _fixationRadius = 2.4f;
     private readonly float _fixationSetupThreshold = 0.50f;
     private readonly float _fixationValidationThreshold = 0.25f;
+    private readonly int _requiredMeasurements = 100;
     private GameObject _fixationObject; // Object moved around the screen
     private Vector2 _fixationObjectPosition; // The active unit vector
     private int _fixationObjectPositionIndex = 0;
@@ -64,7 +66,6 @@ public class SetupManager : MonoBehaviour
         {"q_4", new List<GazeVector>() },
         {"c_end", new List<GazeVector>() },
     };
-
     private readonly Dictionary<string, List<GazeVector>> _validationData = new() {
         {"c_start", new List<GazeVector>() },
         {"q_1", new List<GazeVector>() },
@@ -113,11 +114,33 @@ public class SetupManager : MonoBehaviour
         _setupCallback = callback;
     }
 
+    /// <summary>
+    /// Flash the fixation object 5 times to indicate the start of the validation stage
+    /// </summary>
+    private IEnumerator FlashFixationObject()
+    {
+        var renderer = _fixationObject.GetComponent<MeshRenderer>();
+        for (int i = 0; i < 5; i++)  // Flash 5 times
+        {
+            renderer.material.SetColor("_Color", Color.white);
+            yield return new WaitForSeconds(0.1f);
+            renderer.material.SetColor("_Color", Color.black);
+            yield return new WaitForSeconds(0.1f);
+        }
+        renderer.material.SetColor("_Color", Color.red);  // Reset to original color
+    }
+
+    /// <summary>
+    /// At the end of the setup stage, begin the validation stage, otherwise end the calibration
+    /// </summary>
     private void EndCalibrationStage()
     {
         Debug.Log("Ending calibration stage...");
         if (!_isEyeTrackingCalibrationSetup)
         {
+            // Flash the fixation object before starting validation
+            StartCoroutine(FlashFixationObject());
+
             // Completed the setup stage, begin the validation stage
             _isEyeTrackingCalibrationSetup = true;
             _isEyeTrackingCalibrationActive = true;
@@ -131,6 +154,9 @@ public class SetupManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// At the end of the validation stage, mark the end of the calibration procedure
+    /// </summary>
     private void EndCalibration()
     {
         _isEyeTrackingCalibrationActive = false;
@@ -147,12 +173,27 @@ public class SetupManager : MonoBehaviour
         _setupCallback?.Invoke();
     }
 
+    /// <summary>
+    /// Get the completion status of the calibration procedure
+    /// </summary>
+    /// <returns>True if the calibration is complete, false otherwise</returns>
     public bool GetCalibrationComplete() => _isEyeTrackingCalibrationComplete;
 
+    /// <summary>
+    /// Get the active status of the calibration procedure
+    /// </summary>
+    /// <returns>True if the calibration is active, false otherwise</returns>
     public bool GetCalibrationActive() => _isEyeTrackingCalibrationActive;
 
+    /// <summary>
+    /// Set the visibility of the calibration prefab instance
+    /// </summary>
+    /// <param name="state">True to show the prefab, false to hide it</param>
     public void SetViewCalibrationVisibility(bool state) => _viewCalibrationPrefabInstance.SetActive(state);
 
+    /// <summary>
+    /// Calculate the offset values for position in the fixation object path
+    /// </summary>
     private void CalculateOffsetValues()
     {
         // Function to examine each point and calculate average vector difference from each point
@@ -190,16 +231,11 @@ public class SetupManager : MonoBehaviour
         R_averageOffsetCorrection /= _setupData.Keys.Count;
     }
 
-    public Dictionary<string, GazeVector> Get_directionalOffsets() => _directionalOffsets;
-
-    public GazeVector GetCentralOffset() => _directionalOffsets["c_start"];
-
-    public static Dictionary<string, Tuple<float, float>> GetQuadrants() => new() {
-        {"q_1", new Tuple<float, float>(0, 89)},
-        {"q_2", new Tuple<float, float>(90, 179)},
-        {"q_3", new Tuple<float, float>(180, 269)},
-        {"q_4", new Tuple<float, float>(270, 360)},
-    };
+    /// <summary>
+    /// Get the directional offsets for each eye
+    /// </summary>
+    /// <returns>Dictionary of directional offsets</returns>
+    public Dictionary<string, GazeVector> GetDirectionalOffsets() => _directionalOffsets;
 
     /// <summary>
     /// Check if the eye tracking data is within the fixation threshold
@@ -222,6 +258,9 @@ public class SetupManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Utility function to capture eye tracking data and store alongside the relevant location
+    /// </summary>
     private void RunGazeCapture()
     {
         // Capture eye tracking data and store alongside location
@@ -238,7 +277,7 @@ public class SetupManager : MonoBehaviour
         }
 
         // If the number of fixations is greater than or equal to 50, proceed to the next position
-        if (gazeData[_fixationObjectPath.Keys.ToList()[_fixationObjectPositionIndex]].Count >= 50)
+        if (gazeData[_fixationObjectPath.Keys.ToList()[_fixationObjectPositionIndex]].Count >= _requiredMeasurements)
         {
             _fixationObject.GetComponent<MeshRenderer>().material.SetColor("_Color", Color.green);
             _fixationCanProceed = true;
