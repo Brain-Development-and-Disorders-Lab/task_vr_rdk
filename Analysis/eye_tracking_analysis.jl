@@ -322,7 +322,7 @@ df = filter(row -> startswith(row.trial_type, "Training_") || startswith(row.tri
 df = mapcols(val -> _clean_tracking_paths(val), df, cols=r"lefteyeactive_gaze_location_0")
 df = mapcols(val -> _clean_tracking_paths(val), df, cols=r"righteyeactive_gaze_location_0")
 
-# motion_plots()
-# decision_plots()
-# time_to_fixation()
+motion_plots()
+decision_plots()
+time_to_fixation()
 analyze_fixation_stability()
