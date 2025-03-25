@@ -107,11 +107,11 @@ function motion_plots()
   df_l = DataFrame([[], [], [], [], [], [], [], [], [], [], []], ["trial_type", "active_visual_field", "time", "eye", "pos_x", "pos_y", "pos_z", "rot_x", "rot_y", "rot_z", "blink"])
   df_r = DataFrame([[], [], [], [], [], [], [], [], [], [], []], ["trial_type", "active_visual_field", "time", "eye", "pos_x", "pos_y", "pos_z", "rot_x", "rot_y", "rot_z", "blink"])
   for (i, row) in enumerate(eachrow(df))
-    left_gaze_data = read_data(row.lefteyeactive_gaze_location_0)
+    left_gaze_data = _read_data(row.lefteyeactive_gaze_location_0)
     left_gaze_data.trial_type .= row.trial_type
     left_gaze_data.active_visual_field .= row.active_visual_field
 
-    right_gaze_data = read_data(row.righteyeactive_gaze_location_0)
+    right_gaze_data = _read_data(row.righteyeactive_gaze_location_0)
     right_gaze_data.trial_type .= row.trial_type
     right_gaze_data.active_visual_field .= row.active_visual_field
 
@@ -197,11 +197,11 @@ function decision_plots()
   df_l = DataFrame([[], [], [], [], [], [], [], [], [], [], []], ["trial_type", "active_visual_field", "time", "eye", "pos_x", "pos_y", "pos_z", "rot_x", "rot_y", "rot_z", "blink"])
   df_r = DataFrame([[], [], [], [], [], [], [], [], [], [], []], ["trial_type", "active_visual_field", "time", "eye", "pos_x", "pos_y", "pos_z", "rot_x", "rot_y", "rot_z", "blink"])
   for (i, row) in enumerate(eachrow(df))
-    left_gaze_data = read_data(row.lefteyeactive_gaze_location_0)
+    left_gaze_data = _read_data(row.lefteyeactive_gaze_location_0)
     left_gaze_data.trial_type .= row.trial_type
     left_gaze_data.active_visual_field .= row.active_visual_field
 
-    right_gaze_data = read_data(row.righteyeactive_gaze_location_0)
+    right_gaze_data = _read_data(row.righteyeactive_gaze_location_0)
     right_gaze_data.trial_type .= row.trial_type
     right_gaze_data.active_visual_field .= row.active_visual_field
 
@@ -210,12 +210,12 @@ function decision_plots()
     right_gaze_data = filter(et_row -> et_row.time >= row.decision_start && et_row.blink < BLINK_THRESHOLD, right_gaze_data)
 
     for left_row in eachrow(left_gaze_data)
-      apply_offsets(left_row)
+      _apply_offsets(left_row)
       push!(df_l, left_row)
     end
 
     for right_row in eachrow(right_gaze_data)
-      apply_offsets(right_row)
+      _apply_offsets(right_row)
       push!(df_r, right_row)
     end
   end
