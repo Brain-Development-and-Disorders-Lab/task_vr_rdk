@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using UnityEngine;
 
 using UXF;
@@ -761,9 +762,13 @@ public class ExperimentManager : MonoBehaviour
                 yield return StartCoroutine(WaitSeconds(2.0f, true));
                 break;
             case EBlockSequence.Setup:
+                StringBuilder _eyetrackingInstructions = new();
+                _eyetrackingInstructions.Append("A red dot will be visible, and you are to follow the dot movement with your gaze. It will briefly appear green before changing position.\n\n");
+                _eyetrackingInstructions.Append("After a series of movements, the dot will flash before repeating the movements for a second time.\n\n");
+                _eyetrackingInstructions.Append("When you are ready and comfortable, press the <b>Trigger</b> to select <b>Continue</b> and begin.");
                 _uiManager.SetVisible(true);
                 _uiManager.SetHeaderText("Eye-Tracking Setup");
-                _uiManager.SetBodyText("You will be shown a red dot in front of you. Follow the dot movement with your gaze.\n\nAfter a brief series of dot movements, the headset setup will be complete and you will be shown further instructions.\n\n\nWhen you are ready and comfortable, press the <b>Trigger</b> to select <b>Continue</b> and begin.");
+                _uiManager.SetBodyText(_eyetrackingInstructions.ToString());
                 _uiManager.SetLeftButtonState(false, false, "");
                 _uiManager.SetRightButtonState(true, true, "Continue");
 

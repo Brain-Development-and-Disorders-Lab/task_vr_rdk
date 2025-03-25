@@ -1,4 +1,4 @@
-using CSV, DataFrames, Plots, StatsPlots, KernelDensity
+using CSV, DataFrames, Plots, StatsPlots, KernelDensity, Statistics
 
 # Path to the results directory
 RESULTS_PATH = "/Analysis/results"
@@ -107,11 +107,11 @@ function motion_plots()
   df_l = DataFrame([[], [], [], [], [], [], [], [], [], [], []], ["trial_type", "active_visual_field", "time", "eye", "pos_x", "pos_y", "pos_z", "rot_x", "rot_y", "rot_z", "blink"])
   df_r = DataFrame([[], [], [], [], [], [], [], [], [], [], []], ["trial_type", "active_visual_field", "time", "eye", "pos_x", "pos_y", "pos_z", "rot_x", "rot_y", "rot_z", "blink"])
   for (i, row) in enumerate(eachrow(df))
-    left_gaze_data = read_data(row.lefteyeactive_gaze_location_0)
+    left_gaze_data = _read_data(row.lefteyeactive_gaze_location_0)
     left_gaze_data.trial_type .= row.trial_type
     left_gaze_data.active_visual_field .= row.active_visual_field
 
-    right_gaze_data = read_data(row.righteyeactive_gaze_location_0)
+    right_gaze_data = _read_data(row.righteyeactive_gaze_location_0)
     right_gaze_data.trial_type .= row.trial_type
     right_gaze_data.active_visual_field .= row.active_visual_field
 
@@ -197,11 +197,11 @@ function decision_plots()
   df_l = DataFrame([[], [], [], [], [], [], [], [], [], [], []], ["trial_type", "active_visual_field", "time", "eye", "pos_x", "pos_y", "pos_z", "rot_x", "rot_y", "rot_z", "blink"])
   df_r = DataFrame([[], [], [], [], [], [], [], [], [], [], []], ["trial_type", "active_visual_field", "time", "eye", "pos_x", "pos_y", "pos_z", "rot_x", "rot_y", "rot_z", "blink"])
   for (i, row) in enumerate(eachrow(df))
-    left_gaze_data = read_data(row.lefteyeactive_gaze_location_0)
+    left_gaze_data = _read_data(row.lefteyeactive_gaze_location_0)
     left_gaze_data.trial_type .= row.trial_type
     left_gaze_data.active_visual_field .= row.active_visual_field
 
-    right_gaze_data = read_data(row.righteyeactive_gaze_location_0)
+    right_gaze_data = _read_data(row.righteyeactive_gaze_location_0)
     right_gaze_data.trial_type .= row.trial_type
     right_gaze_data.active_visual_field .= row.active_visual_field
 
@@ -210,12 +210,12 @@ function decision_plots()
     right_gaze_data = filter(et_row -> et_row.time >= row.decision_start && et_row.blink < BLINK_THRESHOLD, right_gaze_data)
 
     for left_row in eachrow(left_gaze_data)
-      apply_offsets(left_row)
+      _apply_offsets(left_row)
       push!(df_l, left_row)
     end
 
     for right_row in eachrow(right_gaze_data)
-      apply_offsets(right_row)
+      _apply_offsets(right_row)
       push!(df_r, right_row)
     end
   end
@@ -250,6 +250,57 @@ function time_to_fixation()
   display(p)
 end
 
+function analyze_fixation_stability()
+  # Generate concatenated datasets
+  df_l = DataFrame([[], [], [], [], [], [], [], [], [], [], []], ["trial_type", "active_visual_field", "time", "eye", "pos_x", "pos_y", "pos_z", "rot_x", "rot_y", "rot_z", "blink"])
+  df_r = DataFrame([[], [], [], [], [], [], [], [], [], [], []], ["trial_type", "active_visual_field", "time", "eye", "pos_x", "pos_y", "pos_z", "rot_x", "rot_y", "rot_z", "blink"])
+  for (i, row) in enumerate(eachrow(df))
+    left_gaze_data = _read_data(row.lefteyeactive_gaze_location_0)
+    left_gaze_data.trial_type .= row.trial_type
+    left_gaze_data.active_visual_field .= row.active_visual_field
+
+    right_gaze_data = _read_data(row.righteyeactive_gaze_location_0)
+    right_gaze_data.trial_type .= row.trial_type
+    right_gaze_data.active_visual_field .= row.active_visual_field
+
+    # Filter data to be within the time period where the dot motion is displayed
+    left_gaze_data = filter(et_row -> et_row.time >= row.decision_start && et_row.blink < BLINK_THRESHOLD, left_gaze_data)
+    right_gaze_data = filter(et_row -> et_row.time >= row.decision_start && et_row.blink < BLINK_THRESHOLD, right_gaze_data)
+
+    for left_row in eachrow(left_gaze_data)
+      _apply_offsets(left_row)
+      push!(df_l, left_row)
+    end
+
+    for right_row in eachrow(right_gaze_data)
+      _apply_offsets(right_row)
+      push!(df_r, right_row)
+    end
+  end
+
+  # Calculate standard deviation of gaze positions during fixation periods
+  function get_stability_metrics(x_coords, y_coords)
+    return (
+      std(x_coords),  # X-axis stability
+      std(y_coords),  # Y-axis stability
+      sqrt(std(x_coords)^2 + std(y_coords)^2)  # Overall stability
+    )
+  end
+
+  println("Stability metrics:")
+  # Group by trial type and calculate stability
+  for trial_type in unique(df.trial_type)
+    l_data = filter(row -> row.trial_type == trial_type, df_l)
+    r_data = filter(row -> row.trial_type == trial_type, df_r)
+    l_stability = get_stability_metrics(l_data.pos_x, l_data.pos_y)
+    r_stability = get_stability_metrics(r_data.pos_x, r_data.pos_y)
+
+    println("Trial type: $trial_type")
+    println("\tLeft eye: \t$(round.(l_stability, digits=3))")
+    println("\tRight eye: \t$(round.(r_stability, digits=3))")
+  end
+end
+
 # Check if the trial_results.csv file exists
 if !isfile("trial_results.csv")
   println("Error: trial_results.csv not found, attempting to change directory")
@@ -274,3 +325,4 @@ df = mapcols(val -> _clean_tracking_paths(val), df, cols=r"righteyeactive_gaze_l
 motion_plots()
 decision_plots()
 time_to_fixation()
+analyze_fixation_stability()

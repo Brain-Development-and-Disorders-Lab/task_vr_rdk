@@ -37,7 +37,7 @@ public class CameraManager : MonoBehaviour
     private float _verticalOffset = -2.0f;
 
     private float _stimulusWidth = 0.0f; // Additional world-units to offset the stimulus
-    private float _totalOffset = 0.0f;
+    private float _lateralizedHorizontalOffset = 0.0f;
     private float _stimulusAnchorDistance;
 
     // Camera presentation modes
@@ -61,7 +61,7 @@ public class CameraManager : MonoBehaviour
             _uiAnchor.transform.SetParent(_cameraRig.centerEyeAnchor.transform, false);
             _fixationAnchor.transform.SetParent(_cameraRig.centerEyeAnchor.transform, false);
 
-            CalculateOffset();
+            CalculateLateralizedHorizontalOffset();
         }
     }
 
@@ -69,7 +69,7 @@ public class CameraManager : MonoBehaviour
     /// Calculate the offset distance to accurately present the stimulus 2.5-3 degrees offset from the central
     /// fixation point.
     /// </summary>
-    private void CalculateOffset()
+    private void CalculateLateralizedHorizontalOffset()
     {
         // Calculate required visual offsets for dichoptic presentation
         // Step 1: Calculate IPD
@@ -85,9 +85,15 @@ public class CameraManager : MonoBehaviour
         float offsetDistance = _stimulusAnchorDistance * Mathf.Tan(theta);
 
         // Step 5: Calculate total offset value
-        _totalOffset = offsetDistance + (_stimulusWidth / 2.0f) + (ipd / 2.0f);
+        _lateralizedHorizontalOffset = offsetDistance + (_stimulusWidth / 2.0f) + (ipd / 2.0f);
         Debug.Log("Calculated CameraManager offset distance: " + offsetDistance);
     }
+
+    /// <summary>
+    /// Get the vertical offset of the camera
+    /// </summary>
+    /// <returns>Vertical offset, measured in world units</returns>
+    public float GetVerticalOffset() => _verticalOffset;
 
     /// <summary>
     /// Set the active visual field
@@ -107,7 +113,7 @@ public class CameraManager : MonoBehaviour
             // Left visual presentation
             if (lateralized)
             {
-                _stimulusAnchor.transform.localPosition = new Vector3(0.0f - _totalOffset, 0.0f + _verticalOffset, _stimulusAnchorDistance);
+                _stimulusAnchor.transform.localPosition = new Vector3(0.0f - _lateralizedHorizontalOffset, 0.0f + _verticalOffset, _stimulusAnchorDistance);
             }
 
             if (_useCullingMask)
@@ -121,7 +127,7 @@ public class CameraManager : MonoBehaviour
             // Right visual presentation
             if (lateralized)
             {
-                _stimulusAnchor.transform.localPosition = new Vector3(0.0f + _totalOffset, 0.0f + _verticalOffset, _stimulusAnchorDistance);
+                _stimulusAnchor.transform.localPosition = new Vector3(0.0f + _lateralizedHorizontalOffset, 0.0f + _verticalOffset, _stimulusAnchorDistance);
             }
 
             if (_useCullingMask)
@@ -149,7 +155,7 @@ public class CameraManager : MonoBehaviour
     public void SetStimulusWidth(float width)
     {
         _stimulusWidth = width;
-        CalculateOffset(); // We need to re-calculate the offset values if this has been updated
+        CalculateLateralizedHorizontalOffset(); // We need to re-calculate the offset values if this has been updated
     }
 
     /// <summary>
@@ -170,5 +176,5 @@ public class CameraManager : MonoBehaviour
     /// Get the offset distance, measured in world units
     /// </summary>
     /// <returns>`float` representing the offset distance</returns>
-    public float GetTotalOffset() => _totalOffset;
+    public float GetLateralizedHorizontalOffset() => _lateralizedHorizontalOffset;
 }
