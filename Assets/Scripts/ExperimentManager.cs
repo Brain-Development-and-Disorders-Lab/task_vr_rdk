@@ -630,18 +630,30 @@ public class ExperimentManager : MonoBehaviour
         else if (trial == ETrialType.Main_Trials_Binocular)
         {
             _activeCoherence = UnityEngine.Random.value > 0.5 ? _mainBinocularCoherence.Item1 : _mainBinocularCoherence.Item2;
+
+            // Store if the high or low coherence was selected
+            Session.instance.CurrentTrial.result["main_binocular_coherence_type"] = _activeCoherence == _mainBinocularCoherence.Item1 ? "low" : "high";
+            Debug.Log("Coherence type: " + Session.instance.CurrentTrial.result["main_binocular_coherence_type"]);
         }
         else if (trial is ETrialType.Main_Trials_Monocular_Left or ETrialType.Main_Trials_Monocular_Right)
         {
             // Select the appropriate coherence pair (left or right), then select a coherence value (low or high)
             var CoherencePair = _activeVisualField == CameraManager.EVisualField.Left ? _mainMonocularCoherenceLeft : _mainMonocularCoherenceRight;
             _activeCoherence = UnityEngine.Random.value > 0.5 ? CoherencePair.Item1 : CoherencePair.Item2;
+
+            // Store if the high or low coherence was selected
+            Session.instance.CurrentTrial.result["main_monocular_coherence_type"] = _activeCoherence == CoherencePair.Item1 ? "low" : "high";
+            Debug.Log("Coherence type: " + Session.instance.CurrentTrial.result["main_monocular_coherence_type"]);
         }
         else if (trial is ETrialType.Main_Trials_Lateralized_Left or ETrialType.Main_Trials_Lateralized_Right)
         {
             // Select the appropriate coherence pair (left or right), then select a coherence value (low or high)
             var CoherencePair = _activeVisualField == CameraManager.EVisualField.Left ? _mainLateralizedCoherenceLeft : _mainLateralizedCoherenceRight;
             _activeCoherence = UnityEngine.Random.value > 0.5 ? CoherencePair.Item1 : CoherencePair.Item2;
+
+            // Store if the high or low coherence was selected
+            Session.instance.CurrentTrial.result["main_lateralized_coherence_type"] = _activeCoherence == CoherencePair.Item1 ? "low" : "high";
+            Debug.Log("Coherence type: " + Session.instance.CurrentTrial.result["main_lateralized_coherence_type"]);
         }
 
         // Apply coherence value (RDK-70)
