@@ -23,12 +23,8 @@ public class SetupManager : MonoBehaviour
     private GameObject _stimulusAnchor;
     private GameObject _viewCalibrationPrefabInstance;
 
-    // Left and right `GazeTracker` objects
-    [Header("Eye trackers")]
-    [SerializeField]
-    private GazeTracker _leftEyeTracker;
-    [SerializeField]
-    private GazeTracker _rightEyeTracker;
+    // `GazeManager` object
+    private GazeManager _gazeManager;
 
     // Flags for state management
     private bool _fixationCanProceed = false; // 'true' when the fixation object can proceed to the next position
@@ -41,7 +37,7 @@ public class SetupManager : MonoBehaviour
     private readonly float _fixationRadius = 2.4f;
     private readonly float _fixationSetupThreshold = 0.70f;
     private readonly float _fixationValidationThreshold = 0.50f;
-    private readonly int _requiredMeasurements = 100;
+    private readonly int _fixationMeasurements = 100;
     private GameObject _fixationObject; // Object moved around the screen
     private Vector2 _fixationObjectPosition; // The active unit vector
     private int _fixationObjectPositionIndex = 0;
@@ -83,6 +79,13 @@ public class SetupManager : MonoBehaviour
     /// </summary>
     private void Start()
     {
+        // Get the `GazeManager` object
+        _gazeManager = FindObjectOfType<GazeManager>();
+        if (_gazeManager == null)
+        {
+            throw new Exception("`GazeManager` object not found in scene");
+        }
+
         // Create moving fixation object
         _fixationObject = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         _fixationObject.name = "calibration_fixation";
@@ -238,46 +241,26 @@ public class SetupManager : MonoBehaviour
     public Dictionary<string, GazeVector> GetDirectionalOffsets() => _directionalOffsets;
 
     /// <summary>
-    /// Check if the eye tracking data is within the fixation threshold
-    /// </summary>
-    /// <param name="l_p">Left eye tracking data</param>
-    /// <param name="r_p">Right eye tracking data</param>
-    /// <returns>True if the eye tracking data is within the fixation threshold, false otherwise</returns>
-    private bool IsFixated(Vector3 l_p, Vector3 r_p)
-    {
-        // Determine which threshold to use based on the current state
-        if (!_isEyeTrackingCalibrationSetup)
-        {
-            // Setup stage, use the setup threshold
-            return Vector2.Distance(l_p, _fixationObject.transform.position) < _fixationSetupThreshold && Vector2.Distance(r_p, _fixationObject.transform.position) < _fixationSetupThreshold;
-        }
-        else
-        {
-            // Validation stage, use the validation threshold
-            return Vector2.Distance(l_p, _fixationObject.transform.position) < _fixationValidationThreshold && Vector2.Distance(r_p, _fixationObject.transform.position) < _fixationValidationThreshold;
-        }
-    }
-
-    /// <summary>
     /// Utility function to capture eye tracking data and store alongside the relevant location
     /// </summary>
     private void RunGazeCapture()
     {
         // Capture eye tracking data and store alongside location
-        var l_p = _leftEyeTracker.GetGazeEstimate();
-        var r_p = _rightEyeTracker.GetGazeEstimate();
+        var l_p = _gazeManager.GetLeftEyeTracker().GetGazeEstimate();
+        var r_p = _gazeManager.GetRightEyeTracker().GetGazeEstimate();
 
         // Determine which data dictionary to use based on the current state
         var gazeData = _isEyeTrackingCalibrationSetup ? _validationData : _setupData;
 
         // Test fixation and add to the appropriate data dictionary
-        if (IsFixated(l_p, r_p))
+        float _fixationThreshold = _isEyeTrackingCalibrationSetup ? _fixationValidationThreshold : _fixationSetupThreshold;
+        if (_gazeManager.IsFixatedStatic(_fixationObject.transform.position, _fixationThreshold))
         {
             gazeData[_fixationObjectPath.Keys.ToList()[_fixationObjectPositionIndex]].Add(new(l_p, r_p));
         }
 
         // If the number of fixations is greater than or equal to 50, proceed to the next position
-        if (gazeData[_fixationObjectPath.Keys.ToList()[_fixationObjectPositionIndex]].Count >= _requiredMeasurements)
+        if (gazeData[_fixationObjectPath.Keys.ToList()[_fixationObjectPositionIndex]].Count >= _fixationMeasurements)
         {
             Debug.Log("Fixation detected at position \"" + _fixationObjectPath.Keys.ToList()[_fixationObjectPositionIndex] + "\", proceeding to next position...");
             _fixationObject.GetComponent<MeshRenderer>().material.SetColor("_Color", Color.green);

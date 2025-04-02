@@ -14,11 +14,12 @@ namespace Monitoring
     public class Handler : WebSocketBehavior
     {
         private readonly ExperimentManager _experiment;
+        private readonly GazeManager _gazeManager;
         private readonly CaptureManager[] _captureSources;
-
-        public Handler(ExperimentManager manager, CaptureManager[] sources)
+        public Handler(ExperimentManager manager, GazeManager gazeManager, CaptureManager[] sources)
         {
             _experiment = manager;
+            _gazeManager = gazeManager;
             _captureSources = sources;
         }
 
@@ -39,13 +40,13 @@ namespace Monitoring
             else if (e.Data == "disable_fixation")
             {
                 // Disable the fixation requirement
-                _experiment.SetFixationRequired(false);
+                _gazeManager.SetRequireFixation(false);
                 Send(JsonConvert.SerializeObject("Fixation Disabled"));
             }
             else if (e.Data == "enable_fixation")
             {
                 // Enable the fixation requirement
-                _experiment.SetFixationRequired(true);
+                _gazeManager.SetRequireFixation(true);
                 Send(JsonConvert.SerializeObject("Fixation Enabled"));
             }
             else if (e.Data == "screenshot")
@@ -91,7 +92,8 @@ namespace Monitoring
         private ExperimentManager _experiment;
         // WebSocket server instance
         private WebSocketServer _server;
-
+        // `GazeManager` instance
+        private GazeManager _gazeManager;
         // Queue to manage log messages
         private Queue<string> _logsPreflight;
 
@@ -101,11 +103,24 @@ namespace Monitoring
 
         private void Start()
         {
-            _experiment = GetComponent<ExperimentManager>();
+            _experiment = FindObjectOfType<ExperimentManager>();
+            _gazeManager = _experiment.GetComponent<GazeManager>();
+
+            // Check if the `ExperimentManager` and `GazeManager` are attached to the same GameObject
+            if (_experiment == null)
+            {
+                throw new Exception("`ExperimentManager` not found in scene");
+            }
+
+            if (_gazeManager == null)
+            {
+                throw new Exception("`GazeManager` not found in scene");
+            }
+
             _logsPreflight = new Queue<string>();
 
             _server = new WebSocketServer(port);
-            _server.AddWebSocketService<Handler>("/", () => new Handler(_experiment, _captureSources));
+            _server.AddWebSocketService<Handler>("/", () => new Handler(_experiment, _gazeManager, _captureSources));
             _server.Start();
 
             Application.logMessageReceived += HandleLogMessage;

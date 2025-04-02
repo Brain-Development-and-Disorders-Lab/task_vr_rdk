@@ -123,24 +123,9 @@ public class ExperimentManager : MonoBehaviour
     private StimulusManager _stimulusManager;
     private UIManager _uiManager;
     private CameraManager _cameraManager;
+    private GazeManager _gazeManager;
     private SetupManager _setupManager;
     private VRLogger _logger;
-
-    // Store references to EyePositionTracker instances
-    [Header("Gaze Fixation Parameters")]
-    [Tooltip("Require a central fixation prior to presenting the trial stimuli")]
-    [SerializeField]
-    private bool _requireFixation = true; // Require participant to be fixation on center before trial begins
-    [Tooltip("Radius (in world units) around the central fixation point which registers as fixated")]
-    [SerializeField]
-    private float _fixationRadius = 0.5f; // Specify the fixation radius
-    [Header("EyePositionTrackers")]
-    [SerializeField]
-    private GazeTracker _leftEyeTracker;
-    [SerializeField]
-    private GazeTracker _rightEyeTracker;
-    private int _fixationMeasurementCounter = 0; // Counter for number of fixation measurements
-    private readonly int _requiredFixationMeasurements = 48; // Required on-target fixation measurements
 
     // Input parameters
     private bool _isInputEnabled = false; // Input is accepted
@@ -246,6 +231,7 @@ public class ExperimentManager : MonoBehaviour
         _stimulusManager = GetComponent<StimulusManager>();
         _uiManager = GetComponent<UIManager>();
         _cameraManager = GetComponent<CameraManager>();
+        _gazeManager = GetComponent<GazeManager>();
         _setupManager = GetComponent<SetupManager>();
         _logger = GetComponent<VRLogger>();
 
@@ -258,7 +244,7 @@ public class ExperimentManager : MonoBehaviour
             Debug.LogWarning("Experiment is being run in Demonstration Mode");
 
             // Disable fixation requirement
-            _requireFixation = false;
+            _gazeManager.SetRequireFixation(false);
 
             // Update timings
             _displayDuration = 1.80f;
@@ -271,7 +257,7 @@ public class ExperimentManager : MonoBehaviour
             Debug.LogWarning("Debug mode has been enabled");
 
             // Disable fixation
-            _requireFixation = false;
+            _gazeManager.SetRequireFixation(false);
 
             // Update timings
             _displayDuration = 0.50f;
@@ -910,10 +896,10 @@ public class ExperimentManager : MonoBehaviour
         // Disable input and wait for fixation if enabled
         SetIsInputEnabled(false);
         _stimulusManager.SetFixationCrossVisibility(true);
-        if (_requireFixation)
+        if (_gazeManager.GetRequireFixation())
         {
             Debug.Log("Waiting for fixation...");
-            yield return new WaitUntil(() => IsFixated());
+            yield return new WaitUntil(() => _gazeManager.IsFixatedDuration(_stimulusManager.GetFixationAnchor().transform.position, 1.5f));
             Debug.Log("Fixated, continuing...");
         }
         else
@@ -926,10 +912,10 @@ public class ExperimentManager : MonoBehaviour
         _stimulusManager.SetVisible(EStimulusType.Fixation, true);
 
         // Wait either for fixation or a fixed duration if fixation not required
-        if (_requireFixation)
+        if (_gazeManager.GetRequireFixation())
         {
             Debug.Log("Waiting for fixation...");
-            yield return new WaitUntil(() => IsFixated());
+            yield return new WaitUntil(() => _gazeManager.IsFixatedDuration(_stimulusManager.GetFixationAnchor().transform.position, 1.5f));
             Debug.Log("Fixated, continuing...");
         }
         else
@@ -1021,64 +1007,10 @@ public class ExperimentManager : MonoBehaviour
     public void ForceEnd() => _hasQueuedExit = true;
 
     /// <summary>
-    /// Set the requirement for fixation prior to trial advancement
-    /// </summary>
-    /// <param name="state">`true` if required, `false` if not</param>
-    public void SetFixationRequired(bool state)
-    {
-        _requireFixation = state;
-
-        // Logging output
-        if (state)
-        {
-            Debug.Log("Fixation requirement: Enabled");
-        }
-        else
-        {
-            Debug.Log("Fixation requirement: Disabled");
-        }
-    }
-
-    /// <summary>
-    /// Get if fixation is required or not
-    /// </summary>
-    /// <returns>`true` if required, `false` if not</returns>
-    public bool GetFixationRequired() => _requireFixation;
-
-    /// <summary>
     /// Set the input state, `true` allows input, `false` ignores input
     /// </summary>
     /// <param name="state">Input state</param>
     private void SetIsInputEnabled(bool state) => _isInputEnabled = state;
-
-    /// <summary>
-    /// Wait for eye gaze to return to central fixation point prior to returning
-    /// </summary>
-    /// <returns></returns>
-    private bool IsFixated()
-    {
-        // Get gaze estimates and the current world position
-        var leftGaze = _leftEyeTracker.GetGazeEstimate();
-        var rightGaze = _rightEyeTracker.GetGazeEstimate();
-        var worldPosition = _stimulusManager.GetFixationAnchor().transform.position;
-
-        bool isFixated = false; // Fixated state
-        // If the gaze is directed in fixation, increment the counter to signify a measurement
-        if ((Mathf.Abs(leftGaze.x - worldPosition.x) <= _fixationRadius && Mathf.Abs(leftGaze.y - worldPosition.y) <= _fixationRadius) || (Mathf.Abs(rightGaze.x - worldPosition.x) <= _fixationRadius && Mathf.Abs(rightGaze.y - worldPosition.y) <= _fixationRadius))
-        {
-            _fixationMeasurementCounter += 1;
-        }
-
-        // Register as fixated if the required number of measurements have been taken
-        if (_fixationMeasurementCounter >= _requiredFixationMeasurements)
-        {
-            isFixated = true;
-            _fixationMeasurementCounter = 0;
-        }
-
-        // Return the overall fixation state
-        return isFixated;
-    }
 
     /// <summary>
     /// Utility function to block further execution until a duration has elapsed
