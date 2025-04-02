@@ -136,9 +136,9 @@ public class ExperimentManager : MonoBehaviour
     private float _fixationRadius = 0.5f; // Specify the fixation radius
     [Header("EyePositionTrackers")]
     [SerializeField]
-    private EyePositionTracker _leftEyeTracker;
+    private GazeTracker _leftEyeTracker;
     [SerializeField]
-    private EyePositionTracker _rightEyeTracker;
+    private GazeTracker _rightEyeTracker;
     private int _fixationMeasurementCounter = 0; // Counter for number of fixation measurements
     private readonly int _requiredFixationMeasurements = 48; // Required on-target fixation measurements
 

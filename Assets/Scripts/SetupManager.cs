@@ -23,12 +23,12 @@ public class SetupManager : MonoBehaviour
     private GameObject _stimulusAnchor;
     private GameObject _viewCalibrationPrefabInstance;
 
-    // Left and right `EyePositionTracker` objects
+    // Left and right `GazeTracker` objects
     [Header("Eye trackers")]
     [SerializeField]
-    private EyePositionTracker _leftEyeTracker;
+    private GazeTracker _leftEyeTracker;
     [SerializeField]
-    private EyePositionTracker _rightEyeTracker;
+    private GazeTracker _rightEyeTracker;
 
     // Flags for state management
     private bool _fixationCanProceed = false; // 'true' when the fixation object can proceed to the next position

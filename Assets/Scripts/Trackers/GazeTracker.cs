@@ -7,7 +7,7 @@ namespace UXF
     /// Attach this component to a GameObject and assign it in the trackedObjects field in an ExperimentSession to automatically record position/rotation of the object at each frame.
     /// </summary>
     [RequireComponent(typeof(OVREyeGaze))]
-    public class EyePositionTracker : Tracker
+    public class GazeTracker : Tracker
     {
         // Default gaze distance (should be mapped to the "surface" of the furthest 2D stimulus)
         private float _gazeDistance = 10.0f; // World units
