@@ -77,9 +77,10 @@ namespace Monitoring
     }
 
     /// <summary>
-    /// _server component for Headsup system, enables communication to and from Headsup client over the local
+    /// Server component for Headsup system, enables communication to and from Headsup client over the local
     /// network. Listens on defined prefix address, responds to specific paths. Requires an `ExperimentManager` or similar
-    /// class that can provide experiment status data as a `Dictionary<string, string>` type.
+    /// class that can provide experiment status data as a `Dictionary<string, string>` type and a `GazeManager` instance
+    /// to control the eye-tracking and fixation requirements.
     /// </summary>
     public class HeadsupServer : MonoBehaviour
     {
