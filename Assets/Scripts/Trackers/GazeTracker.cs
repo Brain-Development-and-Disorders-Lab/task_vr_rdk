@@ -9,12 +9,8 @@ namespace UXF
     [RequireComponent(typeof(OVREyeGaze))]
     public class GazeTracker : Tracker
     {
-        // Default gaze distance (should be mapped to the "surface" of the furthest 2D stimulus)
-        private float _gazeDistance = 10.0f; // World units
-        [SerializeField]
-        private GameObject _gazeTargetSurface; // Typically mapped to StimulusAnchor `GameObject`
-        [SerializeField]
-        private GameObject _gazeSource; // Typically mapped to CenterEyeAnchor under the `OVRCameraRig` prefab
+        // Gaze distance
+        private float _gazeDistance = 10.0f;
 
         // Fields to enable and manage the gaze indicators
         private bool _showIndicator = false;
@@ -35,12 +31,6 @@ namespace UXF
             // Get OVR components
             _eyeGazeComponent = GetComponentInParent<OVREyeGaze>();
             _faceComponent = FindObjectOfType<OVRFaceExpressions>();
-
-            // Setup gaze distance
-            if (_gazeTargetSurface != null && _gazeSource != null)
-            {
-                _gazeDistance = _gazeTargetSurface.transform.position.z - _gazeSource.transform.position.z;
-            }
 
             // Eye gaze setup
             if (_eyeGazeComponent)
@@ -85,6 +75,8 @@ namespace UXF
             }
         }
 
+        public void SetGazeDistance(float distance) => _gazeDistance = distance;
+
         /// <summary>
         /// Utility function to access the realtime gaze estimate from other classes
         /// </summary>
@@ -117,6 +109,12 @@ namespace UXF
         public bool GetIndicatorVisibility() => _showIndicator;
 
         /// <summary>
+        /// Set the position of the gaze indicator
+        /// </summary>
+        /// <param name="position">The position to set the indicator to</param>
+        public void SetIndicatorPosition(Vector3 position) => _indicator.transform.position = position;
+
+        /// <summary>
         /// Returns current position and rotation values of the eye
         /// </summary>
         /// <returns></returns>
@@ -126,13 +124,6 @@ namespace UXF
             var p = transform.position;
             var r = transform.eulerAngles;
             _gazeEstimate = (p + transform.forward) * _gazeDistance;
-
-            // If using indicators, update the position
-            if (_showIndicator && _indicator != null)
-            {
-                // Apply the raw position to the primary _indicator
-                _indicator.transform.position = GetGazeEstimate();
-            }
 
             float LBlinkWeight = -1.0f;
             float RBlinkWeight = -1.0f;

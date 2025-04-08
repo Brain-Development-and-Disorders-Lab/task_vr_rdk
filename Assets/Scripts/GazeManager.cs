@@ -9,10 +9,18 @@ using Utilities;
 public class GazeManager : MonoBehaviour
 {
     [SerializeField]
+    private GameObject _gazeTargetSurface; // Typically mapped to StimulusAnchor `GameObject`
+    private float _gazeDistance = 10.0f; // World units
+
+    [SerializeField]
+    private GameObject _gazeSource; // Typically mapped to CenterEyeAnchor under the `OVRCameraRig` prefab
+
+    [SerializeField]
     private GazeTracker _leftEyeTracker;
     [SerializeField]
     private GazeTracker _rightEyeTracker;
 
+    [Header("Fixation parameters")]
     [SerializeField]
     private bool _requireFixation = false;
     [SerializeField]
@@ -33,8 +41,14 @@ public class GazeManager : MonoBehaviour
         {"c_end", new Vector2(0, 0)}, // Return to center
     };
 
+    // Fixation threshold
+    [SerializeField]
+    private float _defaultThreshold = 0.70f;
+    private float _activeThreshold = 0.70f;
+
     // Calculated offset vectors
     private readonly Dictionary<string, GazeVector> _directionalOffsets = new();
+    private bool _hasCalculatedOffsets = false;
 
     // Calibration data storage
     private readonly Dictionary<string, List<GazeVector>> _setupData = new() {
@@ -56,10 +70,37 @@ public class GazeManager : MonoBehaviour
 
     private void Start()
     {
+        // Set the default active threshold
+        SetActiveThreshold(_defaultThreshold);
+
+        if (_gazeTargetSurface != null && _gazeSource != null)
+        {
+            _gazeDistance = _gazeTargetSurface.transform.position.z - _gazeSource.transform.position.z;
+        }
+
+        // Set the gaze distance for the left and right eye trackers
+        _leftEyeTracker.SetGazeDistance(_gazeDistance);
+        _rightEyeTracker.SetGazeDistance(_gazeDistance);
+
         // Set the indicator visibility according to the show indicators flag
         _leftEyeTracker.SetIndicatorVisibility(_showIndicators);
         _rightEyeTracker.SetIndicatorVisibility(_showIndicators);
     }
+
+    public GameObject GetGazeSource() => _gazeSource;
+    public float GetGazeDistance() => _gazeDistance;
+
+    /// <summary>
+    /// Get the active threshold for fixation
+    /// </summary>
+    /// <returns></returns>
+    public float GetActiveThreshold() => _activeThreshold;
+
+    /// <summary>
+    /// Set the active threshold for fixation
+    /// </summary>
+    /// <param name="threshold">A value expressing the world units, the radius for fixation</param>
+    public void SetActiveThreshold(float threshold) => _activeThreshold = threshold;
 
     // Get the calibration data
     public Dictionary<string, List<GazeVector>> GetSetupData() => _setupData;
@@ -71,31 +112,25 @@ public class GazeManager : MonoBehaviour
     public float GetFixationRadius() => _fixationRadius;
 
     /// <summary>
-    /// Get the raw gaze estimate for both eyes
-    /// </summary>
-    /// <returns>A `GazeVector` object containing the raw gaze estimates for both eyes</returns>
-    public GazeVector GetRawGazeEstimate()
-    {
-        var l_p = _leftEyeTracker.GetGazeEstimate();
-        var r_p = _rightEyeTracker.GetGazeEstimate();
-
-        return new GazeVector(l_p, r_p);
-    }
-
-    /// <summary>
     /// Get the adjusted gaze estimate for both eyes by applying the calculated corrective vectors
     /// </summary>
     /// <returns>A `GazeVector` object containing the adjusted gaze estimates for both eyes</returns>
-    public GazeVector GetAdjustedGazeEstimate()
+    public GazeVector GetGazeEstimate(bool useAdjustedGaze = false)
     {
         // Get raw gaze estimates
         var l_p = _leftEyeTracker.GetGazeEstimate();
         var r_p = _rightEyeTracker.GetGazeEstimate();
-        var currentGaze = new Vector2((l_p.x + r_p.x) / 2, (l_p.y + r_p.y) / 2);
+
+        // Return raw gaze estimates if adjusted gaze is not required
+        if (!useAdjustedGaze)
+        {
+            return new GazeVector(l_p, r_p);
+        }
 
         // Calculate weights for each fixation point based on inverse distance
         Dictionary<string, float> weights = new();
         float totalWeight = 0f;
+        var currentGaze = new Vector2((l_p.x + r_p.x) / 2, (l_p.y + r_p.y) / 2);
 
         foreach (var point in _fixationObjectPath.Keys)
         {
@@ -159,13 +194,12 @@ public class GazeManager : MonoBehaviour
     /// Check if the gaze is fixated on a static point from a single frame
     /// </summary>
     /// <param name="fixationPoint">The point to check if the gaze is fixated on</param>
-    /// <param name="threshold">The threshold for the gaze to be considered fixated</param>
     /// <param name="useAdjustedGaze">Whether to use the adjusted gaze estimate</param>
     /// <returns>True if the gaze is fixated on the point, false otherwise</returns>
-    public bool IsFixatedStatic(Vector2 fixationPoint, float threshold = 0.0f, bool useAdjustedGaze = false)
+    public bool IsFixatedStatic(Vector2 fixationPoint, bool useAdjustedGaze = false)
     {
         // Get the gaze estimate
-        var _gazeEstimate = useAdjustedGaze ? GetAdjustedGazeEstimate() : GetRawGazeEstimate();
+        var _gazeEstimate = GetGazeEstimate(useAdjustedGaze);
 
         // Get gaze estimates and the current world position
         var _leftGaze = _gazeEstimate.GetLeft();
@@ -173,7 +207,7 @@ public class GazeManager : MonoBehaviour
         var _worldPosition = fixationPoint;
 
         // If the gaze is directed in fixation, increment the counter to signify a measurement
-        return (Mathf.Abs(_leftGaze.x - _worldPosition.x) <= threshold && Mathf.Abs(_leftGaze.y - _worldPosition.y) <= threshold) || (Mathf.Abs(_rightGaze.x - _worldPosition.x) <= threshold && Mathf.Abs(_rightGaze.y - _worldPosition.y) <= threshold);
+        return (Mathf.Abs(_leftGaze.x - _worldPosition.x) <= _activeThreshold && Mathf.Abs(_leftGaze.y - _worldPosition.y) <= _activeThreshold) || (Mathf.Abs(_rightGaze.x - _worldPosition.x) <= _activeThreshold && Mathf.Abs(_rightGaze.y - _worldPosition.y) <= _activeThreshold);
     }
 
     /// <summary>
@@ -181,10 +215,9 @@ public class GazeManager : MonoBehaviour
     /// </summary>
     /// <param name="fixationPoint">The point to check if the gaze is fixated on</param>
     /// <param name="duration">The duration for the gaze to be considered fixated</param>
-    /// <param name="threshold">The threshold for the gaze to be considered fixated</param>
     /// <param name="useAdjustedGaze">Whether to use the adjusted gaze estimate</param>
     /// <returns>True if the gaze is fixated on the point for the duration, false otherwise</returns>
-    public bool IsFixatedDuration(Vector2 fixationPoint, float duration, float threshold = 0.0f, bool useAdjustedGaze = false)
+    public bool IsFixatedDuration(Vector2 fixationPoint, float duration, bool useAdjustedGaze = false)
     {
         // Initialize variables
         float _elapsedTime = 0.0f;
@@ -194,7 +227,7 @@ public class GazeManager : MonoBehaviour
         while (_elapsedTime < duration)
         {
             // Check if the gaze is fixated on the point
-            if (IsFixatedStatic(fixationPoint, threshold, useAdjustedGaze))
+            if (IsFixatedStatic(fixationPoint, useAdjustedGaze))
             {
                 // If the gaze is fixated, set the start time and the fixated flag
                 if (!_isFixated)
@@ -307,6 +340,19 @@ public class GazeManager : MonoBehaviour
 
             Debug.Log($"Calculated corrective vectors for {fixationPoint}:");
             Debug.Log($"Left eye: {leftCorrection}, Right eye: {rightCorrection}");
+        }
+        _hasCalculatedOffsets = true;
+    }
+
+    private void Update()
+    {
+        if (_showIndicators)
+        {
+            // Get the gaze estimate and update the indicator positions
+            var l_p = GetGazeEstimate(_hasCalculatedOffsets).GetLeft();
+            var r_p = GetGazeEstimate(_hasCalculatedOffsets).GetRight();
+            _leftEyeTracker.SetIndicatorPosition(new Vector3(l_p.x, l_p.y, _gazeDistance));
+            _rightEyeTracker.SetIndicatorPosition(new Vector3(r_p.x, r_p.y, _gazeDistance));
         }
     }
 }

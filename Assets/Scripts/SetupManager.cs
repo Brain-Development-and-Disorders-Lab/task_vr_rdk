@@ -167,16 +167,16 @@ public class SetupManager : MonoBehaviour
     private void RunGazeCapture()
     {
         // Capture eye tracking data and store alongside location
-        var l_p = _gazeManager.GetLeftEyeTracker().GetGazeEstimate();
-        var r_p = _gazeManager.GetRightEyeTracker().GetGazeEstimate();
+        var l_p = _gazeManager.GetGazeEstimate(_isEyeTrackingCalibrationSetup).GetLeft();
+        var r_p = _gazeManager.GetGazeEstimate(_isEyeTrackingCalibrationSetup).GetRight();
 
         // Determine which data dictionary to use based on the current state
         var gazeData = _isEyeTrackingCalibrationSetup ? _gazeManager.GetValidationData() : _gazeManager.GetSetupData();
 
         // Test fixation and add to the appropriate data dictionary
         var _fixationObjectPath = _gazeManager.GetFixationObjectPath();
-        float _fixationThreshold = _isEyeTrackingCalibrationSetup ? _fixationValidationThreshold : _fixationSetupThreshold;
-        if (_gazeManager.IsFixatedStatic(_fixationObject.transform.position, _fixationThreshold))
+        _gazeManager.SetActiveThreshold(_isEyeTrackingCalibrationSetup ? _fixationValidationThreshold : _fixationSetupThreshold);
+        if (_gazeManager.IsFixatedStatic(_fixationObject.transform.position, _isEyeTrackingCalibrationSetup))
         {
             gazeData[_fixationObjectPath.Keys.ToList()[_fixationObjectPositionIndex]].Add(new(l_p, r_p));
         }
