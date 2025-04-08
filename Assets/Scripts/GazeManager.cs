@@ -1,12 +1,7 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using UnityEngine;
 
 using UXF;
-using MathNet.Numerics.Statistics;
 
 // Custom namespaces
 using Utilities;
@@ -20,9 +15,60 @@ public class GazeManager : MonoBehaviour
 
     [SerializeField]
     private bool _requireFixation = false;
+    [SerializeField]
+    private bool _showIndicators = false;
 
+    // Eye tracker objects
     public GazeTracker GetLeftEyeTracker() => _leftEyeTracker;
     public GazeTracker GetRightEyeTracker() => _rightEyeTracker;
+
+    // Fixation object radius and path
+    private readonly float _fixationRadius = 2.4f;
+    private readonly Dictionary<string, Vector2> _fixationObjectPath = new() {
+        {"c_start", new Vector2(0, 0)},
+        {"q_1", new Vector2(1, 1)},
+        {"q_2", new Vector2(-1, 1)},
+        {"q_3", new Vector2(-1, -1)},
+        {"q_4", new Vector2(1, -1)},
+        {"c_end", new Vector2(0, 0)}, // Return to center
+    };
+
+    // Calculated offset vectors
+    private readonly Dictionary<string, GazeVector> _directionalOffsets = new();
+
+    // Calibration data storage
+    private readonly Dictionary<string, List<GazeVector>> _setupData = new() {
+        {"c_start", new List<GazeVector>() },
+        {"q_1", new List<GazeVector>() },
+        {"q_2", new List<GazeVector>() },
+        {"q_3", new List<GazeVector>() },
+        {"q_4", new List<GazeVector>() },
+        {"c_end", new List<GazeVector>() },
+    };
+    private readonly Dictionary<string, List<GazeVector>> _validationData = new() {
+        {"c_start", new List<GazeVector>() },
+        {"q_1", new List<GazeVector>() },
+        {"q_2", new List<GazeVector>() },
+        {"q_3", new List<GazeVector>() },
+        {"q_4", new List<GazeVector>() },
+        {"c_end", new List<GazeVector>() },
+    };
+
+    private void Start()
+    {
+        // Set the indicator visibility according to the show indicators flag
+        _leftEyeTracker.SetIndicatorVisibility(_showIndicators);
+        _rightEyeTracker.SetIndicatorVisibility(_showIndicators);
+    }
+
+    // Get the calibration data
+    public Dictionary<string, List<GazeVector>> GetSetupData() => _setupData;
+    public Dictionary<string, List<GazeVector>> GetValidationData() => _validationData;
+
+    // Get the directional offsets, fixation object path and radius
+    public Dictionary<string, GazeVector> GetDirectionalOffsets() => _directionalOffsets;
+    public Dictionary<string, Vector2> GetFixationObjectPath() => _fixationObjectPath;
+    public float GetFixationRadius() => _fixationRadius;
 
     /// <summary>
     /// Get the raw gaze estimate for both eyes
@@ -37,15 +83,52 @@ public class GazeManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Get the adjusted gaze estimate for both eyes
+    /// Get the adjusted gaze estimate for both eyes by applying the calculated corrective vectors
     /// </summary>
     /// <returns>A `GazeVector` object containing the adjusted gaze estimates for both eyes</returns>
     public GazeVector GetAdjustedGazeEstimate()
     {
+        // Get raw gaze estimates
         var l_p = _leftEyeTracker.GetGazeEstimate();
         var r_p = _rightEyeTracker.GetGazeEstimate();
+        var currentGaze = new Vector2((l_p.x + r_p.x) / 2, (l_p.y + r_p.y) / 2);
 
-        return new GazeVector(l_p, r_p);
+        // Calculate weights for each fixation point based on inverse distance
+        Dictionary<string, float> weights = new();
+        float totalWeight = 0f;
+
+        foreach (var point in _fixationObjectPath.Keys)
+        {
+            var targetPos = _fixationObjectPath[point] * _fixationRadius;
+            var distance = Vector2.Distance(currentGaze, targetPos);
+
+            // Use inverse distance squared for smoother falloff
+            var weight = 1f / (distance * distance + 0.0001f); // Add small epsilon to avoid division by zero
+            weights[point] = weight;
+            totalWeight += weight;
+        }
+
+        // Normalize weights and calculate weighted average of corrections
+        Vector2 leftCorrection = Vector2.zero;
+        Vector2 rightCorrection = Vector2.zero;
+
+        foreach (var point in weights.Keys)
+        {
+            if (_directionalOffsets.ContainsKey(point))
+            {
+                var normalizedWeight = weights[point] / totalWeight;
+                var corrections = _directionalOffsets[point];
+
+                leftCorrection += corrections.GetLeft() * normalizedWeight;
+                rightCorrection += corrections.GetRight() * normalizedWeight;
+            }
+        }
+
+        // Apply weighted corrections
+        var adjustedLeft = new Vector2(l_p.x, l_p.y) + leftCorrection;
+        var adjustedRight = new Vector2(r_p.x, r_p.y) + rightCorrection;
+
+        return new GazeVector(adjustedLeft, adjustedRight);
     }
 
     /// <summary>
@@ -81,6 +164,7 @@ public class GazeManager : MonoBehaviour
     /// <returns>True if the gaze is fixated on the point, false otherwise</returns>
     public bool IsFixatedStatic(Vector2 fixationPoint, float threshold = 0.0f, bool useAdjustedGaze = false)
     {
+        // Get the gaze estimate
         var _gazeEstimate = useAdjustedGaze ? GetAdjustedGazeEstimate() : GetRawGazeEstimate();
 
         // Get gaze estimates and the current world position
@@ -131,4 +215,99 @@ public class GazeManager : MonoBehaviour
         }
         return true;
     }
+
+    /// <summary>
+    /// Calculate the corrective vectors for each fixation point based on collected gaze data
+    /// </summary>
+    public void CalculateOffsetValues()
+    {
+        // Clear any existing offsets
+        _directionalOffsets.Clear();
+
+        // Function to calculate mean and standard deviation for a list of vectors
+        static (Vector2 mean, Vector2 stdDev) GetVectorStats(List<Vector2> vectors)
+        {
+            if (vectors.Count == 0) return (Vector2.zero, Vector2.zero);
+
+            // Calculate mean
+            Vector2 sum = Vector2.zero;
+            foreach (var v in vectors)
+            {
+                sum += v;
+            }
+            Vector2 mean = sum / vectors.Count;
+
+            // Calculate standard deviation
+            Vector2 sqSum = Vector2.zero;
+            foreach (var v in vectors)
+            {
+                sqSum.x += (v.x - mean.x) * (v.x - mean.x);
+                sqSum.y += (v.y - mean.y) * (v.y - mean.y);
+            }
+            Vector2 stdDev = new(
+                Mathf.Sqrt(sqSum.x / vectors.Count),
+                Mathf.Sqrt(sqSum.y / vectors.Count)
+            );
+
+            return (mean, stdDev);
+        }
+
+        // Process each fixation point
+        foreach (string fixationPoint in _setupData.Keys)
+        {
+            // Get the actual fixation point position
+            Vector2 targetPos = _fixationObjectPath[fixationPoint] * _fixationRadius;
+
+            // Collect left and right eye gaze positions
+            List<Vector2> leftGazePositions = new();
+            List<Vector2> rightGazePositions = new();
+
+            foreach (var gazePair in _setupData[fixationPoint])
+            {
+                leftGazePositions.Add(gazePair.GetLeft());
+                rightGazePositions.Add(gazePair.GetRight());
+            }
+
+            // Calculate stats for both eyes
+            var (leftMean, leftStdDev) = GetVectorStats(leftGazePositions);
+            var (rightMean, rightStdDev) = GetVectorStats(rightGazePositions);
+
+            // Filter out outliers (points more than 2 standard deviations from mean)
+            List<Vector2> leftFiltered = new();
+            List<Vector2> rightFiltered = new();
+
+            foreach (var pos in leftGazePositions)
+            {
+                if (Mathf.Abs(pos.x - leftMean.x) <= 2 * leftStdDev.x &&
+                    Mathf.Abs(pos.y - leftMean.y) <= 2 * leftStdDev.y)
+                {
+                    leftFiltered.Add(pos);
+                }
+            }
+
+            foreach (var pos in rightGazePositions)
+            {
+                if (Mathf.Abs(pos.x - rightMean.x) <= 2 * rightStdDev.x &&
+                    Mathf.Abs(pos.y - rightMean.y) <= 2 * rightStdDev.y)
+                {
+                    rightFiltered.Add(pos);
+                }
+            }
+
+            // Recalculate means with filtered data
+            var (leftFilteredMean, _) = GetVectorStats(leftFiltered);
+            var (rightFilteredMean, _) = GetVectorStats(rightFiltered);
+
+            // Calculate corrective vectors (target position - mean gaze position)
+            Vector2 leftCorrection = targetPos - leftFilteredMean;
+            Vector2 rightCorrection = targetPos - rightFilteredMean;
+
+            // Store the corrective vectors
+            _directionalOffsets[fixationPoint] = new GazeVector(leftCorrection, rightCorrection);
+
+            Debug.Log($"Calculated corrective vectors for {fixationPoint}:");
+            Debug.Log($"Left eye: {leftCorrection}, Right eye: {rightCorrection}");
+        }
+    }
 }
+

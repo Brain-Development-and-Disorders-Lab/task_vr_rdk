@@ -17,7 +17,6 @@ namespace UXF
         private GameObject _gazeSource; // Typically mapped to CenterEyeAnchor under the `OVRCameraRig` prefab
 
         // Fields to enable and manage the gaze indicators
-        [SerializeField]
         private bool _showIndicator = false;
         private GameObject _indicator;
 
@@ -63,10 +62,10 @@ namespace UXF
                 Debug.LogWarning("Missing OVRFaceExpressions component. Eye tracking will not detect blinks.");
             }
 
-            // Show gaze _indicator if enabled
+            // Show gaze indicator if enabled
             if (_showIndicator && _eyeGazeComponent)
             {
-                // Create a new _indicator object
+                // Create a new indicator object
                 _indicator = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 _indicator.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
 
@@ -104,6 +103,18 @@ namespace UXF
 #endif
             return _gazeEstimate;
         }
+
+        /// <summary>
+        /// Set the visibility of the gaze indicator
+        /// </summary>
+        /// <param name="state">Whether to show the indicator</param>
+        public void SetIndicatorVisibility(bool state) => _showIndicator = state;
+
+        /// <summary>
+        /// Get the visibility of the gaze indicator
+        /// </summary>
+        /// <returns>Whether the indicator is visible</returns>
+        public bool GetIndicatorVisibility() => _showIndicator;
 
         /// <summary>
         /// Returns current position and rotation values of the eye

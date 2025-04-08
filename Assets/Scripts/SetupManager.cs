@@ -1,12 +1,7 @@
 using UnityEngine;
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
-using UXF;
-
-// Custom namespaces
-using Utilities;
 
 /// <summary>
 /// Manager for headset setup operations. Currently handles setup, operation, and eye-tracking calibration.
@@ -34,45 +29,15 @@ public class SetupManager : MonoBehaviour
 
     // Set of points to be displayed for fixation and the "path" of the fixation object used
     // for eye-tracking setup
-    private readonly float _fixationRadius = 2.4f;
     private readonly float _fixationSetupThreshold = 0.70f;
     private readonly float _fixationValidationThreshold = 0.50f;
     private readonly int _fixationMeasurements = 100;
     private GameObject _fixationObject; // Object moved around the screen
     private Vector2 _fixationObjectPosition; // The active unit vector
     private int _fixationObjectPositionIndex = 0;
-    private readonly Dictionary<string, Vector2> _fixationObjectPath = new() {
-        {"c_start", new Vector2(0, 0)},
-        {"q_1", new Vector2(1, 1)},
-        {"q_2", new Vector2(-1, 1)},
-        {"q_3", new Vector2(-1, -1)},
-        {"q_4", new Vector2(1, -1)},
-        {"c_end", new Vector2(0, 0)}, // Return to center
-    };
     private float _updateTimer = 0.0f;
     private readonly float _pathInterval = 1.6f; // Duration of each point being displayed in the path
     private Action _setupCallback; // Optional callback function executed after calibration complete
-
-    // Data storage
-    private readonly Dictionary<string, List<GazeVector>> _setupData = new() {
-        {"c_start", new List<GazeVector>() },
-        {"q_1", new List<GazeVector>() },
-        {"q_2", new List<GazeVector>() },
-        {"q_3", new List<GazeVector>() },
-        {"q_4", new List<GazeVector>() },
-        {"c_end", new List<GazeVector>() },
-    };
-    private readonly Dictionary<string, List<GazeVector>> _validationData = new() {
-        {"c_start", new List<GazeVector>() },
-        {"q_1", new List<GazeVector>() },
-        {"q_2", new List<GazeVector>() },
-        {"q_3", new List<GazeVector>() },
-        {"q_4", new List<GazeVector>() },
-        {"c_end", new List<GazeVector>() },
-    };
-
-    // Calculated offset vectors
-    private readonly Dictionary<string, GazeVector> _directionalOffsets = new();
 
     /// <summary>
     /// Wrapper function to initialize class and prepare for calibration operations
@@ -96,6 +61,8 @@ public class SetupManager : MonoBehaviour
         _fixationObject.SetActive(false);
 
         // Set initial position of fixation object
+        var _fixationObjectPath = _gazeManager.GetFixationObjectPath();
+        float _fixationRadius = _gazeManager.GetFixationRadius();
         _fixationObjectPosition = _fixationObjectPath[_fixationObjectPath.Keys.ToList()[_fixationObjectPositionIndex]];
         _fixationObject.transform.localPosition = new Vector3(_fixationObjectPosition.x * _fixationRadius, _fixationObjectPosition.y * _fixationRadius, 0.0f);
 
@@ -141,6 +108,9 @@ public class SetupManager : MonoBehaviour
         Debug.Log("Ending calibration stage...");
         if (!_isEyeTrackingCalibrationSetup)
         {
+            // Calculate the offset values for each eye
+            _gazeManager.CalculateOffsetValues();
+
             // Flash the fixation object before starting validation
             StartCoroutine(FlashFixationObject());
 
@@ -165,9 +135,6 @@ public class SetupManager : MonoBehaviour
         _isEyeTrackingCalibrationActive = false;
         _isEyeTrackingCalibrationComplete = true;
         _fixationObject.SetActive(_isEyeTrackingCalibrationActive);
-
-        // Run calculation of gaze offset values
-        CalculateOffsetValues();
 
         // Remove the prefab instance
         Destroy(_viewCalibrationPrefabInstance);
@@ -195,52 +162,6 @@ public class SetupManager : MonoBehaviour
     public void SetViewCalibrationVisibility(bool state) => _viewCalibrationPrefabInstance.SetActive(state);
 
     /// <summary>
-    /// Calculate the offset values for position in the fixation object path
-    /// </summary>
-    private void CalculateOffsetValues()
-    {
-        // Function to examine each point and calculate average vector difference from each point
-        foreach (string _unitVectorDirection in _setupData.Keys)
-        {
-            var L_vectorSum = Vector2.zero;
-            var R_vectorSum = Vector2.zero;
-
-            foreach (var VectorPair in _setupData[_unitVectorDirection])
-            {
-                // Get the sum of the gaze vector and the actual position of the dot for each eye
-                var L_result = new Vector2(VectorPair.GetLeft().x, VectorPair.GetLeft().y) + (_fixationObjectPath[_unitVectorDirection] * _fixationRadius);
-                L_vectorSum += new Vector2(VectorPair.GetLeft().x, VectorPair.GetLeft().y) + (_fixationObjectPath[_unitVectorDirection] * _fixationRadius);
-
-                var R_result = new Vector2(VectorPair.GetRight().x, VectorPair.GetRight().y) + (_fixationObjectPath[_unitVectorDirection] * _fixationRadius);
-                R_vectorSum += new Vector2(VectorPair.GetRight().x, VectorPair.GetRight().y) + (_fixationObjectPath[_unitVectorDirection] * _fixationRadius);
-            }
-
-            L_vectorSum /= _setupData[_unitVectorDirection].Count;
-            R_vectorSum /= _setupData[_unitVectorDirection].Count;
-            _directionalOffsets.Add(_unitVectorDirection, new GazeVector(L_vectorSum, R_vectorSum));
-        }
-
-        // Calculate a global offset correction vector for each eye
-        var L_averageOffsetCorrection = Vector2.zero;
-        var R_averageOffsetCorrection = Vector2.zero;
-
-        foreach (string _unitVectorDirection in _setupData.Keys)
-        {
-            L_averageOffsetCorrection += _directionalOffsets[_unitVectorDirection].GetLeft();
-            R_averageOffsetCorrection += _directionalOffsets[_unitVectorDirection].GetRight();
-        }
-
-        L_averageOffsetCorrection /= _setupData.Keys.Count;
-        R_averageOffsetCorrection /= _setupData.Keys.Count;
-    }
-
-    /// <summary>
-    /// Get the directional offsets for each eye
-    /// </summary>
-    /// <returns>Dictionary of directional offsets</returns>
-    public Dictionary<string, GazeVector> GetDirectionalOffsets() => _directionalOffsets;
-
-    /// <summary>
     /// Utility function to capture eye tracking data and store alongside the relevant location
     /// </summary>
     private void RunGazeCapture()
@@ -250,9 +171,10 @@ public class SetupManager : MonoBehaviour
         var r_p = _gazeManager.GetRightEyeTracker().GetGazeEstimate();
 
         // Determine which data dictionary to use based on the current state
-        var gazeData = _isEyeTrackingCalibrationSetup ? _validationData : _setupData;
+        var gazeData = _isEyeTrackingCalibrationSetup ? _gazeManager.GetValidationData() : _gazeManager.GetSetupData();
 
         // Test fixation and add to the appropriate data dictionary
+        var _fixationObjectPath = _gazeManager.GetFixationObjectPath();
         float _fixationThreshold = _isEyeTrackingCalibrationSetup ? _fixationValidationThreshold : _fixationSetupThreshold;
         if (_gazeManager.IsFixatedStatic(_fixationObject.transform.position, _fixationThreshold))
         {
@@ -279,6 +201,8 @@ public class SetupManager : MonoBehaviour
                 {
                     // Shift to the next position if the timer has been reached
                     _fixationObjectPositionIndex += 1;
+                    var _fixationObjectPath = _gazeManager.GetFixationObjectPath();
+                    float _fixationRadius = _gazeManager.GetFixationRadius();
                     if (_fixationObjectPositionIndex > _fixationObjectPath.Count - 1)
                     {
                         _fixationObjectPositionIndex = 0;
