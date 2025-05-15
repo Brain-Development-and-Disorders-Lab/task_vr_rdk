@@ -274,8 +274,8 @@ public class GazeManager : MonoBehaviour
             Vector2 sqSum = Vector2.zero;
             foreach (var v in vectors)
             {
-                sqSum.x += (v.x - mean.x) * (v.x - mean.x);
-                sqSum.y += (v.y - mean.y) * (v.y - mean.y);
+                sqSum.x += Mathf.Pow(v.x - mean.x, 2);
+                sqSum.y += Mathf.Pow(v.y - mean.y, 2);
             }
             Vector2 stdDev = new(
                 Mathf.Sqrt(sqSum.x / vectors.Count),
@@ -306,26 +306,13 @@ public class GazeManager : MonoBehaviour
             var (rightMean, rightStdDev) = GetVectorStats(rightGazePositions);
 
             // Filter out outliers (points more than 2 standard deviations from mean)
-            List<Vector2> leftFiltered = new();
-            List<Vector2> rightFiltered = new();
+            List<Vector2> leftFiltered = leftGazePositions.FindAll(pos =>
+                Mathf.Abs(pos.x - leftMean.x) <= 2 * leftStdDev.x &&
+                Mathf.Abs(pos.y - leftMean.y) <= 2 * leftStdDev.y);
 
-            foreach (var pos in leftGazePositions)
-            {
-                if (Mathf.Abs(pos.x - leftMean.x) <= 2 * leftStdDev.x &&
-                    Mathf.Abs(pos.y - leftMean.y) <= 2 * leftStdDev.y)
-                {
-                    leftFiltered.Add(pos);
-                }
-            }
-
-            foreach (var pos in rightGazePositions)
-            {
-                if (Mathf.Abs(pos.x - rightMean.x) <= 2 * rightStdDev.x &&
-                    Mathf.Abs(pos.y - rightMean.y) <= 2 * rightStdDev.y)
-                {
-                    rightFiltered.Add(pos);
-                }
-            }
+            List<Vector2> rightFiltered = rightGazePositions.FindAll(pos =>
+                Mathf.Abs(pos.x - rightMean.x) <= 2 * rightStdDev.x &&
+                Mathf.Abs(pos.y - rightMean.y) <= 2 * rightStdDev.y);
 
             // Recalculate means with filtered data
             var (leftFilteredMean, _) = GetVectorStats(leftFiltered);
@@ -338,9 +325,12 @@ public class GazeManager : MonoBehaviour
             // Store the corrective vectors
             _directionalOffsets[fixationPoint] = new GazeVector(leftCorrection, rightCorrection);
 
-            Debug.Log($"Calculated corrective vectors for {fixationPoint}:");
-            Debug.Log($"Left eye: {leftCorrection}, Right eye: {rightCorrection}");
+            // Debugging output
+            Debug.Log($"Fixation Point: {fixationPoint}");
+            Debug.Log($"Target Position: {targetPos}");
+            Debug.Log($"Left Correction: {leftCorrection}, Right Correction: {rightCorrection}");
         }
+
         _hasCalculatedOffsets = true;
     }
 
