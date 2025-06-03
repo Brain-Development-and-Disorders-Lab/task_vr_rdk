@@ -339,8 +339,8 @@ public class GazeManager : MonoBehaviour
         if (_showIndicators)
         {
             // Get the gaze estimate and update the indicator positions
-            var l_p = GetGazeEstimate(_hasCalculatedOffsets).GetLeft();
-            var r_p = GetGazeEstimate(_hasCalculatedOffsets).GetRight();
+            var l_p = GetGazeEstimate().GetLeft();
+            var r_p = GetGazeEstimate().GetRight();
             _leftEyeTracker.SetIndicatorPosition(new Vector3(l_p.x, l_p.y, _gazeDistance));
             _rightEyeTracker.SetIndicatorPosition(new Vector3(r_p.x, r_p.y, _gazeDistance));
         }

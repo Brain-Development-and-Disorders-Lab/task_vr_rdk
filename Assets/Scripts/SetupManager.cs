@@ -167,8 +167,8 @@ public class SetupManager : MonoBehaviour
     private void RunGazeCapture()
     {
         // Capture eye tracking data and store alongside location
-        var l_p = _gazeManager.GetGazeEstimate(_isEyeTrackingCalibrationSetup).GetLeft();
-        var r_p = _gazeManager.GetGazeEstimate(_isEyeTrackingCalibrationSetup).GetRight();
+        var l_p = _gazeManager.GetGazeEstimate().GetLeft();
+        var r_p = _gazeManager.GetGazeEstimate().GetRight();
 
         // Determine which data dictionary to use based on the current state
         var gazeData = _isEyeTrackingCalibrationSetup ? _gazeManager.GetValidationData() : _gazeManager.GetSetupData();

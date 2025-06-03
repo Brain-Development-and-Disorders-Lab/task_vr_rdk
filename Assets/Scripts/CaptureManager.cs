@@ -58,21 +58,42 @@ public class CaptureManager : MonoBehaviour
         // if _folder not specified by now use a good default
         if (_folder == null || _folder.Length == 0)
         {
-            _folder = Application.dataPath;
-            if (Application.isEditor)
+            if (Application.platform == RuntimePlatform.Android)
             {
-                // put screenshots in _folder above asset path so unity doesn't index the files
-                string stringPath = _folder + "/..";
-                _folder = Path.GetFullPath(stringPath);
+                // On Android, use the persistent data path which is writable
+                _folder = Application.persistentDataPath;
+            }
+            else
+            {
+                _folder = Application.dataPath;
+                if (Application.isEditor)
+                {
+                    // put screenshots in _folder above asset path so unity doesn't index the files
+                    string stringPath = _folder + "/..";
+                    _folder = Path.GetFullPath(stringPath);
+                }
             }
             _folder += "/screenshots";
 
-            // make sure di_rectoroy exists
-            System.IO.Directory.CreateDirectory(_folder);
+            try
+            {
+                // make sure directory exists
+                if (!Directory.Exists(_folder))
+                {
+                    Directory.CreateDirectory(_folder);
+                }
 
-            // count number of files of specified _format in _folder
-            string mask = string.Format("screen_{0}x{1}*.{2}", width, height, _format.ToString().ToLower());
-            _counter = Directory.GetFiles(_folder, mask, SearchOption.TopDirectoryOnly).Length;
+                // count number of files of specified format in folder
+                string mask = string.Format("screen_{0}x{1}*.{2}", width, height, _format.ToString().ToLower());
+                _counter = Directory.GetFiles(_folder, mask, SearchOption.TopDirectoryOnly).Length;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"Error creating screenshot directory: {e.Message}");
+                // Fallback to a temporary directory if we can't create the screenshots directory
+                _folder = Application.temporaryCachePath;
+                Debug.Log($"Falling back to temporary directory: {_folder}");
+            }
         }
 
         // use width, height, and _counter for unique file name
