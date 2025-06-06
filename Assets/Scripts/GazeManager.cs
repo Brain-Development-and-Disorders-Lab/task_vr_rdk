@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using System.Collections;
 
 using UXF;
 
@@ -43,8 +44,8 @@ public class GazeManager : MonoBehaviour
 
     // Fixation threshold
     [SerializeField]
-    private float _defaultThreshold = 0.70f;
-    private float _activeThreshold = 0.70f;
+    private float _defaultThreshold = 1.5f;
+    private float _activeThreshold = 1.5f;
 
     // Calculated offset vectors
     private readonly Dictionary<string, GazeVector> _directionalOffsets = new();
@@ -205,13 +206,20 @@ public class GazeManager : MonoBehaviour
         // Get the gaze estimate
         var _gazeEstimate = GetGazeEstimate();
 
-        // Get gaze estimates and the current world position
+        // Get gaze estimates in world space
         var _leftGaze = _gazeEstimate.GetLeft();
         var _rightGaze = _gazeEstimate.GetRight();
-        var _worldPosition = fixationPoint;
+
+        // Convert gaze estimates to world space
+        var leftGazeWorld = _gazeSource.transform.TransformPoint(new Vector3(_leftGaze.x, _leftGaze.y, _gazeDistance));
+        var rightGazeWorld = _gazeSource.transform.TransformPoint(new Vector3(_rightGaze.x, _rightGaze.y, _gazeDistance));
+
+        // Create world space fixation point
+        var fixationWorld = new Vector3(fixationPoint.x, fixationPoint.y, _gazeDistance);
 
         // If the gaze is directed in fixation, increment the counter to signify a measurement
-        return (Mathf.Abs(_leftGaze.x - _worldPosition.x) <= _activeThreshold && Mathf.Abs(_leftGaze.y - _worldPosition.y) <= _activeThreshold) || (Mathf.Abs(_rightGaze.x - _worldPosition.x) <= _activeThreshold && Mathf.Abs(_rightGaze.y - _worldPosition.y) <= _activeThreshold);
+        return (Vector3.Distance(leftGazeWorld, fixationWorld) <= _activeThreshold) ||
+               (Vector3.Distance(rightGazeWorld, fixationWorld) <= _activeThreshold);
     }
 
     /// <summary>
@@ -220,7 +228,7 @@ public class GazeManager : MonoBehaviour
     /// <param name="fixationPoint">The point to check if the gaze is fixated on</param>
     /// <param name="duration">The duration for the gaze to be considered fixated</param>
     /// <returns>True if the gaze is fixated on the point for the duration, false otherwise</returns>
-    public bool IsFixatedDuration(Vector2 fixationPoint, float duration)
+    public IEnumerator IsFixatedDuration(Vector2 fixationPoint, float duration)
     {
         // Initialize variables
         float _elapsedTime = 0.0f;
@@ -248,8 +256,10 @@ public class GazeManager : MonoBehaviour
                 _isFixated = false;
                 _elapsedTime = 0.0f;
             }
+
+            // Yield to allow Unity to update the frame
+            yield return null;
         }
-        return true;
     }
 
     /// <summary>

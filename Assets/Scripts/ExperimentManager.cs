@@ -792,11 +792,8 @@ public class ExperimentManager : MonoBehaviour
                 break;
             case EBlockSequence.Instructions_Demo_Motion:
                 // Run setup for the motion stimuli
-                Debug.Log("Displaying demo motion...");
                 SetupMotion(ETrialType.Training_Trials_Binocular);
-                Debug.Log("Displaying motion...");
                 yield return StartCoroutine(DisplayMotion(3.0f));
-                Debug.Log("Ending trial...");
                 EndTrial();
                 break;
             case EBlockSequence.Instructions_Selection:
@@ -909,7 +906,7 @@ public class ExperimentManager : MonoBehaviour
         if (_gazeManager.GetRequireFixation())
         {
             Debug.Log("Waiting for fixation...");
-            yield return new WaitUntil(() => _gazeManager.IsFixatedDuration(_stimulusManager.GetFixationAnchor().transform.position, 1.5f));
+            yield return StartCoroutine(_gazeManager.IsFixatedDuration(_stimulusManager.GetFixationAnchor().transform.position, 0.5f));
             Debug.Log("Fixated, continuing...");
         }
         else
@@ -925,7 +922,7 @@ public class ExperimentManager : MonoBehaviour
         if (_gazeManager.GetRequireFixation())
         {
             Debug.Log("Waiting for fixation...");
-            yield return new WaitUntil(() => _gazeManager.IsFixatedDuration(_stimulusManager.GetFixationAnchor().transform.position, 1.5f));
+            yield return StartCoroutine(_gazeManager.IsFixatedDuration(_stimulusManager.GetFixationAnchor().transform.position, 0.5f));
             Debug.Log("Fixated, continuing...");
         }
         else
