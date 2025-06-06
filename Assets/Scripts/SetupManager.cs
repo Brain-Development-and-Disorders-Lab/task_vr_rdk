@@ -176,7 +176,7 @@ public class SetupManager : MonoBehaviour
         // Test fixation and add to the appropriate data dictionary
         var _fixationObjectPath = _gazeManager.GetFixationObjectPath();
         _gazeManager.SetActiveThreshold(_isEyeTrackingCalibrationSetup ? _fixationValidationThreshold : _fixationSetupThreshold);
-        if (_gazeManager.IsFixatedStatic(_fixationObject.transform.position, _isEyeTrackingCalibrationSetup))
+        if (_gazeManager.IsFixatedStatic(_fixationObject.transform.position))
         {
             gazeData[_fixationObjectPath.Keys.ToList()[_fixationObjectPositionIndex]].Add(new(l_p, r_p));
         }

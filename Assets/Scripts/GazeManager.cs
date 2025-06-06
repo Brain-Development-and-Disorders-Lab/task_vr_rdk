@@ -49,6 +49,7 @@ public class GazeManager : MonoBehaviour
     // Calculated offset vectors
     private readonly Dictionary<string, GazeVector> _directionalOffsets = new();
     private bool _hasCalculatedOffsets = false;
+    private bool _enableGazeAdjustment = false;
 
     // Calibration data storage
     private readonly Dictionary<string, List<GazeVector>> _setupData = new() {
@@ -110,19 +111,20 @@ public class GazeManager : MonoBehaviour
     public Dictionary<string, GazeVector> GetDirectionalOffsets() => _directionalOffsets;
     public Dictionary<string, Vector2> GetFixationObjectPath() => _fixationObjectPath;
     public float GetFixationRadius() => _fixationRadius;
+    public void SetUseAdjustedGaze(bool state) => _enableGazeAdjustment = state;
 
     /// <summary>
     /// Get the adjusted gaze estimate for both eyes by applying the calculated corrective vectors
     /// </summary>
     /// <returns>A `GazeVector` object containing the adjusted gaze estimates for both eyes</returns>
-    public GazeVector GetGazeEstimate(bool useAdjustedGaze = false)
+    public GazeVector GetGazeEstimate()
     {
         // Get raw gaze estimates
         var l_p = _leftEyeTracker.GetGazeEstimate();
         var r_p = _rightEyeTracker.GetGazeEstimate();
 
         // Return raw gaze estimates if adjusted gaze is not required
-        if (!useAdjustedGaze)
+        if (!_enableGazeAdjustment)
         {
             return new GazeVector(l_p, r_p);
         }
@@ -147,15 +149,18 @@ public class GazeManager : MonoBehaviour
         Vector2 leftCorrection = Vector2.zero;
         Vector2 rightCorrection = Vector2.zero;
 
-        foreach (var point in weights.Keys)
+        if (_hasCalculatedOffsets)
         {
-            if (_directionalOffsets.ContainsKey(point))
+            foreach (var point in weights.Keys)
             {
-                var normalizedWeight = weights[point] / totalWeight;
-                var corrections = _directionalOffsets[point];
+                if (_directionalOffsets.ContainsKey(point))
+                {
+                    var normalizedWeight = weights[point] / totalWeight;
+                    var corrections = _directionalOffsets[point];
 
-                leftCorrection += corrections.GetLeft() * normalizedWeight;
-                rightCorrection += corrections.GetRight() * normalizedWeight;
+                    leftCorrection += corrections.GetLeft() * normalizedWeight;
+                    rightCorrection += corrections.GetRight() * normalizedWeight;
+                }
             }
         }
 
@@ -194,12 +199,11 @@ public class GazeManager : MonoBehaviour
     /// Check if the gaze is fixated on a static point from a single frame
     /// </summary>
     /// <param name="fixationPoint">The point to check if the gaze is fixated on</param>
-    /// <param name="useAdjustedGaze">Whether to use the adjusted gaze estimate</param>
     /// <returns>True if the gaze is fixated on the point, false otherwise</returns>
-    public bool IsFixatedStatic(Vector2 fixationPoint, bool useAdjustedGaze = false)
+    public bool IsFixatedStatic(Vector2 fixationPoint)
     {
         // Get the gaze estimate
-        var _gazeEstimate = GetGazeEstimate(useAdjustedGaze);
+        var _gazeEstimate = GetGazeEstimate();
 
         // Get gaze estimates and the current world position
         var _leftGaze = _gazeEstimate.GetLeft();
@@ -215,9 +219,8 @@ public class GazeManager : MonoBehaviour
     /// </summary>
     /// <param name="fixationPoint">The point to check if the gaze is fixated on</param>
     /// <param name="duration">The duration for the gaze to be considered fixated</param>
-    /// <param name="useAdjustedGaze">Whether to use the adjusted gaze estimate</param>
     /// <returns>True if the gaze is fixated on the point for the duration, false otherwise</returns>
-    public bool IsFixatedDuration(Vector2 fixationPoint, float duration, bool useAdjustedGaze = false)
+    public bool IsFixatedDuration(Vector2 fixationPoint, float duration)
     {
         // Initialize variables
         float _elapsedTime = 0.0f;
@@ -227,7 +230,7 @@ public class GazeManager : MonoBehaviour
         while (_elapsedTime < duration)
         {
             // Check if the gaze is fixated on the point
-            if (IsFixatedStatic(fixationPoint, useAdjustedGaze))
+            if (IsFixatedStatic(fixationPoint))
             {
                 // If the gaze is fixated, set the start time and the fixated flag
                 if (!_isFixated)

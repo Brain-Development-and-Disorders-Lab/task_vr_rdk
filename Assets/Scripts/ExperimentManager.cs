@@ -18,13 +18,17 @@ public class ExperimentManager : MonoBehaviour
     [SerializeField]
     private GameObject _loadingScreen;
 
-    [Header("Experiment Modes")]
+    [Header("Operating Modes")]
     [SerializeField]
     private bool _demoMode = false;
 
     [SerializeField]
     private bool _debugMode = false;
     private readonly int _debugBlockSize = 4;
+
+    [Header("Experimental Features")]
+    [SerializeField]
+    private bool _enableGazeAdjustment = false;
 
     // Define the types of trials that occur during the experiment timeline
     public enum ETrialType
@@ -234,6 +238,9 @@ public class ExperimentManager : MonoBehaviour
         _gazeManager = GetComponent<GazeManager>();
         _setupManager = GetComponent<SetupManager>();
         _logger = GetComponent<VRLogger>();
+
+        // Apply settings to the GazeManager
+        _gazeManager.SetUseAdjustedGaze(_enableGazeAdjustment);
 
         // Update the CameraManager value for the aperture offset to be the stimulus radius
         _cameraManager.SetStimulusWidth(_stimulusManager.GetApertureWidth());
@@ -785,8 +792,11 @@ public class ExperimentManager : MonoBehaviour
                 break;
             case EBlockSequence.Instructions_Demo_Motion:
                 // Run setup for the motion stimuli
+                Debug.Log("Displaying demo motion...");
                 SetupMotion(ETrialType.Training_Trials_Binocular);
+                Debug.Log("Displaying motion...");
                 yield return StartCoroutine(DisplayMotion(3.0f));
+                Debug.Log("Ending trial...");
                 EndTrial();
                 break;
             case EBlockSequence.Instructions_Selection:
