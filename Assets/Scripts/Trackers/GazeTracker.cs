@@ -123,7 +123,9 @@ namespace UXF
             // Eye position and rotation
             var p = transform.position;
             var r = transform.eulerAngles;
-            _gazeEstimate = (p + transform.forward) * _gazeDistance;
+            // Convert Euler angles to a direction vector
+            var direction = Quaternion.Euler(r) * Vector3.forward;
+            _gazeEstimate = p + (direction.normalized * _gazeDistance);
 
             float LBlinkWeight = -1.0f;
             float RBlinkWeight = -1.0f;

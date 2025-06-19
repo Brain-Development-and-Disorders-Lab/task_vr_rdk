@@ -29,8 +29,8 @@ public class SetupManager : MonoBehaviour
 
     // Set of points to be displayed for fixation and the "path" of the fixation object used
     // for eye-tracking setup
-    private readonly float _fixationSetupThreshold = 2.0f;
-    private readonly float _fixationValidationThreshold = 1.5f;
+    private readonly float _fixationSetupThreshold = 1.0f;
+    private readonly float _fixationValidationThreshold = 0.70f;
     private readonly int _fixationMeasurements = 100;
     private GameObject _fixationObject; // Object moved around the screen
     private Vector2 _fixationObjectPosition; // The active unit vector

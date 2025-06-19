@@ -44,8 +44,8 @@ public class GazeManager : MonoBehaviour
 
     // Fixation threshold
     [SerializeField]
-    private float _defaultThreshold = 1.5f;
-    private float _activeThreshold = 1.5f;
+    private float _defaultThreshold = 0.70f;
+    private float _activeThreshold = 0.70f;
 
     // Calculated offset vectors
     private readonly Dictionary<string, GazeVector> _directionalOffsets = new();
@@ -206,20 +206,13 @@ public class GazeManager : MonoBehaviour
         // Get the gaze estimate
         var _gazeEstimate = GetGazeEstimate();
 
-        // Get gaze estimates in world space
+        // Get gaze estimates and current world position
         var _leftGaze = _gazeEstimate.GetLeft();
         var _rightGaze = _gazeEstimate.GetRight();
+        var _worldPosition = fixationPoint;
 
-        // Convert gaze estimates to world space
-        var leftGazeWorld = _gazeSource.transform.TransformPoint(new Vector3(_leftGaze.x, _leftGaze.y, _gazeDistance));
-        var rightGazeWorld = _gazeSource.transform.TransformPoint(new Vector3(_rightGaze.x, _rightGaze.y, _gazeDistance));
-
-        // Create world space fixation point
-        var fixationWorld = new Vector3(fixationPoint.x, fixationPoint.y, _gazeDistance);
-
-        // If the gaze is directed in fixation, increment the counter to signify a measurement
-        return (Vector3.Distance(leftGazeWorld, fixationWorld) <= _activeThreshold) ||
-               (Vector3.Distance(rightGazeWorld, fixationWorld) <= _activeThreshold);
+        // If the gaze is directed in fixation, return true
+        return (Mathf.Abs(_leftGaze.x - _worldPosition.x) <= _activeThreshold && Mathf.Abs(_leftGaze.y - _worldPosition.y) <= _activeThreshold) || (Mathf.Abs(_rightGaze.x - _worldPosition.x) <= _activeThreshold && Mathf.Abs(_rightGaze.y - _worldPosition.y) <= _activeThreshold);
     }
 
     /// <summary>
