@@ -347,8 +347,10 @@ public class GazeManager : MonoBehaviour
             // Get the gaze estimate and update the indicator positions
             var l_p = GetGazeEstimate().GetLeft();
             var r_p = GetGazeEstimate().GetRight();
-            _leftEyeTracker.SetIndicatorPosition(new Vector3(l_p.x, l_p.y, _gazeDistance));
-            _rightEyeTracker.SetIndicatorPosition(new Vector3(r_p.x, r_p.y, _gazeDistance));
+
+            // Use the gaze estimates directly as they are already in world coordinates
+            _leftEyeTracker.SetIndicatorPosition(l_p);
+            _rightEyeTracker.SetIndicatorPosition(r_p);
         }
     }
 }
