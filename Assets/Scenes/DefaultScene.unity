@@ -1307,7 +1307,7 @@ MonoBehaviour:
   ApplyPosition: 1
   ApplyRotation: 1
   ReferenceFrame: {fileID: 0}
-  TrackingMode: 1
+  TrackingMode: 0
 --- !u!114 &567733400
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6807,7 +6807,7 @@ MonoBehaviour:
   ApplyPosition: 1
   ApplyRotation: 1
   ReferenceFrame: {fileID: 0}
-  TrackingMode: 1
+  TrackingMode: 0
 --- !u!114 &1593745115
 MonoBehaviour:
   m_ObjectHideFlags: 0
