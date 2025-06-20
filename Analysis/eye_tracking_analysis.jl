@@ -140,7 +140,7 @@ function motion_plots()
     vcat(df_l.pos_x, df_r.pos_x),
     vcat(df_l.pos_y, df_r.pos_y),
     "scatter",
-    "Eye-tracking Heatmap (All)"
+    "Eye-tracking Plot (All)"
   )
 
   # Scatter - Binocular trials
@@ -150,7 +150,7 @@ function motion_plots()
     vcat(df_l_binocular.pos_x, df_r_binocular.pos_x),
     vcat(df_l_binocular.pos_y, df_r_binocular.pos_y),
     "scatter",
-    "Eye-tracking Heatmap (Binocular)"
+    "Eye-tracking Plot (Binocular)"
   )
 
   # Scatter - Monocular, Left trials
@@ -159,7 +159,7 @@ function motion_plots()
     df_l_l_monocular.pos_x,
     df_l_l_monocular.pos_y,
     "scatter",
-    "Eye-tracking Heatmap (Monocular, Left)"
+    "Eye-tracking Plot (Monocular, Left)"
   )
 
   # Scatter - Monocular, Right trials
@@ -168,7 +168,7 @@ function motion_plots()
     df_r_r_monocular.pos_x,
     df_r_r_monocular.pos_y,
     "scatter",
-    "Eye-tracking Heatmap (Monocular, Right)"
+    "Eye-tracking Plot (Monocular, Right)"
   )
 
   # Scatter - Lateralized, Left trials
@@ -177,7 +177,7 @@ function motion_plots()
     df_l_l_lateralized.pos_x,
     df_l_l_lateralized.pos_y,
     "scatter",
-    "Eye-tracking Heatmap (Lateralized, Left)"
+    "Eye-tracking Plot (Lateralized, Left)"
   )
 
   # Scatter - Lateralized, Right trials
@@ -186,7 +186,7 @@ function motion_plots()
     df_r_r_lateralized.pos_x,
     df_r_r_lateralized.pos_y,
     "scatter",
-    "Eye-tracking Heatmap (Lateralized, Right)"
+    "Eye-tracking Plot (Lateralized, Right)"
   )
 end
 
@@ -224,7 +224,7 @@ function decision_plots()
     vcat(df_l.pos_x, df_r.pos_x),
     vcat(df_l.pos_y, df_r.pos_y),
     "scatter",
-    "Eye-tracking Fixation Density"
+    "Eye-tracking Plot (Decision)"
   )
 end
 

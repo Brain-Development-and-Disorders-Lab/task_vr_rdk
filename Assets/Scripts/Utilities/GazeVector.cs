@@ -7,23 +7,23 @@ namespace Utilities
     /// </summary>
     public struct GazeVector
     {
-        public Vector2 leftAdjustment;
-        public Vector2 rightAdjustment;
+        public Vector3 left;
+        public Vector3 right;
 
-        public GazeVector(Vector2 left, Vector2 right)
+        public GazeVector(Vector3 left, Vector3 right)
         {
-            leftAdjustment = left;
-            rightAdjustment = right;
+            this.left = left;
+            this.right = right;
         }
 
-        public void SetAdjustments(Vector2 left, Vector2 right)
+        public void SetAdjustments(Vector3 left, Vector3 right)
         {
-            leftAdjustment = left;
-            rightAdjustment = right;
+            this.left = left;
+            this.right = right;
         }
 
-        public readonly Vector2 GetLeft() => leftAdjustment;
+        public readonly Vector3 GetLeft() => left;
 
-        public readonly Vector2 GetRight() => rightAdjustment;
+        public readonly Vector3 GetRight() => right;
     }
 }
