@@ -342,6 +342,11 @@ public class GazeManager : MonoBehaviour
 
     private void Update()
     {
+        // Update gaze distance values
+        _gazeDistance = Vector3.Distance(_gazeSource.transform.position, _gazeTargetSurface.transform.position);
+        _leftEyeTracker.SetGazeDistance(_gazeDistance);
+        _rightEyeTracker.SetGazeDistance(_gazeDistance);
+
         if (_showIndicators)
         {
             // Get the gaze estimate and update the indicator positions
