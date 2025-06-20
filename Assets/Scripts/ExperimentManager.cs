@@ -26,10 +26,6 @@ public class ExperimentManager : MonoBehaviour
     private bool _debugMode = false;
     private readonly int _debugBlockSize = 4;
 
-    [Header("Experimental Features")]
-    [SerializeField]
-    private bool _enableGazeAdjustment = false;
-
     // Define the types of trials that occur during the experiment timeline
     public enum ETrialType
     {
@@ -238,9 +234,6 @@ public class ExperimentManager : MonoBehaviour
         _gazeManager = GetComponent<GazeManager>();
         _setupManager = GetComponent<SetupManager>();
         _logger = GetComponent<VRLogger>();
-
-        // Apply settings to the GazeManager
-        _gazeManager.SetUseAdjustedGaze(_enableGazeAdjustment);
 
         // Update the CameraManager value for the aperture offset to be the stimulus radius
         _cameraManager.SetStimulusWidth(_stimulusManager.GetApertureWidth());

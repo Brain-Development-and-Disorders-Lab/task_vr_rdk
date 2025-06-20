@@ -108,9 +108,6 @@ public class SetupManager : MonoBehaviour
         Debug.Log("Ending calibration stage...");
         if (!_isEyeTrackingCalibrationSetup)
         {
-            // Calculate the offset values for each eye
-            _gazeManager.CalculateOffsetValues();
-
             // Flash the fixation object before starting validation
             StartCoroutine(FlashFixationObject());
 
