@@ -77,7 +77,7 @@ public class GazeManager : MonoBehaviour
 
         if (_gazeTargetSurface != null && _gazeSource != null)
         {
-            _gazeDistance = _gazeTargetSurface.transform.position.z - _gazeSource.transform.position.z;
+            _gazeDistance = Vector3.Distance(_gazeSource.transform.position, _gazeTargetSurface.transform.position);
         }
 
         // Set the gaze distance for the left and right eye trackers
@@ -201,7 +201,7 @@ public class GazeManager : MonoBehaviour
     /// </summary>
     /// <param name="fixationPoint">The point to check if the gaze is fixated on</param>
     /// <returns>True if the gaze is fixated on the point, false otherwise</returns>
-    public bool IsFixatedStatic(Vector2 fixationPoint)
+    public bool IsFixatedStatic(GameObject fixationTarget)
     {
         // Get the gaze estimate
         var _gazeEstimate = GetGazeEstimate();
@@ -209,7 +209,7 @@ public class GazeManager : MonoBehaviour
         // Get gaze estimates and current world position
         var _leftGaze = _gazeEstimate.GetLeft();
         var _rightGaze = _gazeEstimate.GetRight();
-        var _worldPosition = fixationPoint;
+        var _worldPosition = fixationTarget.transform.position;
 
         // If the gaze is directed in fixation, return true
         return (Mathf.Abs(_leftGaze.x - _worldPosition.x) <= _activeThreshold && Mathf.Abs(_leftGaze.y - _worldPosition.y) <= _activeThreshold) || (Mathf.Abs(_rightGaze.x - _worldPosition.x) <= _activeThreshold && Mathf.Abs(_rightGaze.y - _worldPosition.y) <= _activeThreshold);
@@ -221,7 +221,7 @@ public class GazeManager : MonoBehaviour
     /// <param name="fixationPoint">The point to check if the gaze is fixated on</param>
     /// <param name="duration">The duration for the gaze to be considered fixated</param>
     /// <returns>True if the gaze is fixated on the point for the duration, false otherwise</returns>
-    public IEnumerator IsFixatedDuration(Vector2 fixationPoint, float duration)
+    public IEnumerator IsFixatedDuration(GameObject fixationTarget, float duration)
     {
         // Initialize variables
         float _elapsedTime = 0.0f;
@@ -231,7 +231,7 @@ public class GazeManager : MonoBehaviour
         while (_elapsedTime < duration)
         {
             // Check if the gaze is fixated on the point
-            if (IsFixatedStatic(fixationPoint))
+            if (IsFixatedStatic(fixationTarget))
             {
                 // If the gaze is fixated, set the start time and the fixated flag
                 if (!_isFixated)

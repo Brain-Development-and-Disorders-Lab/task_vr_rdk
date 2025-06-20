@@ -906,7 +906,7 @@ public class ExperimentManager : MonoBehaviour
         if (_gazeManager.GetRequireFixation())
         {
             Debug.Log("Waiting for fixation...");
-            yield return StartCoroutine(_gazeManager.IsFixatedDuration(_stimulusManager.GetFixationAnchor().transform.position, 0.5f));
+            yield return StartCoroutine(_gazeManager.IsFixatedDuration(_stimulusManager.GetFixationAnchor(), 0.5f));
             Debug.Log("Fixated, continuing...");
         }
         else
@@ -922,7 +922,7 @@ public class ExperimentManager : MonoBehaviour
         if (_gazeManager.GetRequireFixation())
         {
             Debug.Log("Waiting for fixation...");
-            yield return StartCoroutine(_gazeManager.IsFixatedDuration(_stimulusManager.GetFixationAnchor().transform.position, 0.5f));
+            yield return StartCoroutine(_gazeManager.IsFixatedDuration(_stimulusManager.GetFixationAnchor(), 0.5f));
             Debug.Log("Fixated, continuing...");
         }
         else
