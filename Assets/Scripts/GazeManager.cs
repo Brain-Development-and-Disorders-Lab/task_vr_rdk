@@ -116,8 +116,8 @@ public class GazeManager : MonoBehaviour
         // Get raw gaze estimates
         var l_p = _leftEyeTracker.GetGazeEstimate();
         var r_p = _rightEyeTracker.GetGazeEstimate();
-            return new GazeVector(l_p, r_p);
-        }
+        return new GazeVector(l_p, r_p);
+    }
 
     /// <summary>
     /// Get the require fixation flag
