@@ -134,6 +134,10 @@ public class ExperimentManager : MonoBehaviour
 
     // Signal state from external management tools
     private bool _hasQueuedExit = false;
+    private bool _hasQueuedTask = false;
+    private bool _hasRunTask = false;
+    private bool _hasQueuedCalibration = false;
+    private bool _hasRunCalibration = false;
 
     // Input button slider GameObjects and variables
     private readonly float _triggerThreshold = 0.8f;
@@ -1007,6 +1011,16 @@ public class ExperimentManager : MonoBehaviour
     public void ForceEnd() => _hasQueuedExit = true;
 
     /// <summary>
+    /// Function to start the task, used to signal the start of the task to the Headsup server
+    /// </summary>
+    public void StartTask() => _hasQueuedTask = true;
+
+    /// <summary>
+    /// Function to start the calibration, used to signal the start of the calibration to the Headsup server
+    /// </summary>
+    public void StartCalibration() => _hasQueuedCalibration = true;
+
+    /// <summary>
     /// Set the input state, `true` allows input, `false` ignores input
     /// </summary>
     /// <param name="state">Input state</param>
@@ -1226,33 +1240,6 @@ public class ExperimentManager : MonoBehaviour
                         }
                         _isInputReset = false;
                     }
-                    else if (IsSetupScreen() && _isInputReset)
-                    {
-                        // Hide the UI
-                        _uiManager.SetVisible(false);
-
-                        // Only provide haptic feedback before calibration is run
-                        if (!_setupManager.GetCalibrationActive() && !_setupManager.GetCalibrationComplete())
-                        {
-                            // Trigger controller haptics
-                            VRInput.SetHaptics(15.0f, 0.4f, 0.1f, true, true);
-                        }
-
-                        // Trigger eye-tracking calibration the end the trial
-                        _setupManager.RunSetup(() => EndTrial());
-                        _isInputReset = false;
-                    }
-                    else if (IsFitScreen() && _isInputReset)
-                    {
-                        // Hide the fit calibration screen
-                        _setupManager.SetViewCalibrationVisibility(false);
-
-                        // Trigger controller haptics
-                        VRInput.SetHaptics(15.0f, 0.4f, 0.1f, true, true);
-
-                        EndTrial();
-                        _isInputReset = false;
-                    }
                 }
             }
 
@@ -1269,6 +1256,40 @@ public class ExperimentManager : MonoBehaviour
         {
             Session.instance.End();
             Application.Quit();
+        }
+        // Handle the start of the task or calibration
+        else if (IsFitScreen() && _hasQueuedTask && _isInputReset && !_hasRunTask)
+        {
+            // Set the flag to prevent the task from being run again
+            _hasRunTask = true;
+
+            // Hide the fit calibration screen
+            _setupManager.SetViewCalibrationVisibility(false);
+
+            // Trigger controller haptics
+            VRInput.SetHaptics(15.0f, 0.4f, 0.1f, true, true);
+
+            EndTrial();
+            _isInputReset = false;
+        }
+        else if (IsSetupScreen() && _hasQueuedCalibration && _isInputReset && !_hasRunCalibration)
+        {
+            // Set the flag to prevent the calibration from being run again
+            _hasRunCalibration = true;
+
+            // Hide the UI
+            _uiManager.SetVisible(false);
+
+            // Only provide haptic feedback before calibration is run
+            if (!_setupManager.GetCalibrationActive() && !_setupManager.GetCalibrationComplete())
+            {
+                // Trigger controller haptics
+                VRInput.SetHaptics(15.0f, 0.4f, 0.1f, true, true);
+            }
+
+            // Trigger eye-tracking calibration the end the trial
+            _setupManager.RunSetup(() => EndTrial());
+            _isInputReset = false;
         }
     }
 }
