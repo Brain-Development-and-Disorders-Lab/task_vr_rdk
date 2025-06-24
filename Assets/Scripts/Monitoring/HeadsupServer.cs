@@ -49,6 +49,16 @@ namespace Monitoring
                 _gazeManager.SetRequireFixation(true);
                 Send(JsonConvert.SerializeObject("Fixation Enabled"));
             }
+            else if (e.Data == "start_task")
+            {
+                _experiment.StartTask();
+                Send(JsonConvert.SerializeObject("Started Task"));
+            }
+            else if (e.Data == "start_calibration")
+            {
+                _experiment.StartCalibration();
+                Send(JsonConvert.SerializeObject("Started Calibration"));
+            }
             else if (e.Data == "screenshot")
             {
                 // Capture screenshot of current view
