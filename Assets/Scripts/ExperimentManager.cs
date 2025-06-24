@@ -767,12 +767,12 @@ public class ExperimentManager : MonoBehaviour
                 StringBuilder _eyetrackingInstructions = new();
                 _eyetrackingInstructions.Append("A red dot will be visible, and you are to follow the dot movement with your gaze. It will briefly appear green before changing position.\n\n");
                 _eyetrackingInstructions.Append("After a series of movements, the dot will flash before repeating the movements for a second time.\n\n");
-                _eyetrackingInstructions.Append("When you are ready and comfortable, press the <b>Trigger</b> to select <b>Continue</b> and begin.");
+                _eyetrackingInstructions.Append("Notify the facilitator when you are ready to continue.");
                 _uiManager.SetVisible(true);
                 _uiManager.SetHeaderText("Eye-Tracking Setup");
                 _uiManager.SetBodyText(_eyetrackingInstructions.ToString());
                 _uiManager.SetLeftButtonState(false, false, "");
-                _uiManager.SetRightButtonState(true, true, "Continue");
+                _uiManager.SetRightButtonState(false, false, "");
 
                 // Input delay
                 yield return StartCoroutine(WaitSeconds(0.25f, true));
